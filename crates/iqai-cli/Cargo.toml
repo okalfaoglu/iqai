@@ -1,0 +1,19 @@
+[package]
+name = "iqai-cli"
+version = "0.1.0"
+edition = "2021"
+description = "CLI for trading execution"
+
+[[bin]]
+name = "iqai"
+path = "src/main.rs"
+
+[dependencies]
+iqai-core = { path = "../iqai-core" }
+iqai-binance = { path = "../iqai-binance" }
+tokio = { version = "1", features = ["full"] }
+clap = { version = "4", features = ["derive"] }
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"

@@ -1,0 +1,5 @@
+[workspace]
+members = ["crates/iqai-core", "crates/iqai-binance", "crates/iqai-cli", "crates/iqai-web"]
+# iqai-gui requires desktop (X11/Wayland). Enable when building on a system with display:
+# members = ["crates/iqai-core", "crates/iqai-binance", "crates/iqai-cli", "crates/iqai-gui"]
+resolver = "2"

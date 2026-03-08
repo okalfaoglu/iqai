@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IQAI | Smart Money & Elliott Wave</title>
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a0e27;
+      color: #e0e0e0;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    #chart {
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+    .panel {
+      position: absolute;
+      z-index: 100;
+      background: rgba(10, 14, 39, 0.92);
+      border: 1px solid rgba(0, 217, 255, 0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      backdrop-filter: blur(8px);
+    }
+    .panel-smart {
+      top: 16px;
+      right: 16px;
+      min-width: 180px;
+    }
+    .panel-smart h2 {
+      color: #00f5ff;
+      font-size: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-smart .version { color: #00d9ff66; font-size: 11px; }
+    .panel-smart .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 12px;
+    }
+    .panel-smart .row .label { color: #ffffffb3; }
+    .strength-pos { color: #00e676; }
+    .strength-neg { color: #ff1744; }
+    .strength-mid { color: #ffb627; }
+    .conf-high { color: #00e5ff; }
+    .conf-mid { color: #00d9ffb3; }
+    .conf-low { color: #ffb627; }
+    .panel-trend {
+      bottom: 16px;
+      right: 16px;
+    }
+    .panel-trend h2 { color: #e040fb; font-size: 12px; margin-bottom: 8px; }
+    .panel-trend table { font-size: 11px; border-collapse: collapse; }
+    .panel-trend td { padding: 2px 8px; }
+    .trend-up { color: #76ff03; }
+    .trend-down { color: #ff1744; }
+    .trend-flat { color: #ffb627b3; }
+    .controls {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      background: rgba(10, 14, 39, 0.92);
+      border: 1px solid rgba(0, 217, 255, 0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .controls input, .controls select {
+      background: #0f1629;
+      border: 1px solid #1a1f3a;
+      color: #e0e0e0;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .controls button {
+      background: #00d9ff;
+      color: #0a0e27;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .controls button:hover { background: #00e5ff; }
+    .header-info {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      z-index: 100;
+      transform: translateX(-50%);
+      background: rgba(10, 14, 39, 0.92);
+      border: 1px solid rgba(0, 217, 255, 0.3);
+      border-radius: 8px;
+      padding: 8px 20px;
+      font-size: 14px;
+      z-index: 10;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .header-info .header-input, .header-info .header-select {
+      background: #0f1629; border: 1px solid #1a1f3a; color: #00d9ff; font-weight: 700;
+      padding: 4px 8px; border-radius: 4px; font-size: 14px;
+    }
+    .header-info .header-select { color: #e0e0e0b3; font-weight: normal; }
+    .header-info .time { color: #8b93ff; font-size: 12px; }
+    .panel-overlays { top: 60px; left: 16px; min-width: 160px; }
+    .panel-overlays h3 {
+      color: #00d9ff;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .panel-overlays label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 2px 0;
+      color: #e0e0e0b3;
+    }
+    .panel-overlays input[type="checkbox"] {
+      accent-color: #00d9ff;
+      cursor: pointer;
+    }
+    .panel-elliott {
+      bottom: 80px;
+      left: 16px;
+      min-width: 220px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .panel-elliott h3 { color: #E040FB; font-size: 12px; margin-bottom: 8px; }
+    .panel-elliott .formation-type { color: #00BFA5; font-size: 11px; }
+    .panel-elliott .formation-name { color: #00d9ff; font-weight: 600; font-size: 13px; margin: 4px 0; }
+    .panel-elliott .wave-pts { font-size: 10px; color: #e0e0e0b3; margin-top: 6px; }
+    .panel-elliott .wave-pts span { display: inline-block; margin: 1px 4px 1px 0; }
+    .panel-elliott .w5-pred { margin-top: 8px; font-size: 11px; color: #FFB627; }
+    .panel-elliott .ew-validation { font-size: 10px; margin-top: 4px; }
+    .panel-elliott .ew-validation.ok { color: #00E676; }
+    .panel-elliott .ew-validation.fail { color: #FF1744; }
+    .panel-elliott .ew-impulse-stage { font-size: 10px; color: #8b93ff; margin-top: 4px; }
+    .panel-elliott .ew-setups { font-size: 10px; color: #00BFA5; margin-top: 6px; line-height: 1.4; }
+    .live-badge { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00e676; animation: pulse 1.5s infinite; margin-right: 6px; }
+    .live-badge.off { background: #666; animation: none; }
+    @keyframes pulse { 50% { opacity: 0.5; } }
+    .panel-toggle { background: none; border: none; color: #8b93ff; cursor: pointer; padding: 0 4px; font-size: 12px; }
+    .panel-toggle:hover { color: #00d9ff; }
+    .panel.collapsed .panel-toggle { transform: rotate(-90deg); }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin: -4px -4px 8px -4px; }
+    .panel.collapsed .panel-body { display: none; }
+    .panel.collapsed { min-width: auto; padding: 6px 10px; }
+    .panel.collapsed .panel-header { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <div class="header-info" id="headerInfo">
+    <input type="text" id="headerSymbol" value="ETHUSDT" placeholder="Symbol" class="header-input">
+    <select id="headerTf" class="header-select">
+      <option value="1M">1M</option>
+      <option value="5M" selected>5M</option>
+      <option value="15M">15M</option>
+      <option value="30M">30M</option>
+      <option value="1H">1H</option>
+      <option value="4H">4H</option>
+      <option value="D">1D</option>
+    </select>
+    <span class="time" id="dispTime">—</span>
+  </div>
+
+  <div class="panel panel-overlays collapsible" id="overlaysPanel" data-panel="overlays">
+    <div class="panel-header"><h3>📊 Görseller</h3><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
+    <div class="panel-body">
+    <label><input type="checkbox" id="showChoch" checked> CHoCH</label>
+    <label><input type="checkbox" id="showBos" checked> BOS</label>
+    <label><input type="checkbox" id="showLiquidity" checked> Liquidity</label>
+    <label><input type="checkbox" id="showMarketProfile" checked> Market Profile</label>
+    <label><input type="checkbox" id="showDivergence" checked> Divergence</label>
+    <label><input type="checkbox" id="showSupport" checked> Support</label>
+    <label><input type="checkbox" id="showResistance" checked> Resistance</label>
+    <label><input type="checkbox" id="showElliott" checked> Elliott Wave</label>
+    </div>
+  </div>
+
+  <div class="controls">
+    <select id="market">
+      <option value="futures">Futures</option>
+      <option value="spot">Spot</option>
+    </select>
+    <button onclick="loadChart()">Load</button>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+      <span class="live-badge" id="liveBadge"></span>
+      <input type="checkbox" id="liveMode"> Canlı
+    </label>
+  </div>
+
+  <div id="chart"></div>
+
+  <div class="panel panel-smart collapsible" id="smartPanel" data-panel="smart">
+    <div class="panel-header"><h2>⚡ SMART MONEY <span class="version">v3.0</span></h2><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
+    <div class="panel-body">
+    <div class="row"><span class="label">📊 Strength</span><span id="strength">-</span></div>
+    <div class="row"><span class="label">🎯 Confidence</span><span id="confidence">-</span></div>
+    <div class="row"><span class="label">💎 Volume</span><span id="volume">-</span></div>
+    <div class="row"><span class="label">1M</span><span id="t1">━</span></div>
+    <div class="row"><span class="label">5M</span><span id="t5">━</span></div>
+    <div class="row"><span class="label">15M</span><span id="t15">━</span></div>
+    <div class="row"><span class="label">30M</span><span id="t30">━</span></div>
+    <div class="row"><span class="label">1H</span><span id="t1h">━</span></div>
+    <div class="row"><span class="label">4H</span><span id="t4h">━</span></div>
+    <div class="row"><span class="label">1D</span><span id="t1d">━</span></div>
+    </div>
+  </div>
+
+  <div class="panel panel-elliott panel-trend collapsible" id="elliottPanel" data-panel="elliott">
+    <div class="panel-header"><h3>📐 Elliott Wave</h3><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
+    <div class="panel-body">
+    <div class="formation-type" id="ewFormationType">—</div>
+    <div class="formation-name" id="ewFormationName">—</div>
+    <div class="ew-validation" id="ewValidation">—</div>
+    <div class="ew-impulse-stage" id="ewImpulseStage">—</div>
+    <div class="wave-pts" id="ewWavePoints">—</div>
+    <div class="w5-pred" id="ewW5Pred">—</div>
+    <div class="ew-setups" id="ewSetups">—</div>
+    </div>
+  </div>
+
+  <div class="panel panel-trend collapsible" id="trendPanel" data-panel="trend">
+    <div class="panel-header"><h2>🔮 TREND Predict</h2><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
+    <div class="panel-body">
+    <table>
+      <tr><td>5M</td><td id="p5">━</td><td>15M</td><td id="p15">━</td><td>30M</td><td id="p30">━</td></tr>
+      <tr><td>1H</td><td id="p1h">━</td><td>4H</td><td id="p4h">━</td><td>1D</td><td id="p1d">━</td></tr>
+    </table>
+    </div>
+  </div>
+
+  <script>
+    let chart = null;
+    let candleSeries = null;
+    let volumeSeries = null;
+    let lastChartData = null;
+    let liveInterval = null;
+    const LIVE_POLL_MS = 15000;
+
+    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showElliott'];
+    const OVERLAY_STORAGE = 'iqai-overlay-state';
+
+    function setupOverlayListeners() {
+      const saved = JSON.parse(localStorage.getItem(OVERLAY_STORAGE) || '{}');
+      OVERLAY_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          if (saved[id] !== undefined) el.checked = saved[id];
+          el.addEventListener('change', () => {
+            const state = {};
+            OVERLAY_IDS.forEach(k => {
+              const e = document.getElementById(k);
+              if (e) state[k] = e.checked;
+            });
+            localStorage.setItem(OVERLAY_STORAGE, JSON.stringify(state));
+            if (lastChartData) applyOverlays(lastChartData);
+          });
+        }
+      });
+      document.getElementById('liveMode')?.addEventListener('change', toggleLive);
+      document.getElementById('headerSymbol')?.addEventListener('change', onSymbolTfChange);
+      document.getElementById('headerSymbol')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadChart(); });
+      document.getElementById('headerTf')?.addEventListener('change', onSymbolTfChange);
+      document.getElementById('market')?.addEventListener('change', onSymbolTfChange);
+    }
+
+    function toggleLive() {
+      const live = document.getElementById('liveMode')?.checked ?? false;
+      const badge = document.getElementById('liveBadge');
+      if (badge) badge.className = live ? 'live-badge' : 'live-badge off';
+      if (live) {
+        if (liveInterval) clearInterval(liveInterval);
+        liveInterval = setInterval(loadChart, LIVE_POLL_MS);
+      } else {
+        if (liveInterval) { clearInterval(liveInterval); liveInterval = null; }
+      }
+    }
+
+    function onSymbolTfChange() {
+      if (document.getElementById('liveMode')?.checked) loadChart();
+    }
+
+    function updateElliottPanel(data) {
+      const ew = data?.annotations?.elliott;
+      const typeEl = document.getElementById('ewFormationType');
+      const nameEl = document.getElementById('ewFormationName');
+      const valEl = document.getElementById('ewValidation');
+      const stageEl = document.getElementById('ewImpulseStage');
+      const ptsEl = document.getElementById('ewWavePoints');
+      const w5El = document.getElementById('ewW5Pred');
+      const setupsEl = document.getElementById('ewSetups');
+      if (!typeEl || !nameEl || !ptsEl) return;
+      if (!ew) {
+        typeEl.textContent = '—';
+        nameEl.textContent = '—';
+        if (valEl) { valEl.textContent = '—'; valEl.className = 'ew-validation'; }
+        if (stageEl) stageEl.textContent = '—';
+        ptsEl.textContent = '—';
+        if (w5El) w5El.textContent = '—';
+        if (setupsEl) setupsEl.textContent = '—';
+        return;
+      }
+      typeEl.textContent = ew.formation_type || '—';
+      nameEl.textContent = ew.formation || '—';
+      if (valEl) {
+        if (ew.validation_ok !== undefined && ew.validation_ok !== null) {
+          valEl.textContent = ew.validation_msg || (ew.validation_ok ? '✓ Kurallar geçerli' : '✗ İhlal');
+          valEl.className = 'ew-validation ' + (ew.validation_ok ? 'ok' : 'fail');
+        } else { valEl.textContent = '—'; valEl.className = 'ew-validation'; }
+      }
+      if (stageEl) {
+        const imp = ew.impulse_state;
+        stageEl.textContent = imp ? imp.stage + ': ' + imp.message : '—';
+      }
+      ptsEl.innerHTML = (ew.wave_points || []).map(p =>
+        `<span title="${p.price?.toFixed(4) || ''}">${p.label}: ${(p.price || 0).toFixed(2)}</span>`
+      ).join('') || '—';
+      if (w5El) {
+        const w5 = ew.w5_targets;
+        if (w5 && (ew.formation === 'Impulse' || ew.formation_type === 'Motif (İtki)')) {
+          w5El.innerHTML = `🎯 W5: <b>${(w5[0]).toFixed(2)}</b> (W1=W5) / <b>${(w5[1]).toFixed(2)}</b> (61.8%)${w5[2] != null ? ' / <b>' + (w5[2]).toFixed(2) + '</b> (inv123.6%)' : ''}`;
+        } else {
+          w5El.textContent = '—';
+        }
+      }
+      if (setupsEl) {
+        const imp = ew.impulse_state;
+        if (!imp || (!imp.setup_w3 && !imp.setup_w5)) {
+          setupsEl.textContent = '—';
+        } else {
+          const parts = [];
+          if (imp.setup_w3) {
+            const s = imp.setup_w3;
+            parts.push('W3: E=' + (s.entry||0).toFixed(2) + ' SL=' + (s.sl||0).toFixed(2) + ' TP1=' + (s.tp1||0).toFixed(2) + ' TP2=' + (s.tp2||0).toFixed(2));
+          }
+          if (imp.setup_w5) {
+            const s = imp.setup_w5;
+            parts.push('W5: E=' + (s.entry||0).toFixed(2) + ' SL=' + (s.sl||0).toFixed(2) + ' TP=' + (s.tp||0).toFixed(2));
+          }
+          setupsEl.innerHTML = parts.join('<br>');
+        }
+      }
+    }
+
+    function initChart() {
+      if (chart) chart.remove();
+      chart = LightweightCharts.createChart(document.getElementById('chart'), {
+        layout: { background: { color: '#0a0e27' }, textColor: '#8b93ff' },
+        grid: { vertLines: { color: '#1a1f3a' }, horzLines: { color: '#1a1f3a' } },
+        width: document.getElementById('chart').clientWidth,
+        height: document.getElementById('chart').clientHeight,
+        timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#1a1f3a' },
+        rightPriceScale: { borderColor: '#1a1f3a', scaleMargins: { top: 0.05, bottom: 0.25 } }
+      });
+      candleSeries = chart.addCandlestickSeries({
+        upColor: '#00e676', downColor: '#ff1744', borderVisible: false
+      });
+      volumeSeries = chart.addHistogramSeries({
+        color: '#26a69a', priceFormat: { type: 'volume' }, priceScaleId: ''
+      });
+      volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
+      chart._lineSeries = [];
+      chart.timeScale().fitContent();
+    }
+
+    async function loadChart() {
+      const symbol = document.getElementById('headerSymbol')?.value || document.getElementById('symbol')?.value || 'ETHUSDT';
+      const tf = document.getElementById('headerTf')?.value || document.getElementById('tf')?.value || '5M';
+      const market = document.getElementById('market')?.value || 'futures';
+
+      try {
+        const r = await fetch(`/api/chart?symbol=${symbol}&tf=${tf}&market=${market}`);
+        const data = await r.json();
+        if (data.error) { alert(data.error); return; }
+
+        const symEl = document.getElementById('headerSymbol');
+        const tfEl = document.getElementById('headerTf');
+        if (symEl) symEl.value = data.symbol || 'ETHUSDT';
+        if (tfEl) tfEl.value = data.timeframe || '5M';
+        const lastCandle = data.candles && data.candles.length ? data.candles[data.candles.length - 1] : null;
+        document.getElementById('dispTime').textContent = lastCandle
+          ? new Date(lastCandle.time * 1000).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })
+          : '—';
+
+        if (!chart) initChart();
+
+        const candles = data.candles.map(c => ({
+          time: c.time,
+          open: c.open, high: c.high, low: c.low, close: c.close
+        }));
+        const isLive = document.getElementById('liveMode')?.checked;
+        const prev = lastChartData?.candles;
+        const lastSame = isLive && prev && prev.length === candles.length && prev.length > 0 && prev[prev.length-1]?.time === candles[candles.length-1]?.time;
+        if (lastSame) {
+          candleSeries.update(candles[candles.length-1]);
+        } else {
+          candleSeries.setData(candles);
+        }
+        const volData = data.candles.map(c => ({
+          time: c.time,
+          value: c.volume,
+          color: c.close >= c.open ? 'rgba(0,230,118,0.5)' : 'rgba(255,23,68,0.5)'
+        }));
+        volumeSeries.setData(volData);
+
+        // Markers for signals
+        const markers = data.signals.map(s => ({
+          time: s.time,
+          position: s.label.startsWith('🟢') ? 'belowBar' : 'aboveBar',
+          color: s.label.includes('BUY') ? '#00e676' : s.label.includes('SELL') ? '#ff1744' : '#ffb627',
+          shape: 'arrowUp',
+          text: s.label
+        }));
+        candleSeries.setMarkers(markers);
+
+        lastChartData = data;
+        applyOverlays(data);
+
+        // Update panels
+        const t = data.trend;
+        document.getElementById('strength').textContent = Math.round(t.strength);
+        document.getElementById('strength').className = t.strength > 50 ? 'strength-pos' : t.strength < -50 ? 'strength-neg' : 'strength-mid';
+        document.getElementById('confidence').textContent = t.confidence + '%';
+        document.getElementById('confidence').className = t.confidence >= 75 ? 'conf-high' : t.confidence >= 60 ? 'conf-mid' : 'conf-low';
+        document.getElementById('volume').textContent = t.cvd != null 
+          ? (t.cvd >= 0 ? '+' : '') + Math.round(t.cvd / 1000) + 'K' 
+          : '-';
+        document.getElementById('volume').style.color = t.cvd > 0 ? '#76ff03' : t.cvd < 0 ? '#ff1744' : '#ffb627';
+
+        updateTrendPanels(data);
+        updateElliottPanel(data);
+
+        chart.timeScale().fitContent();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    function applyOverlays(data) {
+      if (!chart || !candleSeries || !data) return;
+      const ann = data.annotations || {};
+        const showChoch = document.getElementById('showChoch')?.checked ?? true;
+        const showBos = document.getElementById('showBos')?.checked ?? true;
+        const showLiq = document.getElementById('showLiquidity')?.checked ?? true;
+        const showMp = document.getElementById('showMarketProfile')?.checked ?? true;
+        const showDiv = document.getElementById('showDivergence')?.checked ?? true;
+        const showSupport = document.getElementById('showSupport')?.checked ?? true;
+        const showResistance = document.getElementById('showResistance')?.checked ?? true;
+        const showElliott = document.getElementById('showElliott')?.checked ?? true;
+
+        const allMarkers = [
+          ...(data.signals || []).map(s => ({
+            time: s.time, position: s.label.includes('BUY') ? 'belowBar' : 'aboveBar',
+            color: s.label.includes('BUY') ? '#00e676' : s.label.includes('SELL') ? '#ff1744' : '#ffb627',
+            shape: 'arrowUp', text: s.label
+          })),
+          ...(showChoch ? (Array.isArray(ann.choch) ? ann.choch : []) : []).map(x => ({
+            time: x.time, position: x.color === '#76FF03' ? 'belowBar' : 'aboveBar',
+            color: x.color, shape: 'circle', text: x.label
+          })),
+          ...(showBos ? (Array.isArray(ann.bos) ? ann.bos : []) : []).map(x => ({
+            time: x.time, position: x.color === '#00BFA5' ? 'belowBar' : 'aboveBar',
+            color: x.color, shape: 'circle', text: x.label
+          })),
+          ...(showLiq ? (Array.isArray(ann.liquidity) ? ann.liquidity : []) : []).map(x => ({
+            time: x.time, position: 'aboveBar', color: '#FF6B35', shape: 'circle', text: x.label
+          })),
+          ...(showMp ? (Array.isArray(ann.market_profile) ? ann.market_profile : []) : []).map(x => ({
+            time: x.time, position: x.label.includes('BUY') ? 'belowBar' : 'aboveBar',
+            color: x.color, shape: 'square', text: x.label
+          })),
+          ...(showDiv ? (Array.isArray(ann.divergence) ? ann.divergence : []) : []).map(x => ({
+            time: x.time, position: x.label.includes('BULL') ? 'belowBar' : 'aboveBar',
+            color: x.color, shape: 'square', text: x.label
+          }))
+        ];
+        const ewPointMarkers = showElliott && (ann.elliott?.wave_points || []).map(p => ({
+          time: p.time, position: 'belowBar', color: '#E040FB', shape: 'circle', text: `W${p.label} ${(p.price||0).toFixed(2)}`
+        }));
+        candleSeries.setMarkers([...allMarkers, ...(ewPointMarkers || [])]);
+
+        // Support/Resistance + Elliott Wave lines
+        if (chart._lineSeries && chart._lineSeries.length) {
+          chart._lineSeries.forEach(s => chart.removeSeries(s));
+          chart._lineSeries = [];
+        }
+        chart._lineSeries = [];
+
+        if (showSupport && ann.support_line) {
+          const l = ann.support_line;
+          const line = chart.addLineSeries({ color: l.color, lineWidth: 2 });
+          line.setData([
+            { time: l.time1, value: l.price1 },
+            { time: l.time2, value: l.price2 },
+            ...(l.time3 ? [{ time: l.time3, value: l.price3 }] : [])
+          ]);
+          chart._lineSeries.push(line);
+        }
+        if (showResistance && ann.resistance_line) {
+          const l = ann.resistance_line;
+          const line = chart.addLineSeries({ color: l.color, lineWidth: 2 });
+          line.setData([
+            { time: l.time1, value: l.price1 },
+            { time: l.time2, value: l.price2 },
+            ...(l.time3 ? [{ time: l.time3, value: l.price3 }] : [])
+          ]);
+          chart._lineSeries.push(line);
+        }
+        if (showElliott && ann.elliott) {
+          const ew = ann.elliott;
+          (ew.wave_legs || []).forEach(leg => {
+            const line = chart.addLineSeries({ color: leg.color, lineWidth: 2 });
+            line.setData([
+              { time: leg.time1, value: leg.price1 },
+              { time: leg.time2, value: leg.price2 }
+            ]);
+            chart._lineSeries.push(line);
+          });
+          (ew.fibo_levels || []).forEach(f => {
+            const line = chart.addLineSeries({ color: f.color, lineWidth: 1, lineStyle: 2 });
+            line.setData([
+              { time: f.time1, value: f.price },
+              { time: f.time2, value: f.price }
+            ]);
+            chart._lineSeries.push(line);
+          });
+          if (ew.w5_targets && (ew.formation === 'Impulse' || ew.formation_type === 'Motif (İtki)')) {
+            const lastPt = ew.wave_points && ew.wave_points.length ? ew.wave_points[ew.wave_points.length - 1] : null;
+            const t1 = lastPt ? lastPt.time : (data.candles && data.candles.length ? data.candles[data.candles.length - 1].time : 0);
+            const t2 = data.candles && data.candles.length ? data.candles[data.candles.length - 1].time : t1;
+            (Array.isArray(ew.w5_targets) ? ew.w5_targets : [ew.w5_targets[0], ew.w5_targets[1]]).forEach((price) => {
+              if (price == null) return;
+              const line = chart.addLineSeries({ color: '#FFB627', lineWidth: 2, lineStyle: 1 });
+              line.setData([{ time: t1, value: price }, { time: t2, value: price }]);
+              chart._lineSeries.push(line);
+            });
+          }
+        }
+    }
+
+    function updateTrendPanels(data) {
+      if (!data || !data.trend) return;
+      const t = data.trend;
+      const ids = ['t1','t5','t15','t30','t1h','t4h','t1d'];
+      const predIds = ['p5','p15','p30','p1h','p4h','p1d'];
+      t.trends.forEach((v, i) => {
+          const el = document.getElementById(ids[i]);
+          if (el) {
+            el.textContent = v;
+            el.className = v === '▲' ? 'trend-up' : v === '▼' ? 'trend-down' : 'trend-flat';
+          }
+        });
+        t.trends.slice(1).forEach((v, i) => {
+          const el = document.getElementById(predIds[i]);
+          if (el) {
+            el.textContent = v;
+            el.className = v === '▲' ? 'trend-up' : v === '▼' ? 'trend-down' : 'trend-flat';
+          }
+        });
+    }
+
+    window.addEventListener('resize', () => {
+      if (chart) chart.applyOptions({ width: document.getElementById('chart').clientWidth, height: document.getElementById('chart').clientHeight });
+    });
+
+    function initCollapsiblePanels() {
+      const STORAGE_KEY = 'iqai-panel-state';
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      document.querySelectorAll('.collapsible').forEach(p => {
+        const id = p.dataset.panel || p.id;
+        const collapsed = saved[id] ?? false;
+        if (collapsed) p.classList.add('collapsed');
+        const btn = p.querySelector('.panel-toggle');
+        const header = p.querySelector('.panel-header');
+        const toggle = () => {
+          p.classList.toggle('collapsed');
+          const state = {};
+          document.querySelectorAll('.collapsible').forEach(el => {
+            const k = el.dataset.panel || el.id;
+            state[k] = el.classList.contains('collapsed');
+          });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        };
+        if (btn) btn.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+        if (header) header.addEventListener('click', e => { if (!e.target.closest('.panel-toggle')) toggle(); });
+      });
+    }
+
+    initChart();
+    setupOverlayListeners();
+    initCollapsiblePanels();
+    loadChart();
+    document.getElementById('liveBadge').className = 'live-badge off';
+  </script>
+</body>
+</html>
