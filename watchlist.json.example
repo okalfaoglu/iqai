@@ -1,0 +1,7 @@
+[
+  { "symbol": "ETHUSDT", "market": "futures", "timeframe": "5M" },
+  { "symbol": "BTCUSDT", "market": "futures", "timeframe": "5M" },
+  { "symbol": "BNBUSDT", "market": "spot", "timeframe": "15M" },
+  { "symbol": "XU100", "market": "tv", "exchange": "BIST", "timeframe": "15M" },
+  { "symbol": "AAPL", "market": "tv", "exchange": "NASDAQ", "timeframe": "1H" }
+]

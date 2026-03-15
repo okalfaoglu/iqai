@@ -1,0 +1,12 @@
+
+target/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.log
+# Gizli bilgiler (token, API key) içerebilir
+config.json
+# Veritabanı (isteğe bağlı; paylaşmak istemezseniz)
+data/

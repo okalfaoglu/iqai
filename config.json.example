@@ -1,7 +1,7 @@
 {
   "notification": {
-    "telegram_bot_token": "8449778774:AAHA4gf5Loo8CE37Z9EQC3c5pwn08O_DbCI",
-    "telegram_chat_id": "5740414370",
+    "telegram_bot_token": "BOT_TOKEN_BURAYA",
+    "telegram_chat_id": "CHAT_ID_BURAYA",
     "whatsapp_webhook_url": null,
     "whatsapp_webhook_token": null,
     "instagram_webhook_url": null,
@@ -13,21 +13,12 @@
     "email_webhook_url": null,
     "email_webhook_token": null
   },
-  "logging": {
-    "level": "INFO",
-    "target": "both",
-    "file_path": "logs/iqai.log"
-  },
-  "data": {
-    "max_bars": 10000,
-    "native_tf_mode": true
-  },
   "trading": {
     "enabled": false,
     "mode": "dry",
     "market": "futures",
-    "api_key": null,
-    "secret_key": null,
+    "api_key": "BINANCE_API_KEY",
+    "secret_key": "BINANCE_SECRET_KEY",
     "db_path": "data/trades.db",
     "risk_per_trade_pct": 1.0,
     "max_positions": 3,
@@ -35,13 +26,9 @@
     "daily_loss_limit_pct": 3.0,
     "min_q_score": 70,
     "min_rr": 1.5,
-    "use_radar_filter": true,
+    "use_radar_filter": false,
     "min_radar_confidence": 4.0,
-    "symbols": ["ETHUSDT", "BTCUSDT", "DOGEUSDT", "BNBUSDT"],
+    "symbols": ["ETHUSDT", "BTCUSDT"],
     "timeframes": ["5m", "15m", "1h", "4h"]
-  },
-  "tv_username": "harmonicviewtr@gmail.com",
-  "tv_password": "BnmsmGmz!778&",
-  "tv_totp_secret": null,
-  "tradingview_auth_token": null
+  }
 }

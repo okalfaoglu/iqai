@@ -1,0 +1,11 @@
+[
+  { "symbol": "ETHUSDT", "market": "futures", "timeframe": "5M" },
+  { "symbol": "ETHUSDT", "market": "futures", "timeframe": "15M" },
+  { "symbol": "ETHUSDT", "market": "futures", "timeframe": "30M" },
+  { "symbol": "BTCUSDT", "market": "futures", "timeframe": "5M" },
+  { "symbol": "DOGEUSDT", "market": "futures", "timeframe": "5M" },
+  { "symbol": "DOGEUSDT", "market": "futures", "timeframe": "15M" },
+  { "symbol": "BNBUSDT", "market": "futures", "timeframe": "5M" },
+  { "symbol": "BNBUSDT", "market": "futures", "timeframe": "15M" },
+  { "symbol": "SASA", "market": "tv", "exchange": "BIST", "timeframe": "15M" }
+]

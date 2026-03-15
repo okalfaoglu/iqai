@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>IQAI | Ayarlar (config.json)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 45%, #000 100%);
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 16px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.8);
+      padding: 20px 24px 24px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+      color: #7dd3fc;
+    }
+    .card-sub {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .section {
+      border-radius: 12px;
+      background: radial-gradient(circle at top left, rgba(15,118,110,0.18), transparent 60%);
+      border: 1px solid rgba(31, 41, 55, 1);
+      padding: 14px 16px 16px;
+    }
+    .section h2 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #a5b4fc;
+      margin-bottom: 8px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .field-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    label span {
+      color: #d1d5db;
+    }
+    .hint {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 12px;
+    }
+    input[type="checkbox"] {
+      accent-color: #22c55e;
+      width: 14px;
+      height: 14px;
+    }
+    select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 12px;
+    }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      gap: 12px;
+      font-size: 12px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #22c55e, #22d3ee);
+      color: #020617;
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #374151;
+      color: #9ca3af;
+    }
+    .status {
+      min-height: 16px;
+      font-size: 12px;
+    }
+    .status.ok { color: #4ade80; }
+    .status.err { color: #f97373; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">IQAI Ayarları</div>
+        <div class="card-sub">config.json &nbsp;•&nbsp; Sadece kritik alanlar (veri + Smart Money çekirdeği).</div>
+      </div>
+      <button class="btn btn-secondary" type="button" onclick="window.location.href='/'">Grafiğe Dön</button>
+    </div>
+
+    <div class="sections">
+      <div class="section" id="sec-data">
+        <h2>Veri Alımı (Binance)</h2>
+        <div class="field">
+          <label for="maxBars"><span>Maksimum bar (1M)</span></label>
+          <input type="number" id="maxBars" min="100" max="50000" step="1000" placeholder="Örn: 10000">
+          <div class="hint">Grafik ve taramalarda çekilecek maksimum 1 dakikalık bar sayısı.</div>
+        </div>
+        <div class="field-row">
+          <div>
+            <label for="nativeTfMode"><span>Native timeframe modu</span></label>
+            <div class="hint">Her TF için direkt Binance verisi (TV gibi).</div>
+          </div>
+          <input type="checkbox" id="nativeTfMode">
+        </div>
+      </div>
+
+      <div class="section" id="sec-smart-core">
+        <h2>Smart Money Çekirdeği</h2>
+        <div class="field">
+          <label for="smPivotLength"><span>Pivot Length</span></label>
+          <input type="number" id="smPivotLength" min="1" max="20" step="1" placeholder="Pine: leftBars/rightBars">
+        </div>
+        <div class="field">
+          <label for="smMomentumBase"><span>Momentum Threshold Base</span></label>
+          <input type="number" id="smMomentumBase" step="0.1" placeholder="Örn: 1.5">
+        </div>
+        <div class="field-row">
+          <div>
+            <label for="smTpPoints"><span>TP Points</span></label>
+            <div class="hint">Varsayılan risk/ödül oranı için hedef mesafe.</div>
+          </div>
+          <input type="number" id="smTpPoints" step="1" style="max-width:90px;">
+        </div>
+        <div class="field-row">
+          <div>
+            <label for="smSlPoints"><span>SL Points</span></label>
+            <div class="hint">Varsayılan stop mesafesi.</div>
+          </div>
+          <input type="number" id="smSlPoints" step="1" style="max-width:90px;">
+        </div>
+        <div class="field-row">
+          <div>
+            <label for="smUseMomentum"><span>Momentum Filtresi</span></label>
+            <div class="hint">Yetersiz momentumlu sinyalleri süz.</div>
+          </div>
+          <input type="checkbox" id="smUseMomentum">
+        </div>
+        <div class="field-row">
+          <div>
+            <label for="smUseTrend"><span>Trend Filtresi</span></label>
+            <div class="hint">Ana trende ters sinyalleri azalt.</div>
+          </div>
+          <input type="checkbox" id="smUseTrend">
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="status" id="statusText"></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" type="button" id="btnReload">Yeniden Yükle</button>
+        <button class="btn btn-primary" type="button" id="btnSave">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentConfig = null;
+
+    function setStatus(msg, ok) {
+      const el = document.getElementById('statusText');
+      if (!el) return;
+      el.textContent = msg || '';
+      el.className = 'status ' + (ok == null ? '' : ok ? 'ok' : 'err');
+    }
+
+    function loadIntoForm(cfg) {
+      const data = cfg.data || {};
+      const sm = cfg.smart_money || {};
+      const maxBarsEl = document.getElementById('maxBars');
+      const nativeEl = document.getElementById('nativeTfMode');
+      const pivEl = document.getElementById('smPivotLength');
+      const momEl = document.getElementById('smMomentumBase');
+      const tpEl = document.getElementById('smTpPoints');
+      const slEl = document.getElementById('smSlPoints');
+      const momChk = document.getElementById('smUseMomentum');
+      const trChk = document.getElementById('smUseTrend');
+
+      if (maxBarsEl) maxBarsEl.value = data.max_bars != null ? data.max_bars : '';
+      if (nativeEl) nativeEl.checked = !!data.native_tf_mode;
+      if (pivEl) pivEl.value = sm.pivot_length != null ? sm.pivot_length : '';
+      if (momEl) momEl.value = sm.momentum_threshold_base != null ? sm.momentum_threshold_base : '';
+      if (tpEl) tpEl.value = sm.tp_points != null ? sm.tp_points : '';
+      if (slEl) slEl.value = sm.sl_points != null ? sm.sl_points : '';
+      if (momChk) momChk.checked = sm.use_momentum_filter != null ? sm.use_momentum_filter : false;
+      if (trChk) trChk.checked = sm.use_trend_filter != null ? sm.use_trend_filter : false;
+    }
+
+    async function fetchConfig() {
+      setStatus('Yükleniyor...', null);
+      try {
+        const r = await fetch('/api/config');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const cfg = await r.json();
+        currentConfig = cfg || {};
+        loadIntoForm(currentConfig);
+        setStatus('Mevcut ayarlar yüklendi.', true);
+      } catch (e) {
+        console.error(e);
+        setStatus('Ayarlar yüklenemedi: ' + e.message, false);
+      }
+    }
+
+    async function saveConfig() {
+      if (!currentConfig) currentConfig = {};
+      const cfg = JSON.parse(JSON.stringify(currentConfig));
+
+      cfg.data = cfg.data || {};
+      cfg.smart_money = cfg.smart_money || {};
+
+      const maxBarsEl = document.getElementById('maxBars');
+      const nativeEl = document.getElementById('nativeTfMode');
+      const pivEl = document.getElementById('smPivotLength');
+      const momEl = document.getElementById('smMomentumBase');
+      const tpEl = document.getElementById('smTpPoints');
+      const slEl = document.getElementById('smSlPoints');
+      const momChk = document.getElementById('smUseMomentum');
+      const trChk = document.getElementById('smUseTrend');
+
+      const mb = maxBarsEl && maxBarsEl.value ? Number(maxBarsEl.value) : null;
+      cfg.data.max_bars = Number.isFinite(mb) && mb > 0 ? mb : null;
+      cfg.data.native_tf_mode = !!(nativeEl && nativeEl.checked);
+
+      const piv = pivEl && pivEl.value ? Number(pivEl.value) : null;
+      cfg.smart_money.pivot_length = Number.isFinite(piv) && piv > 0 ? piv : null;
+      const mom = momEl && momEl.value ? Number(momEl.value) : null;
+      cfg.smart_money.momentum_threshold_base = Number.isFinite(mom) ? mom : null;
+      const tp = tpEl && tpEl.value ? Number(tpEl.value) : null;
+      cfg.smart_money.tp_points = Number.isFinite(tp) ? tp : null;
+      const sl = slEl && slEl.value ? Number(slEl.value) : null;
+      cfg.smart_money.sl_points = Number.isFinite(sl) ? sl : null;
+      cfg.smart_money.use_momentum_filter = !!(momChk && momChk.checked);
+      cfg.smart_money.use_trend_filter = !!(trChk && trChk.checked);
+
+      setStatus('Kaydediliyor...', null);
+      try {
+        const r = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cfg),
+        });
+        const res = await r.json().catch(() => ({}));
+        if (!r.ok || res.ok === false) {
+          throw new Error((res && res.error) || ('HTTP ' + r.status));
+        }
+        currentConfig = cfg;
+        setStatus('Ayarlar kaydedildi.', true);
+      } catch (e) {
+        console.error(e);
+        setStatus('Kaydedilemedi: ' + e.message, false);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btnReload')?.addEventListener('click', fetchConfig);
+      document.getElementById('btnSave')?.addEventListener('click', saveConfig);
+      fetchConfig();
+    });
+  </script>
+</body>
+</html>
+

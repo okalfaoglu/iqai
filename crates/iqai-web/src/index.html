@@ -52,6 +52,7 @@
       font-size: 12px;
     }
     .panel-smart .row .label { color: #ffffffb3; }
+    .panel-smart .smart-update-hint { font-size: 10px; color: #6b7280; margin-bottom: 4px; }
     .strength-pos { color: #00e676; }
     .strength-neg { color: #ff1744; }
     .strength-mid { color: #ffb627; }
@@ -122,6 +123,7 @@
     }
     .header-info .header-select { color: #e0e0e0b3; font-weight: normal; }
     .header-info .time { color: #8b93ff; font-size: 12px; }
+    .header-info .live-price { color: #00e676; font-size: 13px; font-weight: 600; margin-left: 8px; }
     .panel-overlays { top: 60px; left: 16px; min-width: 160px; }
     .panel-overlays h3 {
       color: #00d9ff;
@@ -145,7 +147,7 @@
       bottom: 80px;
       left: 16px;
       min-width: 220px;
-      max-height: 240px;
+      max-height: 340px;
       overflow-y: auto;
     }
     .panel-elliott h3 { color: #E040FB; font-size: 12px; margin-bottom: 8px; }
@@ -169,57 +171,280 @@
     .panel.collapsed .panel-body { display: none; }
     .panel.collapsed { min-width: auto; padding: 6px 10px; }
     .panel.collapsed .panel-header { margin-bottom: 0; }
+    .panel-formations {
+      top: 16px;
+      right: 200px;
+      min-width: 280px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .panel-formations h3 { color: #E040FB; font-size: 12px; margin-bottom: 8px; }
+    .panel-formations .formation-list { font-size: 11px; }
+    .panel-formations .formation-item {
+      padding: 8px 10px;
+      margin: 4px 0;
+      background: rgba(224, 64, 251, 0.08);
+      border: 1px solid rgba(224, 64, 251, 0.25);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .panel-formations .formation-item:hover { background: rgba(224, 64, 251, 0.18); }
+    .panel-formations .formation-item .fw-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 4px;
+    }
+    .panel-formations .formation-item .fw-type { color: #00BFA5; font-weight: 600; }
+    .panel-formations .formation-item .fw-time { color: #8b93ff; font-size: 10px; }
+    .panel-formations .formation-item .fw-pts { color: #e0e0e0b3; font-size: 10px; }
+    .panel-qanaliz {
+      bottom: 16px;
+      left: 16px;
+      min-width: 240px;
+      max-width: 280px;
+    }
+    .panel-qanaliz h3 { color: #00d9ff; font-size: 12px; margin-bottom: 8px; }
+    .panel-qanaliz .q-setup { background: rgba(0, 217, 255, 0.08); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; font-size: 11px; }
+    .panel-qanaliz .q-setup .side-long { color: #00e676; font-weight: 600; }
+    .panel-qanaliz .q-setup .side-short { color: #ff1744; font-weight: 600; }
+    .panel-qanaliz .q-setup .row { display: flex; justify-content: space-between; margin: 2px 0; }
+    .panel-qanaliz .q-setup .label { color: #8b93ff; }
+    .panel-qanaliz .q-radar { background: rgba(255, 183, 39, 0.08); border: 1px solid rgba(255, 183, 39, 0.35); border-radius: 6px; padding: 6px 10px; font-size: 11px; }
+    .panel-qanaliz .q-radar .badge { color: #ffb627; font-weight: 600; }
+    .panel-qanaliz .q-protect { background: rgba(255, 23, 68, 0.08); border: 1px solid rgba(255, 23, 68, 0.35); border-radius: 6px; padding: 8px 10px; margin-top: 8px; font-size: 11px; }
+    .panel-qanaliz .q-protect .row { display: flex; justify-content: space-between; margin: 2px 0; }
+    .panel-qanaliz .q-protect .label { color: #8b93ff; }
+    .panel-qanaliz .q-protect .protect-warn { color: #ff1744; font-weight: 600; margin-top: 6px; }
+    .panel-qanaliz .q-none { color: #8b93ff; font-size: 11px; }
+    .ew-formation-checks { margin: 6px 0 0 8px; padding-left: 4px; border-left: 2px solid rgba(224,64,251,0.3); font-size: 11px; }
+    .ew-formation-checks label { display: block; margin: 2px 0; cursor: pointer; }
+
+    /* TV-style chart toolbar: zoom, nav, refresh */
+    .chart-toolbar {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: rgba(10, 14, 39, 0.92);
+      border: 1px solid rgba(0, 217, 255, 0.3);
+      border-radius: 8px;
+      padding: 6px 4px;
+      backdrop-filter: blur(8px);
+    }
+    .chart-toolbar-group { display: flex; flex-direction: column; gap: 2px; }
+    .chart-toolbar-sep { height: 1px; background: rgba(0, 217, 255, 0.4); margin: 4px 4px; }
+    .chart-toolbar button {
+      width: 32px; height: 32px;
+      background: #0f1629;
+      border: 1px solid #1a1f3a;
+      color: #00d9ff;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .chart-toolbar button:hover { background: rgba(0, 217, 255, 0.2); color: #00e5ff; }
+    .chart-toolbar button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Hamburger + drawer */
+    .hamburger-btn {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 150;
+      width: 40px; height: 40px;
+      background: rgba(10, 14, 39, 0.92);
+      border: 1px solid rgba(0, 217, 255, 0.3);
+      border-radius: 8px;
+      color: #00d9ff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      backdrop-filter: blur(8px);
+      transition: background 0.15s;
+    }
+    .hamburger-btn:hover { background: rgba(0, 217, 255, 0.15); }
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      background: rgba(0,0,0,0.4);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .drawer-overlay.open { opacity: 1; visibility: visible; }
+    .drawer {
+      position: fixed;
+      top: 0; left: 0;
+      width: 280px;
+      max-width: 85vw;
+      height: 100vh;
+      z-index: 130;
+      background: #0a0e27;
+      border-right: 1px solid rgba(0, 217, 255, 0.3);
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      overflow-y: auto;
+      padding: 16px;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer h2 { color: #00d9ff; font-size: 14px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,217,255,0.3); }
+    .drawer .drawer-section { margin-bottom: 16px; }
+    .drawer label { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; margin: 4px 0; color: #e0e0e0b3; }
+    .drawer input[type="checkbox"] { accent-color: #00d9ff; }
+    .drawer select, .drawer input[type="text"] {
+      width: 100%; background: #0f1629; border: 1px solid #1a1f3a; color: #e0e0e0;
+      padding: 8px 10px; border-radius: 4px; font-size: 12px; margin-bottom: 8px;
+    }
+    .drawer .live-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .drawer .live-badge { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00e676; }
+    .drawer .live-badge.off { background: #666; }
   </style>
 </head>
 <body>
-  <div class="header-info" id="headerInfo">
-    <input type="text" id="headerSymbol" value="ETHUSDT" placeholder="Symbol" class="header-input">
-    <select id="headerTf" class="header-select">
-      <option value="1M">1M</option>
-      <option value="5M" selected>5M</option>
-      <option value="15M">15M</option>
-      <option value="30M">30M</option>
-      <option value="1H">1H</option>
-      <option value="4H">4H</option>
-      <option value="D">1D</option>
-    </select>
-    <span class="time" id="dispTime">—</span>
-  </div>
-
-  <div class="panel panel-overlays collapsible" id="overlaysPanel" data-panel="overlays">
-    <div class="panel-header"><h3>📊 Görseller</h3><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
-    <div class="panel-body">
-    <label><input type="checkbox" id="showChoch" checked> CHoCH</label>
-    <label><input type="checkbox" id="showBos" checked> BOS</label>
-    <label><input type="checkbox" id="showLiquidity" checked> Liquidity</label>
-    <label><input type="checkbox" id="showMarketProfile" checked> Market Profile</label>
-    <label><input type="checkbox" id="showDivergence" checked> Divergence</label>
-    <label><input type="checkbox" id="showSupport" checked> Support</label>
-    <label><input type="checkbox" id="showResistance" checked> Resistance</label>
-    <label><input type="checkbox" id="showElliott" checked> Elliott Wave</label>
+  <button class="hamburger-btn" id="hamburgerBtn" title="Menü">☰</button>
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="drawer" id="drawer">
+    <h2>⚙️ Ayarlar</h2>
+    <div class="drawer-section">
+      <label>Piyasa</label>
+      <select id="market">
+        <option value="futures">Futures</option>
+        <option value="spot">Spot</option>
+        <option value="tv">TradingView</option>
+      </select>
+      <label id="tvExchangeLabel" style="display:none">Borsa (TV)</label>
+      <select id="tvExchange" style="display:none" title="TradingView borsası">
+        <option value="BINANCE">BINANCE (Kripto)</option>
+        <option value="BIST">BIST (Borsa İstanbul)</option>
+        <option value="NASDAQ">NASDAQ</option>
+      </select>
+      <label>Sembol</label>
+      <input type="text" id="headerSymbol" value="ETHUSDT" placeholder="Sembol">
+      <label>Zaman dilimi</label>
+      <select id="headerTf">
+        <option value="1M">1M</option>
+        <option value="5M" selected>5M</option>
+        <option value="15M">15M</option>
+        <option value="30M">30M</option>
+        <option value="1H">1H</option>
+        <option value="4H">4H</option>
+        <option value="D">1D</option>
+      </select>
+      <div class="live-row">
+        <span class="live-badge" id="liveBadge"></span>
+        <label style="margin:0"><input type="checkbox" id="liveMode"> Canlı</label>
+      </div>
+      <label style="margin-top:10px">Poz Koruma (açık poz için)</label>
+      <input type="text" id="pozEntry" placeholder="Giriş fiyatı (opsiyonel)" title="Poz Koruma hesaplamak için giriş fiyatı">
+      <input type="text" id="pozSl" placeholder="SL fiyatı (opsiyonel)" title="Poz Koruma için stop loss">
+    </div>
+    <h2>📈 Paneller</h2>
+    <div class="drawer-section">
+      <label>
+        <span>➤ Pozisyon Metrikleri (T / D / Q)</span>
+      </label>
+      <div style="margin-top:4px; font-size:11px; color:#9ca3af;">
+        <a href="/metrics" target="_blank" style="color:#22d3ee; text-decoration:none;">
+          Yeni sekmede aç
+        </a>
+      </div>
+    </div>
+    <div class="drawer-section" style="margin-top:8px;">
+      <label>
+        <span>📈 Kar / Zarar</span>
+      </label>
+      <div style="margin-top:4px; font-size:11px; color:#9ca3af;">
+        <a href="/pnl" target="_blank" style="color:#22d3ee; text-decoration:none;">
+          Yeni sekmede aç
+        </a>
+      </div>
+    </div>
+    <div class="drawer-section" style="margin-top:8px;">
+      <label>
+        <span>📌 Q-Analiz (tüm semboller)</span>
+      </label>
+      <div style="margin-top:4px; font-size:11px; color:#9ca3af;">
+        <a href="/q-analiz" target="_blank" style="color:#22d3ee; text-decoration:none;">
+          Sayfa olarak aç
+        </a>
+      </div>
+    </div>
+    <div class="drawer-section" style="margin-top:8px;">
+      <label>
+        <span>⚙️ Ayarlar (config.json)</span>
+      </label>
+      <div style="margin-top:4px; font-size:11px; color:#9ca3af;">
+        <a href="/settings" target="_blank" style="color:#22d3ee; text-decoration:none;">
+          Yeni sekmede aç
+        </a>
+      </div>
+    </div>
+    <h2>📊 Görseller</h2>
+    <div class="drawer-section panel-body" id="drawerOverlays">
+      <label><input type="checkbox" id="showZigzag"> Zigzag</label>
+      <label><input type="checkbox" id="showChoch" checked> CHoCH</label>
+      <label><input type="checkbox" id="showBos" checked> BOS</label>
+      <label><input type="checkbox" id="showLiquidity" checked> Liquidity</label>
+      <label><input type="checkbox" id="showMarketProfile" checked> Market Profile</label>
+      <label><input type="checkbox" id="showDivergence" checked> Divergence</label>
+      <label><input type="checkbox" id="showSupport" checked> Support</label>
+      <label><input type="checkbox" id="showResistance" checked> Resistance</label>
+      <label><input type="checkbox" id="showElliott" checked> Elliott Wave</label>
+      <div class="ew-formation-checks">
+        <label><input type="checkbox" id="showEwImpulse" checked> Impulse</label>
+        <label><input type="checkbox" id="showEwDiagonal" checked> Diagonal</label>
+        <label><input type="checkbox" id="showEwZigzag" checked> Zigzag</label>
+        <label><input type="checkbox" id="showEwFlat" checked> Flat</label>
+        <label><input type="checkbox" id="showEwTriangle" checked> Triangle</label>
+        <label><input type="checkbox" id="showEwComplex" checked> Double/Triple</label>
+      </div>
+      <label><input type="checkbox" id="showProjections" checked> Projeksiyonlar</label>
+      <label><input type="checkbox" id="invertPattern"> Invert Pattern</label>
     </div>
   </div>
 
-  <div class="controls">
-    <select id="market">
-      <option value="futures">Futures</option>
-      <option value="spot">Spot</option>
-    </select>
-    <button onclick="loadChart()">Load</button>
-    <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
-      <span class="live-badge" id="liveBadge"></span>
-      <input type="checkbox" id="liveMode"> Canlı
-    </label>
+  <div class="header-info" id="headerInfo">
+    <span class="header-input" id="headerSymbolDisp">ETHUSDT</span>
+    <span class="header-select" id="headerTfDisp">5M</span>
+    <span class="time" id="dispTime">—</span>
+    <span class="live-price" id="dispLastPrice"></span>
+  </div>
+
+  <div class="chart-toolbar" id="chartToolbar">
+    <div class="chart-toolbar-group">
+      <button type="button" id="zoomOut" title="Uzaklaştır">−</button>
+      <button type="button" id="zoomIn" title="Yakınlaştır">+</button>
+    </div>
+    <div class="chart-toolbar-sep"></div>
+    <div class="chart-toolbar-group">
+      <button type="button" id="navBack" title="Geri">‹</button>
+      <button type="button" id="navForward" title="İleri">›</button>
+      <button type="button" id="refreshChart" title="Yenile">↻</button>
+    </div>
   </div>
 
   <div id="chart"></div>
 
   <div class="panel panel-smart collapsible" id="smartPanel" data-panel="smart">
-    <div class="panel-header"><h2>⚡ SMART MONEY <span class="version">v3.0</span></h2><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
+    <div class="panel-header" title="Veri: Binance REST (TV değil). Strength/Confidence TV ile aynı olmayabilir (veri kaynağı + kapalı mum). Canlı açıkken 2 sn'de bir güncellenir."><h2>⚡ SMART MONEY <span class="version">v3.0</span></h2><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
     <div class="panel-body">
+    <div class="row smart-update-hint" id="smartUpdateHint" title="Canlı açıkken 2 saniyede bir yenilenir; kapalıyken sadece sembol/TF değişince veya yenile'ye basınca."></div>
     <div class="row"><span class="label">📊 Strength</span><span id="strength">-</span></div>
     <div class="row"><span class="label">🎯 Confidence</span><span id="confidence">-</span></div>
-    <div class="row"><span class="label">💎 Volume</span><span id="volume">-</span></div>
+    <div class="row"><span class="label">📈 Volume</span><span id="volumeDisplay" title="Grafik toplam hacim (TV Volume)">-</span></div>
+    <div class="row"><span class="label">💎 CVD</span><span id="cvdDisplay" title="Kümülatif Volume Delta">-</span></div>
     <div class="row"><span class="label">1M</span><span id="t1">━</span></div>
     <div class="row"><span class="label">5M</span><span id="t5">━</span></div>
     <div class="row"><span class="label">15M</span><span id="t15">━</span></div>
@@ -230,15 +455,25 @@
     </div>
   </div>
 
+  <div class="panel panel-formations collapsible" id="formationsPanel" data-panel="formations">
+    <div class="panel-header"><h3>📋 Geçmiş Formasyonlar</h3><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
+    <div class="panel-body">
+    <div class="formation-list" id="formationsList">—</div>
+    </div>
+  </div>
+
   <div class="panel panel-elliott panel-trend collapsible" id="elliottPanel" data-panel="elliott">
     <div class="panel-header"><h3>📐 Elliott Wave</h3><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
     <div class="panel-body">
     <div class="formation-type" id="ewFormationType">—</div>
     <div class="formation-name" id="ewFormationName">—</div>
     <div class="ew-validation" id="ewValidation">—</div>
+    <div id="ewExtras" style="font-size:10px;color:#90CAF9;margin-top:2px;padding:2px 0;border-top:1px solid #333"></div>
     <div class="ew-impulse-stage" id="ewImpulseStage">—</div>
+    <div class="ew-in-progress" id="ewInProgress" style="display:none;color:#FFB627;font-size:10px;margin-top:4px">⏳ In Progress</div>
     <div class="wave-pts" id="ewWavePoints">—</div>
     <div class="w5-pred" id="ewW5Pred">—</div>
+    <div class="ew-projections" id="ewProjections" style="font-size:10px;color:#FFB627;margin-top:4px"></div>
     <div class="ew-setups" id="ewSetups">—</div>
     </div>
   </div>
@@ -253,15 +488,43 @@
     </div>
   </div>
 
+  <div class="panel panel-qanaliz collapsible" id="qAnalizPanel" data-panel="qanaliz">
+    <div class="panel-header"><h3>📌 Q-ANALİZ</h3><button class="panel-toggle" title="Aç/Kapat">▼</button></div>
+    <div class="panel-body">
+    <div id="qSetupBlock"></div>
+    <div id="qRadarBlock"></div>
+    <div id="qProtectBlock"></div>
+    </div>
+  </div>
+
   <script>
     let chart = null;
     let candleSeries = null;
     let volumeSeries = null;
     let lastChartData = null;
     let liveInterval = null;
-    const LIVE_POLL_MS = 15000;
+    const LIVE_POLL_MS = 2000;
 
-    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showElliott'];
+    function tvDefaultSymbol(exchange) {
+      const e = (exchange || 'BINANCE').toUpperCase();
+      if (e === 'BIST') return 'XU100';
+      if (e === 'NASDAQ') return 'AAPL';
+      return 'ETHUSDT27H2026';
+    }
+
+    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showZigzag','showElliott','showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','invertPattern'];
+
+    function isEwFormationEnabled(formation, formationType) {
+      const f = (formation || '').toLowerCase();
+      const ft = (formationType || '').toLowerCase();
+      if (f.includes('impulse') || (ft.includes('motif') && ft.includes('itki'))) return document.getElementById('showEwImpulse')?.checked ?? true;
+      if (f.includes('diagonal') || ft.includes('diyagonal')) return document.getElementById('showEwDiagonal')?.checked ?? true;
+      if (f.includes('zigzag') || ft.includes('zigzag')) return document.getElementById('showEwZigzag')?.checked ?? true;
+      if (f.includes('flat')) return document.getElementById('showEwFlat')?.checked ?? true;
+      if (f.includes('triangle') || f.includes('üçgen') || ft.includes('üçgen')) return document.getElementById('showEwTriangle')?.checked ?? true;
+      if (f.includes('double') || f.includes('triple')) return document.getElementById('showEwComplex')?.checked ?? true;
+      return true;
+    }
     const OVERLAY_STORAGE = 'iqai-overlay-state';
 
     function setupOverlayListeners() {
@@ -271,6 +534,14 @@
         if (el) {
           if (saved[id] !== undefined) el.checked = saved[id];
           el.addEventListener('change', () => {
+            // Elliott master tiki – alt formların tiklerini de kontrol eder
+            if (id === 'showElliott') {
+              const subs = ['showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections'];
+              subs.forEach(sid => {
+                const sEl = document.getElementById(sid);
+                if (sEl) sEl.checked = el.checked;
+              });
+            }
             const state = {};
             OVERLAY_IDS.forEach(k => {
               const e = document.getElementById(k);
@@ -282,10 +553,30 @@
         }
       });
       document.getElementById('liveMode')?.addEventListener('change', toggleLive);
+      document.getElementById('invertPattern')?.addEventListener('change', () => loadChart());
       document.getElementById('headerSymbol')?.addEventListener('change', onSymbolTfChange);
-      document.getElementById('headerSymbol')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadChart(); });
+      document.getElementById('headerSymbol')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loadChart(); } });
       document.getElementById('headerTf')?.addEventListener('change', onSymbolTfChange);
-      document.getElementById('market')?.addEventListener('change', onSymbolTfChange);
+      document.getElementById('market')?.addEventListener('change', function() {
+        const m = document.getElementById('market')?.value;
+        const symEl = document.getElementById('headerSymbol');
+        const tvExEl = document.getElementById('tvExchange');
+        const tvLbl = document.getElementById('tvExchangeLabel');
+        if (tvExEl) tvExEl.style.display = m === 'tv' ? 'block' : 'none';
+        if (tvLbl) tvLbl.style.display = m === 'tv' ? 'block' : 'none';
+        if (m === 'tv') {
+          const ex = document.getElementById('tvExchange')?.value || 'BINANCE';
+          if (symEl && (symEl.value === 'ETHUSDT' || !symEl.value.trim())) symEl.value = tvDefaultSymbol(ex);
+        }
+        if (m !== 'tv' && symEl && ['ETHUSDT27H2026','XU100','AAPL','NDX'].includes(symEl.value)) symEl.value = 'ETHUSDT';
+        onSymbolTfChange();
+      });
+      document.getElementById('tvExchange')?.addEventListener('change', function() {
+        const ex = this.value;
+        const symEl = document.getElementById('headerSymbol');
+        if (symEl && !symEl.value.trim()) symEl.value = tvDefaultSymbol(ex);
+        onSymbolTfChange();
+      });
     }
 
     function toggleLive() {
@@ -301,11 +592,12 @@
     }
 
     function onSymbolTfChange() {
-      if (document.getElementById('liveMode')?.checked) loadChart();
+      loadChart();
     }
 
     function updateElliottPanel(data) {
       const ew = data?.annotations?.elliott;
+      if (ew) console.log('[EW extras]', {degree:ew.degree, truncation:ew.truncation, alternation:ew.alternation, channel:ew.channel});
       const typeEl = document.getElementById('ewFormationType');
       const nameEl = document.getElementById('ewFormationName');
       const valEl = document.getElementById('ewValidation');
@@ -336,9 +628,21 @@
         const imp = ew.impulse_state;
         stageEl.textContent = imp ? imp.stage + ': ' + imp.message : '—';
       }
-      ptsEl.innerHTML = (ew.wave_points || []).map(p =>
-        `<span title="${p.price?.toFixed(4) || ''}">${p.label}: ${(p.price || 0).toFixed(2)}</span>`
-      ).join('') || '—';
+      const inProgEl = document.getElementById('ewInProgress');
+      if (inProgEl) inProgEl.style.display = ew.in_progress ? 'block' : 'none';
+      const projEl = document.getElementById('ewProjections');
+      if (projEl && ew.projections && ew.projections.length > 0) {
+        projEl.innerHTML = '🎯 ' + ew.projections.map(p => p.label + ' ' + (p.price||0).toFixed(2)).join(' | ');
+      } else if (projEl) projEl.innerHTML = '';
+      const _wp = {
+        '1':'Başlangıç: Şüphe fazı','2':'Geri çekilme: Korku','3':'Güç: En uzun/güçlü',
+        '4':'Konsolidasyon: Kâr real.','5':'Son hamle: Momentum↓',
+        'A':'Düzeltme başı','B':'Tuzak rallisi','C':'Çöküş: Panik'
+      };
+      ptsEl.innerHTML = (ew.wave_points || []).map(p => {
+        const tip = (_wp[p.label] || '') + ' (' + (p.price?.toFixed(4) || '') + ')';
+        return `<span title="${tip}">${p.label}: ${(p.price || 0).toFixed(2)}</span>`;
+      }).join('') || '—';
       if (w5El) {
         const w5 = ew.w5_targets;
         if (w5 && (ew.formation === 'Impulse' || ew.formation_type === 'Motif (İtki)')) {
@@ -355,14 +659,118 @@
           const parts = [];
           if (imp.setup_w3) {
             const s = imp.setup_w3;
-            parts.push('W3: E=' + (s.entry||0).toFixed(2) + ' SL=' + (s.sl||0).toFixed(2) + ' TP1=' + (s.tp1||0).toFixed(2) + ' TP2=' + (s.tp2||0).toFixed(2));
+            const rr1 = s.rr1 != null ? s.rr1.toFixed(1) : '?';
+            const rr2 = s.rr2 != null ? s.rr2.toFixed(1) : '?';
+            const rrColor1 = (s.rr1||0) >= 1.5 ? '#00E676' : (s.rr1||0) >= 1.0 ? '#FFB627' : '#FF1744';
+            const rrColor2 = (s.rr2||0) >= 1.5 ? '#00E676' : (s.rr2||0) >= 1.0 ? '#FFB627' : '#FF1744';
+            parts.push('W3: E=' + (s.entry||0).toFixed(2) + ' SL=' + (s.sl||0).toFixed(2) + ' TP1=' + (s.tp1||0).toFixed(2) + ' <span style="color:'+rrColor1+'">R:R ' + rr1 + '</span> TP2=' + (s.tp2||0).toFixed(2) + ' <span style="color:'+rrColor2+'">R:R ' + rr2 + '</span>');
           }
           if (imp.setup_w5) {
             const s = imp.setup_w5;
-            parts.push('W5: E=' + (s.entry||0).toFixed(2) + ' SL=' + (s.sl||0).toFixed(2) + ' TP=' + (s.tp||0).toFixed(2));
+            const rr = s.rr != null ? s.rr.toFixed(1) : '?';
+            const rrColor = (s.rr||0) >= 1.5 ? '#00E676' : (s.rr||0) >= 1.0 ? '#FFB627' : '#FF1744';
+            parts.push('W5: E=' + (s.entry||0).toFixed(2) + ' SL=' + (s.sl||0).toFixed(2) + ' TP=' + (s.tp||0).toFixed(2) + ' <span style="color:'+rrColor+'">R:R ' + rr + '</span>');
           }
           setupsEl.innerHTML = parts.join('<br>');
         }
+        if (ew.corr_setup) {
+          const cs = ew.corr_setup;
+          const rr = cs.rr != null ? cs.rr.toFixed(1) : '?';
+          const rrColor = (cs.rr||0) >= 1.5 ? '#00E676' : (cs.rr||0) >= 1.0 ? '#FFB627' : '#FF1744';
+          const side = cs.is_long ? 'LONG' : 'SHORT';
+          const sideC = cs.is_long ? '#00E676' : '#FF1744';
+          const line = '<span style="color:'+sideC+'">'+cs.setup_type+' '+side+'</span> E='+(cs.entry||0).toFixed(2)+' SL='+(cs.stop_loss||0).toFixed(2)+' TP='+(cs.tp||0).toFixed(2)+' <span style="color:'+rrColor+'">R:R '+rr+'</span>';
+          setupsEl.innerHTML = (setupsEl.textContent === '—' ? '' : setupsEl.innerHTML + '<br>') + line;
+        }
+      }
+      const extrasEl = document.getElementById('ewExtras');
+      if (extrasEl) {
+        const bits = [];
+        if (ew.degree) bits.push('📊 ' + ew.degree);
+        if (ew.truncation === true) bits.push('⚠️ Truncation');
+        if (ew.truncation === false) bits.push('✅ W5>W3');
+        if (ew.alternation) {
+          const altMap = {Good:'🔄✅', Weak:'🔄⚡', Violation:'🔄❌'};
+          bits.push((altMap[ew.alternation] || ('🔄 ' + ew.alternation)));
+        }
+        if (ew.alternation_structural) {
+          const cwMap = {Sharp:'ZZ', Sideways:'Flat', Unknown:'?'};
+          const w2t = cwMap[ew.w2_corr_type] || '?';
+          const w4t = cwMap[ew.w4_corr_type] || '?';
+          const sMap = {Good:'✅', Weak:'⚡', Violation:'❌'};
+          bits.push('🔀 W2:'+w2t+' W4:'+w4t+' '+(sMap[ew.alternation_structural]||''));
+        }
+        if (ew.channel && ew.channel.w5_channel_target != null) {
+          bits.push('📐 Ch:' + ew.channel.w5_channel_target.toFixed(2));
+        }
+        if (ew.w5_confirmation) {
+          const wc = ew.w5_confirmation;
+          if (wc.confirmed) {
+            const typeMap = {mini_bos:'BOS', choch:'ChoCh', momentum:'Mtm'};
+            bits.push('🎯 W5:' + (typeMap[wc.signal_type]||wc.signal_type) + ' @' + (wc.price||0).toFixed(2));
+          } else {
+            bits.push('⏳ W5 teyit bekleniyor');
+          }
+        }
+        if (ew.w3_volume_ok === true) bits.push('📈 Vol✓');
+        if (ew.w3_volume_ok === false) bits.push('📉 Vol✗');
+        if (ew.throw_over === true) bits.push('🔺 Throw-over');
+        if (ew.extended_wave) {
+          const [w, r] = ew.extended_wave;
+          bits.push('⚡ W'+w+' ext('+r.toFixed(1)+'x)');
+        }
+        if (ew.w1_w5_eq != null) {
+          const eq = (ew.w1_w5_eq * 100).toFixed(0);
+          bits.push('🔗 W1≈W5:'+eq+'%');
+        }
+        if (ew.w5_divergence === true) {
+          bits.push('<span style="color:#FF6B6B">📉 W5 RSI Div!</span>');
+        } else if (ew.w5_divergence === false) {
+          bits.push('📈 RSI OK');
+        }
+        if (ew.diagonal_sub) {
+          const dsMap = {'LeadingMotive':'LD 5-3-5-3-5','EndingCorrective':'ED 3-3-3-3-3','Mixed':'Karışık'};
+          const dsLabel = dsMap[ew.diagonal_sub] || ew.diagonal_sub;
+          bits.push('🔺 '+dsLabel);
+        }
+        if (ew.channel_alt && ew.channel_alt.w5_channel_target != null) {
+          bits.push('📐 AltCh:' + ew.channel_alt.w5_channel_target.toFixed(2));
+        }
+        if (ew.channel_semilog_target != null) {
+          bits.push('📊 LogCh:' + ew.channel_semilog_target.toFixed(2));
+        }
+        if (ew.w5_vol_extension === true) {
+          bits.push('<span style="color:#FFD600">⚡ W5 Ext (Vol)</span>');
+        }
+        if (ew.w4_golden_section != null) {
+          const gs = (ew.w4_golden_section * 100).toFixed(1);
+          const near382 = Math.abs(ew.w4_golden_section - 0.382) < 0.05;
+          const near618 = Math.abs(ew.w4_golden_section - 0.618) < 0.05;
+          const gsColor = (near382 || near618) ? '#00E676' : '#FFB627';
+          bits.push('<span style="color:'+gsColor+'">🔶 W4 GS:'+gs+'%</span>');
+        }
+        if (ew.w2_depth_target != null) {
+          bits.push('📍 W2→' + ew.w2_depth_target.toFixed(2));
+        }
+        if (ew.w4_depth_target != null) {
+          bits.push('📍 W4→' + ew.w4_depth_target.toFixed(2));
+        }
+        if (ew.subwave_validation) {
+          const sv = ew.subwave_validation;
+          const svColor = sv.valid ? '#00E676' : '#FFB627';
+          bits.push('<span style="color:'+svColor+'">🔬 SW:'+sv.conforming_count+'/5 ['+sv.w1_inner+'-'+sv.w2_inner+'-'+sv.w3_inner+'-'+sv.w4_inner+'-'+sv.w5_inner+']</span>');
+        }
+        if (ew.nested_extension && ew.nested_extension[0] === true) {
+          bits.push('<span style="color:#FF6B6B">🔥 Nested Ext ('+ew.nested_extension[1].toFixed(1)+'x)</span>');
+        }
+        if (ew.corr_subwave_validation) {
+          const cv = ew.corr_subwave_validation;
+          const cvColor = cv.valid ? '#00E676' : '#FFB627';
+          bits.push('<span style="color:'+cvColor+'">🔬 '+cv.pattern+' ['+cv.a_inner+'-'+cv.b_inner+'-'+cv.c_inner+']</span>');
+        }
+        extrasEl.innerHTML = bits.length > 0
+          ? bits.join(' | ')
+          : '';
       }
     }
 
@@ -388,30 +796,66 @@
     }
 
     async function loadChart() {
-      const symbol = document.getElementById('headerSymbol')?.value || document.getElementById('symbol')?.value || 'ETHUSDT';
+      const symbol = document.getElementById('headerSymbol')?.value?.trim() || document.getElementById('symbol')?.value?.trim() || 'ETHUSDT';
       const tf = document.getElementById('headerTf')?.value || document.getElementById('tf')?.value || '5M';
       const market = document.getElementById('market')?.value || 'futures';
+      const tvExchange = document.getElementById('tvExchange')?.value || 'BINANCE';
+      const exchangeParam = market === 'tv' ? `&exchange=${encodeURIComponent(tvExchange)}` : '';
+      const invert = document.getElementById('invertPattern')?.checked ? '1' : '0';
+      const pozEntry = document.getElementById('pozEntry')?.value?.trim();
+      const pozSl = document.getElementById('pozSl')?.value?.trim();
+      const pozParams = (pozEntry && pozSl) ? `&entry=${encodeURIComponent(pozEntry)}&sl=${encodeURIComponent(pozSl)}` : '';
 
       try {
-        const r = await fetch(`/api/chart?symbol=${symbol}&tf=${tf}&market=${market}`);
+        const r = await fetch(`/api/chart?symbol=${encodeURIComponent(symbol)}&tf=${tf}&market=${market}${exchangeParam}&invert=${invert}${pozParams}`);
         const data = await r.json();
         if (data.error) { alert(data.error); return; }
 
         const symEl = document.getElementById('headerSymbol');
         const tfEl = document.getElementById('headerTf');
-        if (symEl) symEl.value = data.symbol || 'ETHUSDT';
+        const tvExEl = document.getElementById('tvExchange');
+        // Sembol alanı artık API yanıtından güncellenmiyor; kullanıcı yazdığı sembol sabit kalsın
+        // if (symEl) symEl.value = data.symbol || 'ETHUSDT';
         if (tfEl) tfEl.value = data.timeframe || '5M';
+        // TV borsasını yanıttan yazmıyoruz; kullanıcı BIST seçince tekrar BINANCE'e dönmesin
+        const symDisp = document.getElementById('headerSymbolDisp');
+        const tfDisp = document.getElementById('headerTfDisp');
+        if (symDisp) symDisp.textContent = data.symbol || 'ETHUSDT';
+        if (tfDisp) tfDisp.textContent = data.timeframe || '5M';
         const lastCandle = data.candles && data.candles.length ? data.candles[data.candles.length - 1] : null;
         document.getElementById('dispTime').textContent = lastCandle
           ? new Date(lastCandle.time * 1000).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })
           : '—';
+        const lastPriceEl = document.getElementById('dispLastPrice');
+        if (lastPriceEl) {
+          if (data.last_price != null && data.last_price !== undefined) {
+            lastPriceEl.textContent = 'Anlık: ' + Number(data.last_price).toFixed(2);
+            lastPriceEl.style.display = '';
+          } else {
+            lastPriceEl.textContent = '';
+            lastPriceEl.style.display = 'none';
+          }
+        }
 
         if (!chart) initChart();
 
-        const candles = data.candles.map(c => ({
-          time: c.time,
-          open: c.open, high: c.high, low: c.low, close: c.close
-        }));
+        // Aynı sembol/tf/market ile güncelleme ise zoom ve scroll korunur (canlı güncelleme).
+        const sameParams = lastChartData && lastChartData.symbol === data.symbol &&
+          lastChartData.timeframe === data.timeframe && lastChartData.market === data.market;
+        let savedRange = null;
+        if (chart && sameParams) {
+          try { savedRange = chart.timeScale().getVisibleRange(); } catch (e) {}
+        }
+
+        const lastPrice = data.last_price != null && data.last_price !== undefined ? Number(data.last_price) : null;
+        const candles = data.candles.map((c, i) => {
+          const isLast = i === data.candles.length - 1;
+          const useLive = lastPrice != null && c.is_current && isLast;
+          const close = useLive ? lastPrice : c.close;
+          const high = useLive ? Math.max(c.high, lastPrice) : c.high;
+          const low = useLive ? Math.min(c.low, lastPrice) : c.low;
+          return { time: c.time, open: c.open, high, low, close };
+        });
         const isLive = document.getElementById('liveMode')?.checked;
         const prev = lastChartData?.candles;
         const lastSame = isLive && prev && prev.length === candles.length && prev.length > 0 && prev[prev.length-1]?.time === candles[candles.length-1]?.time;
@@ -440,21 +884,41 @@
         lastChartData = data;
         applyOverlays(data);
 
-        // Update panels
-        const t = data.trend;
-        document.getElementById('strength').textContent = Math.round(t.strength);
-        document.getElementById('strength').className = t.strength > 50 ? 'strength-pos' : t.strength < -50 ? 'strength-neg' : 'strength-mid';
-        document.getElementById('confidence').textContent = t.confidence + '%';
-        document.getElementById('confidence').className = t.confidence >= 75 ? 'conf-high' : t.confidence >= 60 ? 'conf-mid' : 'conf-low';
-        document.getElementById('volume').textContent = t.cvd != null 
-          ? (t.cvd >= 0 ? '+' : '') + Math.round(t.cvd / 1000) + 'K' 
-          : '-';
-        document.getElementById('volume').style.color = t.cvd > 0 ? '#76ff03' : t.cvd < 0 ? '#ff1744' : '#ffb627';
+        // Paneller: Strength, Confidence, Volume (TV gibi), CVD
+        const t = data.trend || {};
+        const strengthEl = document.getElementById('strength');
+        const confidenceEl = document.getElementById('confidence');
+        const volumeEl = document.getElementById('volumeDisplay');
+        const cvdEl = document.getElementById('cvdDisplay');
+        if (strengthEl) { strengthEl.textContent = Math.round(t.strength ?? 0); strengthEl.className = (t.strength ?? 0) > 50 ? 'strength-pos' : (t.strength ?? 0) < -50 ? 'strength-neg' : 'strength-mid'; }
+        if (confidenceEl) { confidenceEl.textContent = (t.confidence ?? 0) + '%'; confidenceEl.className = (t.confidence ?? 0) >= 75 ? 'conf-high' : (t.confidence ?? 0) >= 60 ? 'conf-mid' : 'conf-low'; }
+        if (volumeEl) {
+          const vol = t.volume != null ? t.volume : null;
+          volumeEl.textContent = vol != null ? (Math.round(vol / 1000) + 'K') : '-';
+          volumeEl.style.color = '#8b93ff';
+        }
+        if (cvdEl) {
+          const cvd = t.cvd != null ? t.cvd : null;
+          cvdEl.textContent = cvd != null ? ((cvd >= 0 ? '+' : '') + Math.round(cvd / 1000) + 'K') : '-';
+          cvdEl.style.color = cvd > 0 ? '#76ff03' : cvd < 0 ? '#ff1744' : '#ffb627';
+        }
+        const smartHint = document.getElementById('smartUpdateHint');
+        if (smartHint) {
+          const live = document.getElementById('liveMode')?.checked;
+          smartHint.textContent = 'Son: ' + new Date().toLocaleTimeString('tr-TR') + (live ? ' • Canlı: 2 sn' : '');
+        }
 
         updateTrendPanels(data);
         updateElliottPanel(data);
+        updateFormationsPanel(data.formations || []);
+        updateQAnalizPanel(data);
 
-        chart.timeScale().fitContent();
+        // Veri güncellemesinde zoom/scroll korunur; yeni sembol/tf veya ilk yüklemede fitContent.
+        if (savedRange && chart) {
+          try { chart.timeScale().setVisibleRange(savedRange); } catch (e) { chart.timeScale().fitContent(); }
+        } else {
+          chart.timeScale().fitContent();
+        }
       } catch (e) {
         alert('Error: ' + e.message);
       }
@@ -470,7 +934,9 @@
         const showDiv = document.getElementById('showDivergence')?.checked ?? true;
         const showSupport = document.getElementById('showSupport')?.checked ?? true;
         const showResistance = document.getElementById('showResistance')?.checked ?? true;
+        const showZigzag = document.getElementById('showZigzag')?.checked ?? false;
         const showElliott = document.getElementById('showElliott')?.checked ?? true;
+        const showProjections = document.getElementById('showProjections')?.checked ?? true;
 
         const allMarkers = [
           ...(data.signals || []).map(s => ({
@@ -498,10 +964,21 @@
             color: x.color, shape: 'square', text: x.label
           }))
         ];
-        const ewPointMarkers = showElliott && (ann.elliott?.wave_points || []).map(p => ({
+        const ewValid = ann.elliott && (ann.elliott.validation_ok === true);
+        const ewFormEnabled = ann.elliott && isEwFormationEnabled(ann.elliott.formation, ann.elliott.formation_type);
+        const ewPointMarkers = showElliott && ewValid && ewFormEnabled && (ann.elliott?.wave_points || []).map(p => ({
           time: p.time, position: 'belowBar', color: '#E040FB', shape: 'circle', text: `W${p.label} ${(p.price||0).toFixed(2)}`
         }));
-        candleSeries.setMarkers([...allMarkers, ...(ewPointMarkers || [])]);
+        const formations = data.formations || [];
+        const formationsFiltered = formations.filter(f => isEwFormationEnabled(f.formation, f.formation_type));
+        const formColors = ['#00E5FF', '#00BFA5', '#E040FB', '#76FF03', '#FFB627'];
+        const formMarkers = showElliott && formationsFiltered.length > 0
+          ? formationsFiltered.flatMap((f, fi) => (f.wave_points || []).map(p => ({
+              time: p.time, position: 'belowBar', color: formColors[fi % formColors.length],
+              shape: 'circle', text: `W${p.label} ${(p.price||0).toFixed(2)}`
+            })))
+          : [];
+        candleSeries.setMarkers([...allMarkers, ...(ewPointMarkers || []), ...formMarkers]);
 
         // Support/Resistance + Elliott Wave lines
         if (chart._lineSeries && chart._lineSeries.length) {
@@ -530,36 +1007,237 @@
           ]);
           chart._lineSeries.push(line);
         }
-        if (showElliott && ann.elliott) {
+        if (showZigzag && ann.zigzag && ann.zigzag.length >= 2) {
+          const zzData = ann.zigzag.map(p => ({ time: p.time, value: p.price }));
+          const line = chart.addLineSeries({ color: '#FF9800', lineWidth: 2, lineStyle: 0 });
+          line.setData(zzData);
+          chart._lineSeries.push(line);
+        }
+        if (showElliott && ann.elliott && isEwFormationEnabled(ann.elliott.formation, ann.elliott.formation_type) && (ann.elliott.validation_ok === true || (ann.elliott.wave_legs && ann.elliott.wave_legs.length > 0))) {
           const ew = ann.elliott;
           (ew.wave_legs || []).forEach(leg => {
-            const line = chart.addLineSeries({ color: leg.color, lineWidth: 2 });
+            const lineStyle = leg.dotted ? 2 : 0;
+            const line = chart.addLineSeries({ color: leg.color, lineWidth: 2, lineStyle });
             line.setData([
               { time: leg.time1, value: leg.price1 },
               { time: leg.time2, value: leg.price2 }
             ]);
             chart._lineSeries.push(line);
           });
+          // Fibo yatay çizgileri: dalganın sağında, gap + kısa uzunluk (extend edilmiş tam çizgi olmasın)
+          const fiboGapBars = 2;
+          const fiboLengthBars = 12;
+          const candles = data.candles || [];
+          const lastCandleTime = candles.length ? candles[candles.length - 1].time : 0;
+          const barSec = candles.length >= 2
+            ? Math.max(1, (candles[candles.length - 1].time - candles[candles.length - 2].time))
+            : 60;
+          // Elliott formasyonunun tamamının SAĞINDA göstermek için, referansı son mum zamanı al.
+          // Böylece tüm Fibo/Projeksiyon/W5 yatayları, fiyat verisinden sonra, boş bölgede kısa segment olarak görünür.
+          const anchorTime = lastCandleTime;
+          const fiboStart = anchorTime + fiboGapBars * barSec;
+          const fiboEnd = fiboStart + fiboLengthBars * barSec;
           (ew.fibo_levels || []).forEach(f => {
             const line = chart.addLineSeries({ color: f.color, lineWidth: 1, lineStyle: 2 });
             line.setData([
-              { time: f.time1, value: f.price },
-              { time: f.time2, value: f.price }
+              { time: fiboStart, value: f.price },
+              { time: fiboEnd, value: f.price }
             ]);
             chart._lineSeries.push(line);
           });
-          if (ew.w5_targets && (ew.formation === 'Impulse' || ew.formation_type === 'Motif (İtki)')) {
-            const lastPt = ew.wave_points && ew.wave_points.length ? ew.wave_points[ew.wave_points.length - 1] : null;
-            const t1 = lastPt ? lastPt.time : (data.candles && data.candles.length ? data.candles[data.candles.length - 1].time : 0);
-            const t2 = data.candles && data.candles.length ? data.candles[data.candles.length - 1].time : t1;
-            (Array.isArray(ew.w5_targets) ? ew.w5_targets : [ew.w5_targets[0], ew.w5_targets[1]]).forEach((price) => {
-              if (price == null) return;
-              const line = chart.addLineSeries({ color: '#FFB627', lineWidth: 2, lineStyle: 1 });
-              line.setData([{ time: t1, value: price }, { time: t2, value: price }]);
+          // Projeksiyon ve W5 hedeflerini de aynı kısa yatay segment üzerinde göster
+          const projStart = fiboStart;
+          const projEnd = fiboEnd;
+          if (showProjections && ew.projections && ew.projections.length > 0) {
+            ew.projections.forEach(pr => {
+              if (pr.price == null) return;
+              const line = chart.addLineSeries({ color: '#FFB627', lineWidth: 1, lineStyle: 2 });
+              line.setData([
+                { time: projStart, value: pr.price },
+                { time: projEnd, value: pr.price }
+              ]);
               chart._lineSeries.push(line);
             });
           }
+          if (ew.channel_upper) {
+            const l = ew.channel_upper;
+            const line = chart.addLineSeries({ color: l.color, lineWidth: 1.5, lineStyle: 2 });
+            line.setData([
+              { time: l.time1, value: l.price1 },
+              { time: l.time2, value: l.price2 },
+              ...(l.time3 ? [{ time: l.time3, value: l.price3 }] : [])
+            ]);
+            chart._lineSeries.push(line);
+          }
+          if (ew.channel_lower) {
+            const l = ew.channel_lower;
+            const line = chart.addLineSeries({ color: l.color, lineWidth: 1.5, lineStyle: 2 });
+            line.setData([
+              { time: l.time1, value: l.price1 },
+              { time: l.time2, value: l.price2 },
+              ...(l.time3 ? [{ time: l.time3, value: l.price3 }] : [])
+            ]);
+            chart._lineSeries.push(line);
+          }
+          if (ew.w5_targets && (ew.formation === 'Impulse' || ew.formation_type === 'Motif (İtki)')) {
+            (Array.isArray(ew.w5_targets) ? ew.w5_targets : [ew.w5_targets[0], ew.w5_targets[1]]).forEach((price) => {
+              if (price == null) return;
+              const line = chart.addLineSeries({ color: '#FFB627', lineWidth: 2, lineStyle: 1 });
+              line.setData([
+                { time: fiboStart, value: price },
+                { time: fiboEnd, value: price }
+              ]);
+              chart._lineSeries.push(line);
+            });
+          }
+          // Wave point labels (0-5, A,B,C) as markers on the main candle series
+          if (ew.wave_points && ew.wave_points.length > 0 && candleSeries && candleSeries.setMarkers) {
+            const markers = (ew.wave_points || []).map(p => ({
+              time: p.time > 1_000_000_000_000 ? p.time / 1000 : p.time,
+              position: p.label === '0' || p.label === '1' || p.label === '2' || p.label === '3' || p.label === '4' || p.label === '5'
+                ? 'belowBar'
+                : 'aboveBar',
+              color: '#F5F3FF',
+              shape: 'circle',
+              text: p.label
+            }));
+            // Append to any existing markers instead of overwriting completely
+            const existing = chart._ewMarkers || [];
+            chart._ewMarkers = markers;
+            candleSeries.setMarkers(markers);
+          }
         }
+        // Geçmiş formasyonları mum verisi üzerine çiz: dalga bacakları (çizgiler)
+        if (showElliott && formationsFiltered.length > 0) {
+          formationsFiltered.forEach((f, fi) => {
+            const col = formColors[fi % formColors.length];
+            (f.wave_legs || []).forEach(leg => {
+              const lineStyle = leg.dotted ? 2 : 0;
+              const line = chart.addLineSeries({ color: col, lineWidth: 1.5, lineStyle });
+              line.setData([
+                { time: leg.time1, value: leg.price1 },
+                { time: leg.time2, value: leg.price2 }
+              ]);
+              chart._lineSeries.push(line);
+            });
+          });
+        }
+    }
+
+    function updateFormationsPanel(formations) {
+      const el = document.getElementById('formationsList');
+      if (!el) return;
+      if (!formations || formations.length === 0) {
+        el.innerHTML = '<span style="color:#8b93ff">Geçerli formasyon bulunamadı</span>';
+        return;
+      }
+      el.innerHTML = formations.map((f, i) => {
+        const dir = f.is_bullish ? '▲' : '▼';
+        const pts = (f.wave_points || []).map(p => `W${p.label}:${(p.price||0).toFixed(2)}`).join(' ');
+        const timeStr = f.end_time ? new Date(f.end_time).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+        const w4 = (f.wave_points || []).find(p => p.label === '4');
+        const scrollTime = w4 ? w4.time : '';
+        return `<div class="formation-item" data-time="${scrollTime}" title="Grafiğe git">
+          <div class="fw-head"><span class="fw-type">${dir} ${f.formation}</span><span class="fw-time">${timeStr}</span></div>
+          <div class="fw-pts">${f.formation_type} | ${pts}</div>
+        </div>`;
+      }).join('');
+      el.querySelectorAll('.formation-item').forEach(item => {
+        const t = item.dataset.time;
+        if (t && chart) {
+          const ts = Number(t);
+          item.onclick = () => {
+            const pad = 3600 * 3;
+            chart.timeScale().setVisibleRange({ from: ts - pad, to: ts + pad });
+          };
+        }
+      });
+    }
+
+    function updateQAnalizPanel(data) {
+      const setupEl = document.getElementById('qSetupBlock');
+      const radarEl = document.getElementById('qRadarBlock');
+      if (!setupEl || !radarEl) return;
+      const q = data?.q_setup;
+      const r = data?.q_radar;
+      if (q) {
+        const side = (q.side === 'Buy' || q.side === 'Long') ? 'LONG' : 'SHORT';
+        const sideClass = side === 'LONG' ? 'side-long' : 'side-short';
+        setupEl.innerHTML = '<div class="q-setup">' +
+          '<div class="row"><span class="label">Yön</span><span class="' + sideClass + '">' + side + '</span></div>' +
+          '<div class="row"><span class="label">Giriş</span><span>' + (q.entry != null ? Number(q.entry).toFixed(4) : '—') + '</span></div>' +
+          '<div class="row"><span class="label">TP</span><span>' + (q.take_profit != null ? Number(q.take_profit).toFixed(4) : '—') + '</span></div>' +
+          '<div class="row"><span class="label">SL</span><span>' + (q.stop_loss != null ? Number(q.stop_loss).toFixed(4) : '—') + '</span></div>' +
+          '<div class="row"><span class="label">Q Skor</span><span>' + (q.q_score != null ? Number(q.q_score).toFixed(1) : '—') + '</span></div>' +
+          '<div class="row"><span class="label">Süre</span><span>~' + (q.expected_bars != null ? q.expected_bars : '—') + ' bar</span></div>' +
+          '</div>';
+        setupEl.style.display = '';
+      } else {
+        setupEl.innerHTML = '<div class="q-none">Q-Setup yok</div>';
+        setupEl.style.display = '';
+      }
+      const opp = data?.q_radar_opportunity;
+      if (opp && opp.detection && opp.detection !== '—') {
+        const dir = opp.direction || (opp.radar && (opp.radar.side === 'Buy' || opp.radar.side === 'Long') ? 'LONG' : 'SHORT');
+        const dirIcon = dir === 'LONG' ? '▲' : dir === 'SHORT' ? '▼' : '━';
+        const lastPrice = data?.last_price != null ? Number(data.last_price) : null;
+        const candles = data?.candles || [];
+        const firstClose = candles.length > 0 ? candles[0].close : null;
+        const pctStr = (lastPrice != null && firstClose != null && firstClose > 0)
+          ? ((lastPrice - firstClose) / firstClose * 100).toFixed(2) + '%'
+          : '';
+        const priceStr = lastPrice != null
+          ? (Number(lastPrice).toFixed(2) + (pctStr ? ' ' + dirIcon + ' ' + (pctStr.startsWith('-') ? '' : '+') + pctStr : ''))
+          : (opp.reference_price != null ? Number(opp.reference_price).toFixed(2) : '—');
+        const conf = opp.confidence_score != null ? (Number(opp.confidence_score).toFixed(1) + '/10') : '—';
+        const early = opp.early_warning_score != null ? ('DİP ' + Number(opp.early_warning_score).toFixed(0) + '/10') : (opp.direction === 'SHORT' && opp.early_warning_score != null ? 'TEPE ' + Number(opp.early_warning_score).toFixed(0) + '/10' : '—');
+        const rec = opp.recommendation || '—';
+        const layers = opp.confirmation_layers || '';
+        const sl = opp.radar?.suggested_sl != null ? Number(opp.radar.suggested_sl).toFixed(4) : '—';
+        radarEl.innerHTML = '<div class="q-radar">' +
+          '<div class="row"><span class="badge">RADAR</span></div>' +
+          '<div class="row"><span class="label">Fiyat</span><span>' + priceStr + '</span></div>' +
+          '<div class="row"><span class="label">YÖN</span><span>' + dirIcon + ' ' + dir + '</span></div>' +
+          '<div class="row"><span class="label">Tespit</span><span><strong>' + (opp.detection || '—') + '</strong></span></div>' +
+          '<div class="row"><span class="label">Güven</span><span>' + conf + '</span></div>' +
+          '<div class="row"><span class="label">Erken Uyarı</span><span>' + early + '</span></div>' +
+          '<div class="row"><span class="label">Tavsiye</span><span>' + rec + '</span></div>' +
+          (layers ? '<div class="row"><span class="label">Onay</span><span>' + layers + '</span></div>' : '') +
+          '<div class="row"><span class="label">Tahmini SL</span><span>' + sl + '</span></div>' +
+          '<div class="row"><span class="label">Hedef</span><span>Q-Setup bekleniyor</span></div></div>';
+        radarEl.style.display = '';
+      } else if (r) {
+        const side = (r.side === 'Buy' || r.side === 'Long') ? 'LONG' : 'SHORT';
+        const win = r.expected_window_bars ? (r.expected_window_bars[0] + '–' + r.expected_window_bars[1]) : '—';
+        const refPrice = r.reference_price != null ? Number(r.reference_price).toFixed(4) : '—';
+        const sl = r.suggested_sl != null ? Number(r.suggested_sl).toFixed(4) : '—';
+        radarEl.innerHTML = '<div class="q-radar">' +
+          '<div class="row"><span class="badge">Q-RADAR</span> ' + side + ' | Güven: ' + (r.confidence != null ? (Number(r.confidence) * 100).toFixed(0) + '%' : '—') + ' | Pencere: ' + win + ' bar</div>' +
+          '<div class="row"><span class="label">Referans fiyat</span><span>' + refPrice + '</span></div>' +
+          '<div class="row"><span class="label">Tahmini SL</span><span>' + sl + '</span></div>' +
+          '<div class="row"><span class="label">Hedef</span><span>Q-Setup bekleniyor</span></div></div>';
+        radarEl.style.display = '';
+      } else {
+        radarEl.innerHTML = '<div class="q-none">Q-RADAR uyarısı yok</div>';
+        radarEl.style.display = '';
+      }
+      const protectEl = document.getElementById('qProtectBlock');
+      if (protectEl) {
+        const p = data?.protect_signal;
+        if (p) {
+          protectEl.innerHTML = '<div class="q-protect">' +
+            '<div class="row"><span class="label">🛡️ POZ KORUMA</span></div>' +
+            '<div class="row"><span class="label">Giriş</span><span>' + (p.entry_price != null ? Number(p.entry_price).toFixed(4) : '—') + '</span></div>' +
+            '<div class="row"><span class="label">Kilit seviye</span><span>' + (p.trigger_price != null ? Number(p.trigger_price).toFixed(4) : '—') + '</span></div>' +
+            '<div class="row"><span class="label">Sebep</span><span>' + (p.reason || '—') + '</span></div>' +
+            '<div class="row"><span class="label">Kilitlenen R</span><span>' + (p.locked_r != null ? Number(p.locked_r).toFixed(2) : '—') + '</span></div>' +
+            '<div class="row protect-warn"><span>⚠ Çıkış zorunlu</span></div></div>';
+          protectEl.style.display = '';
+        } else {
+          protectEl.innerHTML = '<div class="q-none">Poz Koruma yok</div>';
+          protectEl.style.display = '';
+        }
+      }
     }
 
     function updateTrendPanels(data) {
@@ -610,9 +1288,69 @@
       });
     }
 
+    function setupHamburger() {
+      const btn = document.getElementById('hamburgerBtn');
+      const drawer = document.getElementById('drawer');
+      const overlay = document.getElementById('drawerOverlay');
+      const open = () => { drawer?.classList.add('open'); overlay?.classList.add('open'); };
+      const close = () => { drawer?.classList.remove('open'); overlay?.classList.remove('open'); };
+      const toggle = () => drawer?.classList.contains('open') ? close() : open();
+      btn?.addEventListener('click', toggle);
+      overlay?.addEventListener('click', close);
+    }
+
+    function setupChartToolbar() {
+      const ZOOM_FACTOR = 1.2;
+      const SCROLL_PCT = 0.3;
+      function getRange() {
+        if (!chart) return null;
+        try { return chart.timeScale().getVisibleRange(); } catch (e) { return null; }
+      }
+      function setRange(from, to) {
+        if (!chart) return;
+        try { chart.timeScale().setVisibleRange({ from, to }); } catch (e) {}
+      }
+      document.getElementById('zoomIn')?.addEventListener('click', () => {
+        const r = getRange();
+        if (!r || r.from == null || r.to == null) return;
+        const span = r.to - r.from;
+        const newSpan = span / ZOOM_FACTOR;
+        const mid = (r.from + r.to) / 2;
+        setRange(mid - newSpan / 2, mid + newSpan / 2);
+      });
+      document.getElementById('zoomOut')?.addEventListener('click', () => {
+        const r = getRange();
+        if (!r || r.from == null || r.to == null) return;
+        const span = r.to - r.from;
+        const newSpan = Math.min(span * ZOOM_FACTOR, 1e12);
+        const mid = (r.from + r.to) / 2;
+        setRange(mid - newSpan / 2, mid + newSpan / 2);
+      });
+      document.getElementById('navBack')?.addEventListener('click', () => {
+        const r = getRange();
+        if (!r || r.from == null || r.to == null) return;
+        const span = r.to - r.from;
+        setRange(r.from - span * SCROLL_PCT, r.to - span * SCROLL_PCT);
+      });
+      document.getElementById('navForward')?.addEventListener('click', () => {
+        const r = getRange();
+        if (!r || r.from == null || r.to == null) return;
+        const span = r.to - r.from;
+        setRange(r.from + span * SCROLL_PCT, r.to + span * SCROLL_PCT);
+      });
+      document.getElementById('refreshChart')?.addEventListener('click', () => loadChart());
+    }
+
     initChart();
     setupOverlayListeners();
+    setupHamburger();
+    setupChartToolbar();
     initCollapsiblePanels();
+    const m0 = document.getElementById('market')?.value;
+    const tvExEl = document.getElementById('tvExchange');
+    const tvLbl0 = document.getElementById('tvExchangeLabel');
+    if (tvExEl) tvExEl.style.display = m0 === 'tv' ? 'block' : 'none';
+    if (tvLbl0) tvLbl0.style.display = m0 === 'tv' ? 'block' : 'none';
     loadChart();
     document.getElementById('liveBadge').className = 'live-badge off';
   </script>

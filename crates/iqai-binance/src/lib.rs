@@ -1,5 +1,6 @@
 //! Binance Spot and Futures API connector
 
+mod sign;
 mod spot;
 mod futures;
 

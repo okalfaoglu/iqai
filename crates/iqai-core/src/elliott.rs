@@ -1,8 +1,35 @@
-//! Elliott Wave formasyonları, kurallar, dalga bacak hesapları, giriş/çıkış/iptal seviyeleri.
+//! Elliott Wave formasyonları, kurallar, dalga dereceleri, dalga bacak hesapları, giriş/çıkış/iptal seviyeleri.
 //!
-//! Bkz: docs/ELLIOTT_WAVE_SPEC.md
+//! Bkz: docs/ELLIOTT_WAVE_SPEC.md ve THE_BASICS_OF_THE_ELLIOTT_WAVE_PRINCIPLE.pdf
 
 use serde::{Deserialize, Serialize};
+
+/// Wave personality – PDF: "Each wave has a personality"
+pub fn wave_personality(wave_label: &str) -> &'static str {
+    match wave_label {
+        "1" => "Başlangıç: Şüphe fazı, hacim düşük",
+        "2" => "Geri çekilme: Korku, kazanç geri verilir",
+        "3" => "Güç: En uzun/güçlü, yüksek hacim",
+        "4" => "Konsolidasyon: Kâr real., W2'den farklı yapı",
+        "5" => "Son hamle: Momentum azalır, hacim düşer",
+        "A" => "Düzeltme başı: Alım fırsatı sanılır",
+        "B" => "Tuzak rallisi: Son iyimserlik",
+        "C" => "Çöküş: Panik, W3 kadar güçlü olabilir",
+        _ => "",
+    }
+}
+
+/// Dalga derecesi – Elliott’un çoklu derece kavramına göre sadeleştirilmiş sınıflar.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum WaveDegree {
+    Grand,
+    Primary,
+    Intermediate,
+    Minor,
+    Minute,
+    Minuette,
+    SubMinuette,
+}
 
 /// Elliott Wave formasyon türü (EWM Cheat Sheet + Studocu interchange uyumlu)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -133,6 +160,30 @@ impl ElliottFormation {
         )
     }
 
+    /// Formation adından tahmini enum (sonraki formasyon referansı için)
+    pub fn from_formation_name(name: &str) -> Option<Self> {
+        let n = name.to_lowercase();
+        if n.contains("impulse") || n.contains("itki") {
+            return Some(ElliottFormation::Impulse);
+        }
+        if n.contains("zigzag") {
+            return Some(ElliottFormation::Zigzag);
+        }
+        if n.contains("flat") {
+            return Some(ElliottFormation::Flat);
+        }
+        if n.contains("triangle") || n.contains("üçgen") {
+            return Some(ElliottFormation::ContractingTriangle);
+        }
+        if n.contains("leading") || n.contains("diagonal") {
+            return Some(ElliottFormation::LeadingDiagonal);
+        }
+        if n.contains("ending") {
+            return Some(ElliottFormation::EndingDiagonal);
+        }
+        None
+    }
+
     /// Zigzag ailesi (ZZ, DZ, TZ)
     pub fn is_zigzag_family(self) -> bool {
         matches!(
@@ -228,6 +279,90 @@ pub mod fibo {
     pub const ZIGZAG_C_EXTENSIONS: [f64; 4] = [1.0, 1.236, 1.382, 1.618];
     // Triangle (EWM): her dalga öncekinin ~%61.8 veya %78.6
     pub const TRIANGLE_RETRACES: [f64; 2] = [0.618, 0.786];
+}
+
+/// Impulse tamamlandıktan sonra beklenen düzeltme (Zigzag/Flat) için referans seviyeleri.
+/// Hesaplamalarda referans olarak kullanılabilir (A/B/C hedefleri).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PostImpulseCorrectionRef {
+    /// Düzeltme başlangıç fiyatı (W5 ucu)
+    pub start_price: f64,
+    /// Impulse tabanı (W0 – bullish’da dip, bearish’da zirve)
+    pub end_price: f64,
+    pub impulse_range: f64,
+    pub is_bullish_impulse: bool,
+    /// Düzeltme A dalgası hedefleri (W5’ten itibaren impulse range retrace: 0.382, 0.5, 0.618)
+    pub correction_a_targets: Vec<f64>,
+    /// B bölgesi (A bitişinden sonra B retrace – Zigzag tipik 0.382–0.786)
+    pub correction_b_zone: (f64, f64),
+    /// C hedefleri (A uzunluğunun 1.0, 1.382, 1.618 – B bitişinden; referans)
+    pub correction_c_targets: Vec<f64>,
+}
+
+/// Mevcut formasyon tamamlandığında sonraki dalga formasyonları için referans seviyeleri.
+/// Elliott dalgalarından sonra oluşacak/oluşan formasyonlar hesaplama referansı olarak kullanılabilir.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NextFormationRefLevels {
+    /// Olası sonraki formasyon adları (Zigzag, Flat, Triangle, …)
+    pub expected_formations: Vec<String>,
+    /// Impulse/Diagonal tamamlandıysa: düzeltme A/B/C referans seviyeleri
+    pub post_impulse_correction: Option<PostImpulseCorrectionRef>,
+}
+
+/// Impulse tamamlandıktan sonra (W5 bitti) beklenen düzeltme için referans seviyelerini hesaplar.
+/// w0_price: dalga 0 fiyatı, w5_price: dalga 5 ucu, is_bullish: yükseliş itkisi mi.
+pub fn compute_post_impulse_correction_ref(
+    w0_price: f64,
+    w5_price: f64,
+    is_bullish: bool,
+) -> PostImpulseCorrectionRef {
+    let impulse_range = (w5_price - w0_price).abs();
+    let (start_price, end_price) = (w5_price, w0_price);
+
+    let correction_a_targets: Vec<f64> = [0.382, 0.5, 0.618]
+        .iter()
+        .map(|&r| {
+            if is_bullish {
+                w5_price - impulse_range * r
+            } else {
+                w5_price + impulse_range * r
+            }
+        })
+        .collect();
+
+    let a_length = impulse_range * 0.618_f64;
+    let a_end = correction_a_targets.get(1).copied().unwrap_or(if is_bullish {
+        w5_price - impulse_range * 0.5
+    } else {
+        w5_price + impulse_range * 0.5
+    });
+    let correction_b_zone = if is_bullish {
+        (a_end - a_length * 0.786, a_end - a_length * 0.382)
+    } else {
+        (a_end + a_length * 0.382, a_end + a_length * 0.786)
+    };
+
+    let correction_c_targets: Vec<f64> = [1.0, 1.236, 1.382, 1.618]
+        .iter()
+        .map(|&ext| {
+            let b_mid = (correction_b_zone.0 + correction_b_zone.1) / 2.0;
+            if is_bullish {
+                b_mid - a_length * ext
+            } else {
+                b_mid + a_length * ext
+            }
+        })
+        .collect();
+
+    PostImpulseCorrectionRef {
+        start_price,
+        end_price,
+        impulse_range,
+        is_bullish_impulse: is_bullish,
+        correction_a_targets,
+        correction_b_zone,
+        correction_c_targets,
+    }
 }
 
 /// Impulse dalga hesapları
@@ -370,14 +505,22 @@ pub fn validate_impulse_with_w5(
     w5_extreme: Option<f64>,
     is_bullish: bool,
 ) -> ImpulseValidation {
+    // W2 düzeltme: bullish'ta W2 low > W0 ve W2 low < W1 high; bearish'ta simetrik
     let w2_valid = if is_bullish {
-        w2_extreme > w0
+        w2_extreme > w0 && w2_extreme < w1_high
     } else {
-        w2_extreme < w0
+        w2_extreme < w0 && w2_extreme > w1_low
     };
     let w1_len = (w1_high - w1_low).abs();
     let w3_len = (w3_extreme - w2_extreme).abs();
-    let w3_valid = w1_len > 0.0 && w3_len >= w1_len * 0.9;
+    // Spec: W3 asla en kısa olamaz. W5 varsa: w3 > min(w1,w5); yoksa: w3 >= w1
+    let w3_valid = match w5_extreme {
+        Some(w5) => {
+            let w5_len = (w5 - w4_extreme).abs();
+            w1_len > 0.0 && w3_len > w1_len.min(w5_len)
+        }
+        None => w1_len > 0.0 && w3_len >= w1_len,
+    };
     let w1_extreme = if is_bullish { w1_high } else { w1_low };
     let w4_valid = if is_bullish {
         w4_extreme > w1_extreme
@@ -407,14 +550,99 @@ pub fn validate_impulse_with_w5(
     }
 }
 
-/// Leading/Ending Diagonal validasyonu.
-/// Impulse'tan fark: W4, W1 ile örtüşebilir (trend çizgileri arasında wedge).
-/// W2 ve W3 kuralları aynı: W2<=W0 iptal, W3 en kısa olamaz.
+/// Diagonal şekli – EWM Spec: Contracting (daralan) veya Expanding (genişleyen)
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiagonalShape {
+    /// İki trend çizgisi birbirine yaklaşır. Hem Leading hem Ending olabilir.
+    Contracting,
+    /// İki trend çizgisi birbirinden uzaklaşır. Daha nadir.
+    Expanding,
+}
+
+/// Diagonal iç yapı tipi – PDF kuralı
+/// Leading Diagonal: 5-3-5-3-5 (motive dalgalar impulse yapıda)
+/// Ending Diagonal:  3-3-3-3-3 (tüm dalgalar zigzag yapıda)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DiagonalSubStructure {
+    /// LD: 5-3-5-3-5
+    LeadingMotive,
+    /// ED: 3-3-3-3-3
+    EndingCorrective,
+    /// Karışık veya belirsiz
+    Mixed,
+}
+
+/// Leading/Ending Diagonal validasyonu – EWM Cheat Sheet kuralları 1:1
+/// Kurallar: W4-W1 örtüşebilir. W3 en kısa olamaz. İki trend çizgisi daralan veya genişleyen.
 #[derive(Debug, Clone)]
 pub struct DiagonalValidation {
     pub w2_valid: bool,
     pub w3_valid: bool,
     pub formation_valid: bool,
+    /// Contracting (daralan) veya Expanding (genişleyen) – kanal şekli
+    pub shape: Option<DiagonalShape>,
+    /// İç yapı kontrolü: LD(5-3-5-3-5) veya ED(3-3-3-3-3)
+    pub sub_structure: Option<DiagonalSubStructure>,
+    /// Her dalganın iç swing sayıları [W1, W2, W3, W4, W5]
+    pub inner_counts: Option<[usize; 5]>,
+}
+
+/// Diagonal iç yapı tipi belirle: her dalganın iç swing sayısına göre
+/// 5-dalgalı (impulse): >=4 iç swing → motive
+/// 3-dalgalı (zigzag): 2-3 iç swing → corrective
+pub fn classify_diagonal_sub_structure(inner_counts: &[usize; 5]) -> DiagonalSubStructure {
+    let motive_waves = [0usize, 2, 4]; // W1, W3, W5
+    let corrective_waves = [1usize, 3]; // W2, W4
+
+    let motive_5wave = motive_waves.iter().all(|&i| inner_counts[i] >= 4);
+    let motive_3wave = corrective_waves.iter().all(|&i| inner_counts[i] >= 2 && inner_counts[i] <= 3);
+    let all_3wave = inner_counts.iter().all(|&c| c >= 2 && c <= 3);
+
+    if motive_5wave && motive_3wave {
+        DiagonalSubStructure::LeadingMotive
+    } else if all_3wave {
+        DiagonalSubStructure::EndingCorrective
+    } else {
+        DiagonalSubStructure::Mixed
+    }
+}
+
+/// Diagonal kanal şekli: Contracting = zirveler düşer/dipler yükselir, Expanding = tersi
+fn diagonal_shape(
+    w0: f64,
+    w1_high: f64,
+    w1_low: f64,
+    w2_extreme: f64,
+    w3_extreme: f64,
+    w4_extreme: f64,
+    is_bullish: bool,
+) -> Option<DiagonalShape> {
+    if is_bullish {
+        let highs_narrow = w3_extreme < w1_high;
+        let lows_rise = w2_extreme > w0 && w4_extreme > w2_extreme;
+        let highs_widen = w3_extreme > w1_high;
+        let lows_fall = w2_extreme < w0 && w4_extreme < w2_extreme;
+        if highs_narrow && lows_rise {
+            Some(DiagonalShape::Contracting)
+        } else if highs_widen && lows_fall {
+            Some(DiagonalShape::Expanding)
+        } else {
+            None
+        }
+    } else {
+        // Bearish: highs = w0,w2,w4; lows = w1_low,w3. Contracting = üst çizgi iner, alt çizgi yükselir
+        let highs_fall = w2_extreme < w0 && w4_extreme < w2_extreme;
+        let lows_rise = w3_extreme > w1_low;
+        let highs_rise = w2_extreme > w0 && w4_extreme > w2_extreme;
+        let lows_fall = w3_extreme < w1_low;
+        if highs_fall && lows_rise {
+            Some(DiagonalShape::Contracting)
+        } else if highs_rise && lows_fall {
+            Some(DiagonalShape::Expanding)
+        } else {
+            None
+        }
+    }
 }
 
 pub fn validate_diagonal(
@@ -423,21 +651,34 @@ pub fn validate_diagonal(
     w1_low: f64,
     w2_extreme: f64,
     w3_extreme: f64,
-    _w4_extreme: f64,
+    w4_extreme: f64,
     is_bullish: bool,
 ) -> DiagonalValidation {
+    // Kural 1: W2 düzeltme – bullish'ta W2 low > W0 ve W2 low < W1 high
     let w2_valid = if is_bullish {
-        w2_extreme > w0
+        w2_extreme > w0 && w2_extreme < w1_high
     } else {
-        w2_extreme < w0
+        w2_extreme < w0 && w2_extreme > w1_low
     };
     let w1_len = (w1_high - w1_low).abs();
     let w3_len = (w3_extreme - w2_extreme).abs();
-    let w3_valid = w1_len > 0.0 && w3_len >= w1_len * 0.9;
+    // Kural 2: W3 en kısa olamaz (Impulse ile aynı)
+    let w3_valid = w1_len > 0.0 && w3_len >= w1_len;
+    // Kural 3: W4-W0 kırmamalı (motive diagonal yapıda trend kökünü bozmamak için)
+    let w4_valid = if is_bullish {
+        w4_extreme > w0
+    } else {
+        w4_extreme < w0
+    };
+    // Kural 4: W4-W1 örtüşebilir (Diagonal'a özgü – validate_diagonal sadece W4 overlap durumunda çağrılır)
+    let shape = diagonal_shape(w0, w1_high, w1_low, w2_extreme, w3_extreme, w4_extreme, is_bullish);
     DiagonalValidation {
         w2_valid,
         w3_valid,
-        formation_valid: w2_valid && w3_valid,
+        formation_valid: w2_valid && w3_valid && w4_valid,
+        shape,
+        sub_structure: None,
+        inner_counts: None,
     }
 }
 
@@ -449,6 +690,10 @@ pub struct SetupW3 {
     pub tp1: f64,
     pub tp2: f64,
     pub is_long: bool,
+    /// TP1 bazlı R/R oranı
+    pub rr1: f64,
+    /// TP2 bazlı R/R oranı
+    pub rr2: f64,
 }
 
 /// W5 setup
@@ -459,6 +704,18 @@ pub struct SetupW5 {
     pub tp: f64,
     pub tp_alternate: f64,
     pub is_long: bool,
+    /// Ana TP bazlı R/R oranı
+    pub rr: f64,
+}
+
+/// R/R hesapla: |TP - Entry| / |Entry - SL|
+#[inline]
+pub fn calc_rr(entry: f64, stop_loss: f64, take_profit: f64) -> f64 {
+    let risk = (entry - stop_loss).abs();
+    if risk < 1e-10 {
+        return 0.0;
+    }
+    (take_profit - entry).abs() / risk
 }
 
 /// W3 setup hesapla: W1 bitti, W2 %50–%61.8 geri çekildi
@@ -472,20 +729,28 @@ pub fn compute_setup_w3(
 ) -> SetupW3 {
     let w1_len = (w1_high - w1_low).abs();
     if is_bullish {
+        let tp1 = w1_high;
+        let tp2 = w1_low + w1_len * fibo::EXT_1618;
         SetupW3 {
             entry: w2_extreme,
             stop_loss: w0,
-            tp1: w1_high,
-            tp2: w1_low + w1_len * fibo::EXT_1618,
+            tp1,
+            tp2,
             is_long: true,
+            rr1: calc_rr(w2_extreme, w0, tp1),
+            rr2: calc_rr(w2_extreme, w0, tp2),
         }
     } else {
+        let tp1 = w1_low;
+        let tp2 = w1_high - w1_len * fibo::EXT_1618;
         SetupW3 {
             entry: w2_extreme,
             stop_loss: w0,
-            tp1: w1_low,
-            tp2: w1_high - w1_len * fibo::EXT_1618,
+            tp1,
+            tp2,
             is_long: false,
+            rr1: calc_rr(w2_extreme, w0, tp1),
+            rr2: calc_rr(w2_extreme, w0, tp2),
         }
     }
 }
@@ -515,6 +780,7 @@ pub fn compute_setup_w5(
             tp,
             tp_alternate: tp_alt,
             is_long: true,
+            rr: calc_rr(entry, w1_high, tp),
         }
     } else {
         let entry = w4_low;
@@ -526,7 +792,59 @@ pub fn compute_setup_w5(
             tp,
             tp_alternate: tp_alt,
             is_long: false,
+            rr: calc_rr(entry, w1_low, tp),
         }
+    }
+}
+
+/// Corrective trade setup – Zigzag C dalgası veya Triangle E breakout
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CorrSetup {
+    pub entry: f64,
+    pub stop_loss: f64,
+    pub tp: f64,
+    pub is_long: bool,
+    pub rr: f64,
+    pub setup_type: String,
+}
+
+/// Zigzag C dalgası setup: B noktasından giriş, A noktası SL, C hedefi TP
+/// C hedefi: A dalgasının %100 veya %161.8'i (B'den itibaren)
+pub fn compute_setup_zigzag_c(
+    a_start: f64, a_end: f64, b_end: f64, is_bullish: bool,
+) -> CorrSetup {
+    let a_len = (a_end - a_start).abs();
+    let (entry, stop_loss, tp) = if is_bullish {
+        // Bearish zigzag: A aşağı, B yukarı düzeltme, C aşağı → short
+        (b_end, a_start, b_end - a_len)
+    } else {
+        // Bullish zigzag: A yukarı, B aşağı düzeltme, C yukarı → long
+        (b_end, a_start, b_end + a_len)
+    };
+    let is_long = !is_bullish;
+    CorrSetup {
+        entry,
+        stop_loss,
+        tp,
+        is_long,
+        rr: calc_rr(entry, stop_loss, tp),
+        setup_type: "Zigzag C".to_string(),
+    }
+}
+
+/// Triangle E breakout setup: E noktasından giriş, D noktası SL, thrust hedefi TP
+pub fn compute_setup_triangle_e(
+    a_len: f64, e_price: f64, d_price: f64, is_bullish_breakout: bool,
+) -> CorrSetup {
+    let tp = triangle_thrust_target(a_len, e_price, is_bullish_breakout);
+    let (entry, stop_loss) = (e_price, d_price);
+    CorrSetup {
+        entry,
+        stop_loss,
+        tp,
+        is_long: is_bullish_breakout,
+        rr: calc_rr(entry, stop_loss, tp),
+        setup_type: "Triangle E".to_string(),
     }
 }
 
@@ -662,14 +980,62 @@ pub fn impulse_trade_levels(
     }
 }
 
-/// Zigzag kuralı: B, A'nın başlangıç noktasını aşamaz
+/// Zigzag kuralı (EWM): B, A'nın başlangıç noktasını aşamaz.
+/// Ek: B geri çekilme olmalı – A start ile A end arasında kalmalı (devam değil).
 /// a_down: A düşüş dalgası ise true (A high→low)
-pub fn zigzag_valid(a_start: f64, b_extreme: f64, a_down: bool) -> bool {
+pub fn zigzag_valid(a_start: f64, a_end: f64, b_extreme: f64, a_down: bool) -> bool {
     if a_down {
-        b_extreme <= a_start
+        b_extreme <= a_start && b_extreme >= a_end
     } else {
-        b_extreme >= a_start
+        b_extreme >= a_start && b_extreme <= a_end
     }
+}
+
+/// Zigzag ABC validasyonu: B retrace 38.2–85.4%, C extension 100–161.8%, C exceeds A end.
+/// p0=A start, p1=A end, p2=B extreme, p3=C extreme.
+/// is_bearish_zz: true = bearish zigzag (A up, B down, C up).
+/// Returns (valid, c_targets) where c_targets are projection levels for C (100%, 123.6%, 138.2%, 161.8%).
+pub fn validate_zigzag_abc(
+    p0: f64,
+    p1: f64,
+    p2: f64,
+    p3: f64,
+    is_bearish_zz: bool,
+) -> (bool, Vec<f64>) {
+    let a_len = (p1 - p0).abs();
+    if a_len < 1e-12 {
+        return (false, vec![]);
+    }
+    let a_down = is_bearish_zz;
+    if !zigzag_valid(p0, p1, p2, a_down) {
+        return (false, vec![]);
+    }
+    let c_exceeds_a_end = if a_down { p3 < p1 } else { p3 > p1 };
+    if !c_exceeds_a_end {
+        return (false, vec![]);
+    }
+    let b_retrace = if a_down {
+        (p2 - p1) / a_len
+    } else {
+        (p1 - p2) / a_len
+    };
+    let b_ok = b_retrace >= 0.382 && b_retrace <= 0.854;
+    let c_len = (p3 - p2).abs();
+    let c_ratio = c_len / a_len;
+    let c_ok = c_ratio >= 0.99 && c_ratio <= 1.65;
+    let valid = b_ok && c_ok;
+
+    let c_targets: Vec<f64> = fibo::ZIGZAG_C_EXTENSIONS
+        .iter()
+        .map(|&ext| {
+            if a_down {
+                p2 - a_len * ext
+            } else {
+                p2 + a_len * ext
+            }
+        })
+        .collect();
+    (valid, c_targets)
 }
 
 /// Flat kuralları: B, A'nın %90'ından fazlasını geri alır
@@ -698,7 +1064,8 @@ pub fn flat_type(b_retrace_ratio: f64) -> Option<FlatType> {
     } else if b_retrace_ratio >= 1.236 {
         Some(FlatType::Expanded)
     } else {
-        Some(FlatType::Regular)
+        // 1.05 < B < 1.236: B, A başlangıcını aştı ama extended değil → Running
+        Some(FlatType::Running)
     }
 }
 
@@ -729,8 +1096,9 @@ pub fn flat_valid_detailed(
     } else {
         (c_extreme - a_start).abs() / a_len
     };
+    // Spec: Regular C ≈ A %100 (A sonuna yakın); Expanded C > %123.6; Running C kısa
     let valid = match typ.unwrap() {
-        FlatType::Regular => b_ratio >= 0.9 && b_ratio <= 1.05 && c_retrace >= 0.6,
+        FlatType::Regular => b_ratio >= 0.9 && b_ratio <= 1.05 && c_retrace >= 0.85 && c_retrace <= 1.15,
         FlatType::Expanded => b_ratio >= 1.236 && c_retrace >= 1.0,
         FlatType::Running => b_ratio >= 1.236 && c_retrace < 1.0 && c_retrace >= 0.5,
     };
@@ -740,6 +1108,18 @@ pub fn flat_valid_detailed(
 /// Zaman Fibonacci: W3 süresi W1'in %100, %161.8 veya %261.8'i
 pub fn time_projection_w3(w1_bars: u32, ratio: f64) -> u32 {
     ((w1_bars as f64) * ratio) as u32
+}
+
+/// W5 süre tahmini: W1 süresinin Fibonacci katları
+/// PDF: "Time relationships between waves exist but are less reliable"
+/// Dönüş: (bars_100, bars_618, bars_1618) – W5'in W1'e göre olası süresi
+pub fn time_projection_w5(w1_duration: i64) -> (i64, i64, i64) {
+    let d = w1_duration as f64;
+    (
+        d as i64,                    // %100 – W5 = W1
+        (d * 0.618) as i64,          // %61.8 – sıkıştırılmış W5
+        (d * 1.618) as i64,          // %161.8 – uzatılmış W5
+    )
 }
 
 /// Zigzag (ABC) trade seviyeleri
@@ -788,4 +1168,575 @@ pub fn triangle_targets(prev: &WaveLeg) -> Vec<f64> {
         .iter()
         .map(|&r| prev.retrace(r))
         .collect()
+}
+
+/// Triangle E-dalgası sonrası thrust hedefi.
+/// PDF: Triangle tamamlandığında, A dalgasının uzunluğu kadar trend yönünde kırılım beklenir.
+/// a_len: A dalgasının uzunluğu, e_price: E noktası fiyatı
+pub fn triangle_thrust_target(a_len: f64, e_price: f64, is_bullish_breakout: bool) -> f64 {
+    if is_bullish_breakout {
+        e_price + a_len
+    } else {
+        e_price - a_len
+    }
+}
+
+/// Truncation (kesilmiş W5) tespiti.
+/// PDF: "Rarely, the fifth wave will not have enough momentum to exceed the end of wave 3."
+/// W5 ucu W3 ucunu aşamadıysa truncation var demektir. Formasyon yine geçerli kalır ama
+/// trendin zayıfladığı sinyali verir.
+pub fn detect_truncation(
+    w3_extreme: f64,
+    w5_extreme: f64,
+    is_bullish: bool,
+) -> bool {
+    if is_bullish {
+        w5_extreme < w3_extreme
+    } else {
+        w5_extreme > w3_extreme
+    }
+}
+
+/// Throw-over tespiti: W5 kanal çizgisini aşar (overshoot).
+/// PDF: W5 bazen kanalı aşar → ardından sert geri dönüş gelir.
+/// channel_target: kanal paralel çizgisinin W5 bitiş zamanındaki fiyatı.
+pub fn detect_throw_over(
+    w5_extreme: f64,
+    channel_target: f64,
+    is_bullish: bool,
+) -> bool {
+    if is_bullish {
+        w5_extreme > channel_target
+    } else {
+        w5_extreme < channel_target
+    }
+}
+
+/// Extended dalga tespiti: W1, W3, W5 arasında hangisi "extended" (en uzun)?
+/// PDF: "Most commonly wave 3 is extended"
+/// Dönüş: (extended_wave: 1/3/5, ratio: extended/next_longest)
+pub fn detect_extended_wave(w1_len: f64, w3_len: f64, w5_len: f64) -> (u8, f64) {
+    let max = w1_len.max(w3_len).max(w5_len);
+    let (wave, second) = if max == w3_len {
+        (3u8, w1_len.max(w5_len))
+    } else if max == w1_len {
+        (1u8, w3_len.max(w5_len))
+    } else {
+        (5u8, w1_len.max(w3_len))
+    };
+    let ratio = if second > 1e-10 { max / second } else { 0.0 };
+    (wave, ratio)
+}
+
+/// W1 ≈ W5 eşitlik kontrolü (W3 extended olduğunda)
+/// PDF: "When wave 3 is extended, waves 1 and 5 tend toward equality"
+pub fn w1_w5_equality(w1_len: f64, w5_len: f64) -> f64 {
+    let max = w1_len.max(w5_len).max(1e-10);
+    let min = w1_len.min(w5_len);
+    min / max
+}
+
+/// Alternation kuralı (PDF): "Wave 2 usually corrects in a different pattern than wave 4."
+/// Derinlik alternasyonu: W2 derin (>%50) ise W4 sığ (<%50) beklenir veya tam tersi.
+/// Yapısal alternasyon: W2 sharp (zigzag) ise W4 flat/triangle beklenir.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AlternationResult {
+    /// W2 ve W4 iyi bir alternasyon gösteriyor
+    Good,
+    /// Alternasyon zayıf (ikisi de yakın derinlikte)
+    Weak,
+    /// Alternasyon ihlali (ikisi de çok derin veya ikisi de çok sığ)
+    Violation,
+}
+
+/// W2 ve W4 derinlik alternasyonu: biri >%50, diğeri <%50 olmalı.
+/// w2_retrace_ratio: W2'nin W1'e geri çekilme oranı (0..1)
+/// w4_retrace_ratio: W4'ün W3'e geri çekilme oranı (0..1)
+pub fn check_alternation_depth(
+    w2_retrace_ratio: f64,
+    w4_retrace_ratio: f64,
+) -> AlternationResult {
+    let w2_deep = w2_retrace_ratio > 0.5;
+    let w4_deep = w4_retrace_ratio > 0.5;
+    if w2_deep != w4_deep {
+        AlternationResult::Good
+    } else {
+        let diff = (w2_retrace_ratio - w4_retrace_ratio).abs();
+        if diff > 0.15 {
+            AlternationResult::Weak
+        } else {
+            AlternationResult::Violation
+        }
+    }
+}
+
+/// Düzeltme dalga tipi – yapısal alternation kontrolü için
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CorrWaveType {
+    /// Sharp (zigzag): hızlı, derin düzeltme
+    Sharp,
+    /// Sideways (flat/triangle): yatay, zaman bazlı düzeltme
+    Sideways,
+    /// Belirsiz
+    Unknown,
+}
+
+/// İç swing sayısına ve retrace oranına göre düzeltme dalga tipini belirle.
+/// sharp (zigzag): genellikle 2 iç swing, derin (>%50)
+/// sideways (flat/triangle): genellikle 4+ iç swing, sığ (<%50)
+pub fn classify_corrective_type(inner_swing_count: usize, retrace_ratio: f64) -> CorrWaveType {
+    if retrace_ratio > 0.5 && inner_swing_count <= 3 {
+        CorrWaveType::Sharp
+    } else if retrace_ratio <= 0.5 || inner_swing_count >= 4 {
+        CorrWaveType::Sideways
+    } else {
+        CorrWaveType::Unknown
+    }
+}
+
+/// Yapısal alternation kontrolü (formasyon tipi bazlı):
+/// W2 sharp (zigzag) ise W4 sideways (flat/triangle) olmalı, veya tersi.
+pub fn check_alternation_structural(
+    w2_type: CorrWaveType,
+    w4_type: CorrWaveType,
+) -> AlternationResult {
+    match (w2_type, w4_type) {
+        (CorrWaveType::Sharp, CorrWaveType::Sideways)
+        | (CorrWaveType::Sideways, CorrWaveType::Sharp) => AlternationResult::Good,
+        (CorrWaveType::Unknown, _) | (_, CorrWaveType::Unknown) => AlternationResult::Weak,
+        (CorrWaveType::Sharp, CorrWaveType::Sharp)
+        | (CorrWaveType::Sideways, CorrWaveType::Sideways) => AlternationResult::Violation,
+    }
+}
+
+/// Triangle alt-tipleri – PDF p.22-24
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TriangleSubtype {
+    /// Symmetrical (simetrik): hem üst hem alt çizgi eşit daralar
+    Symmetrical,
+    /// Ascending (yükselen): üst çizgi düz, alt çizgi yükseliyor
+    Ascending,
+    /// Descending (alçalan): alt çizgi düz, üst çizgi düşüyor
+    Descending,
+    /// Running: B dalgası A başlangıcını aşar
+    Running,
+}
+
+/// Triangle alt-tipini belirle: high/low noktalarının davranışına göre.
+/// highs: [h0, h1, h2] – zirve noktaları (sırasıyla)
+/// lows: [l0, l1, l2] – dip noktaları
+/// b_exceeds_a_start: B dalgası A başlangıcını aşıyor mu
+pub fn classify_triangle_subtype(
+    highs: [f64; 3],
+    lows: [f64; 3],
+    b_exceeds_a_start: bool,
+) -> TriangleSubtype {
+    if b_exceeds_a_start {
+        return TriangleSubtype::Running;
+    }
+    let top_flat = (highs[0] - highs[2]).abs() / highs[0].max(1e-10) < 0.02;
+    let bot_flat = (lows[0] - lows[2]).abs() / lows[0].max(1e-10) < 0.02;
+    let top_falling = highs[0] > highs[1] && highs[1] > highs[2];
+    let bot_rising = lows[0] < lows[1] && lows[1] < lows[2];
+
+    if top_flat && bot_rising {
+        TriangleSubtype::Ascending
+    } else if bot_flat && top_falling {
+        TriangleSubtype::Descending
+    } else {
+        TriangleSubtype::Symmetrical
+    }
+}
+
+/// Triangle ABCDE validasyonu (3-3-3-3-3) – EWM Spec
+/// 6 nokta: p0..p5 → A=(p0,p1), B=(p1,p2), C=(p2,p3), D=(p3,p4), E=(p4,p5)
+/// Her dalga öncekinin ~%61.8 veya %78.6 (tolerance: 0.55–0.90)
+pub fn validate_triangle_abcde(
+    p0: f64,
+    p1: f64,
+    p2: f64,
+    p3: f64,
+    p4: f64,
+    p5: f64,
+    first_is_high: bool,
+) -> bool {
+    let lens = [
+        (p1 - p0).abs(),
+        (p2 - p1).abs(),
+        (p3 - p2).abs(),
+        (p4 - p3).abs(),
+        (p5 - p4).abs(),
+    ];
+    let highs = if first_is_high {
+        [p0, p2, p4]
+    } else {
+        [p1, p3, p5]
+    };
+    let lows = if first_is_high {
+        [p1, p3, p5]
+    } else {
+        [p0, p2, p4]
+    };
+    let contracting = highs[0] > highs[1] && highs[1] > highs[2] && lows[0] < lows[1] && lows[1] < lows[2];
+    let expanding = highs[0] < highs[1] && highs[1] < highs[2] && lows[0] > lows[1] && lows[1] > lows[2];
+
+    if contracting {
+        // Contracting: her ardışık dalga öncekinin ~.618'i civarında (toleranslı .55-.90)
+        for i in 1..5 {
+            if lens[i - 1] < 1e-10 { return false; }
+            let ratio = lens[i] / lens[i - 1];
+            if ratio < 0.50 || ratio > 0.95 { return false; }
+        }
+        return true;
+    }
+
+    if expanding {
+        // PDF p.39: Expanding triangle → her dalga öncekinin 1.618 katı civarında
+        // Toleranslı aralık: 1.05 .. 2.00
+        for i in 1..5 {
+            if lens[i - 1] < 1e-10 { return false; }
+            let ratio = lens[i] / lens[i - 1];
+            if ratio < 1.05 || ratio > 2.00 { return false; }
+        }
+        return true;
+    }
+
+    false
+}
+
+/// Impulse kanal (channeling) hesaplama – PDF: "The Elliott Wave Channel"
+///
+/// İlk kanal (0-2 çizgisi + 1 paraleli): W1 bittikten, W2 oluştuktan sonra çizilebilir.
+/// Son kanal (2-4 çizgisi + 3 paraleli): W4 bittikten sonra çizilebilir – W5 hedefini verir.
+///
+/// Zaman ekseni olarak bar indeksi (i64 timestamp) kullanılır.
+/// Dönüş: W5 için kanal üst/alt sınırı tahmini (fiyat).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImpulseChannel {
+    /// 2-4 baz çizgisi: (time1,price1) – (time2,price2)
+    pub base_t1: i64,
+    pub base_p1: f64,
+    pub base_t2: i64,
+    pub base_p2: f64,
+    /// 1-3 (veya 3) paralel çizgi
+    pub parallel_t: i64,
+    pub parallel_p: f64,
+    /// W5 için kanal hedefi: paralel çizginin t5 anındaki fiyatı
+    pub w5_channel_target: f64,
+}
+
+/// W2-W4 baz çizgisi + W3 paraleli ile W5 kanal hedefini hesapla.
+/// t0..t4: zaman (timestamp/1000), p0..p4: fiyatlar, t5_est: W5'in tahmini bitiş zamanı.
+/// Bullish: kanal üst sınırı W5 hedefi; bearish: kanal alt sınırı.
+///
+/// PDF p.27-28: "If wave 3 is abnormally strong, almost vertical, then a parallel
+/// drawn from its top may be too high. A parallel to the baseline that touches
+/// the top of wave 1 is then more useful."
+pub fn compute_impulse_channel(
+    t2: i64,
+    p2: f64,
+    t3: i64,
+    p3: f64,
+    t4: i64,
+    p4: f64,
+    t5_est: i64,
+    _is_bullish: bool,
+) -> Option<ImpulseChannel> {
+    let dt_base = (t4 - t2) as f64;
+    if dt_base.abs() < 1e-10 {
+        return None;
+    }
+    let slope = (p4 - p2) / dt_base;
+
+    let parallel_p_at_t3 = p3;
+    let intercept_parallel = parallel_p_at_t3 - slope * (t3 - t2) as f64;
+
+    let w5_target = slope * (t5_est - t2) as f64 + intercept_parallel;
+
+    Some(ImpulseChannel {
+        base_t1: t2,
+        base_p1: p2,
+        base_t2: t4,
+        base_p2: p4,
+        parallel_t: t3,
+        parallel_p: p3,
+        w5_channel_target: w5_target,
+    })
+}
+
+/// Alternatif kanal: W3 anormal güçlüyse W1 tepesinden paralel çizgi kullan.
+/// PDF: "a parallel to the baseline that touches the top of wave one is then more useful."
+pub fn compute_impulse_channel_alt(
+    t1: i64,
+    p1: f64,
+    t2: i64,
+    p2: f64,
+    t4: i64,
+    p4: f64,
+    t5_est: i64,
+) -> Option<ImpulseChannel> {
+    let dt_base = (t4 - t2) as f64;
+    if dt_base.abs() < 1e-10 {
+        return None;
+    }
+    let slope = (p4 - p2) / dt_base;
+    let intercept_parallel = p1 - slope * (t1 - t2) as f64;
+    let w5_target = slope * (t5_est - t2) as f64 + intercept_parallel;
+
+    Some(ImpulseChannel {
+        base_t1: t2,
+        base_p1: p2,
+        base_t2: t4,
+        base_p2: p4,
+        parallel_t: t1,
+        parallel_p: p1,
+        w5_channel_target: w5_target,
+    })
+}
+
+/// PDF p.26-27: "Depth of Corrective Waves"
+/// W2 genellikle W1'in iç W4 seviyesinde biter.
+/// W4 genellikle W3'ün iç W4 seviyesinde biter.
+/// İç W4 seviyesi: ana dalganın (W1/W3) .382 retrace noktası.
+pub fn depth_of_corrective_target(
+    wave_start: f64,
+    wave_end: f64,
+    bullish: bool,
+) -> f64 {
+    let range = (wave_end - wave_start).abs();
+    if bullish {
+        wave_end - range * 0.382
+    } else {
+        wave_end + range * 0.382
+    }
+}
+
+/// PDF p.26-27: Gerçek iç W4 seviyesini alt-dalga yapısından tespit et.
+/// Motive dalga içinde sub-W4, son corrective dönüş noktasıdır.
+/// Bullish'te son trough (is_high=false), bearish'te son peak (is_high=true).
+/// Yeterli iç swing yoksa .382 heuristic'e fallback yapar.
+pub fn depth_of_corrective_target_from_subwaves(
+    wave_start: f64,
+    wave_end: f64,
+    bullish: bool,
+    inner_swings: &[(i64, f64, bool)],
+) -> f64 {
+    let corrective_points: Vec<f64> = inner_swings
+        .iter()
+        .filter(|(_, _, is_high)| if bullish { !*is_high } else { *is_high })
+        .map(|(_, p, _)| *p)
+        .collect();
+
+    if corrective_points.len() >= 2 {
+        return *corrective_points.last().unwrap();
+    }
+
+    depth_of_corrective_target(wave_start, wave_end, bullish)
+}
+
+/// Semi-log kanal hedefi: fiyatları logaritmik ölçekte hesaplayıp geri dönüştür.
+/// PDF p.28: "switch to the other scale (semilog) in order to observe the channel"
+pub fn compute_impulse_channel_semilog(
+    t2: i64,
+    p2: f64,
+    t3: i64,
+    p3: f64,
+    t4: i64,
+    p4: f64,
+    t5_est: i64,
+) -> Option<f64> {
+    if p2 <= 0.0 || p3 <= 0.0 || p4 <= 0.0 {
+        return None;
+    }
+    let dt_base = (t4 - t2) as f64;
+    if dt_base.abs() < 1e-10 {
+        return None;
+    }
+    let lp2 = p2.ln();
+    let lp3 = p3.ln();
+    let lp4 = p4.ln();
+    let slope = (lp4 - lp2) / dt_base;
+    let intercept = lp3 - slope * (t3 - t2) as f64;
+    let log_target = slope * (t5_est - t2) as f64 + intercept;
+    Some(log_target.exp())
+}
+
+/// Alt-dalga yapısı doğrulama sonucu
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubWaveValidation {
+    /// W1 iç swing sayısı (beklenen: ≥4 → 5-dalgalı)
+    pub w1_inner: usize,
+    /// W2 iç swing sayısı (beklenen: ≥2 → 3-dalgalı)
+    pub w2_inner: usize,
+    /// W3 iç swing sayısı (beklenen: ≥4 → 5-dalgalı)
+    pub w3_inner: usize,
+    /// W4 iç swing sayısı (beklenen: ≥2 → 3-dalgalı)
+    pub w4_inner: usize,
+    /// W5 iç swing sayısı (beklenen: ≥4 → 5-dalgalı)
+    pub w5_inner: usize,
+    /// Genel geçerlilik: motive dalgalar 5-dalgalı, corrective dalgalar 3-dalgalı mı
+    pub valid: bool,
+    /// Kaç dalga beklenen yapıyla uyumlu (0-5)
+    pub conforming_count: u8,
+    /// Level-2 recursive: kaç alt-dalganın kendi iç yapısı da doğrulandı
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deep_conforming: Option<u8>,
+    /// Level-2 recursive: kaç alt-dalga kontrol edilebildi
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deep_total_checked: Option<u8>,
+    /// Level-2 recursive genel geçerlilik
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deep_valid: Option<bool>,
+    /// Truncated W5 iç yapısı: 5-dalgalı yapıya sahip mi (≥4 iç swing)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub truncated_w5_inner_ok: Option<bool>,
+}
+
+/// İç swing sayısına göre alt-dalga yapısını doğrula.
+/// PDF: "Waves 1, 3, and 5 are themselves motive (5-wave), waves 2 and 4 are corrective (3-wave)."
+/// inner_counts: [W1, W2, W3, W4, W5] iç swing sayıları
+pub fn validate_subwave_structure(inner_counts: [usize; 5]) -> SubWaveValidation {
+    // 5-dalgalı motive yapı → en az 4 iç swing (5 nokta arası 4 bacak)
+    // 3-dalgalı corrective yapı → en az 2 iç swing
+    let w1_ok = inner_counts[0] >= 4;
+    let w2_ok = inner_counts[1] >= 2 && inner_counts[1] <= 5;
+    let w3_ok = inner_counts[2] >= 4;
+    let w4_ok = inner_counts[3] >= 2 && inner_counts[3] <= 5;
+    let w5_ok = inner_counts[4] >= 4;
+
+    let conforming = [w1_ok, w2_ok, w3_ok, w4_ok, w5_ok]
+        .iter()
+        .filter(|&&x| x)
+        .count() as u8;
+
+    // En az 3/5 uyum → geçerli (toleranslı — gerçek piyasada alt swing'ler her zaman ideal sayıda olmayabilir)
+    let valid = conforming >= 3;
+
+    SubWaveValidation {
+        w1_inner: inner_counts[0],
+        w2_inner: inner_counts[1],
+        w3_inner: inner_counts[2],
+        w4_inner: inner_counts[3],
+        w5_inner: inner_counts[4],
+        valid,
+        conforming_count: conforming,
+        deep_conforming: None,
+        deep_total_checked: None,
+        deep_valid: None,
+        truncated_w5_inner_ok: None,
+    }
+}
+
+/// Level-2 recursive alt-dalga doğrulaması.
+/// `level2_counts[w]` = w. dalganın iç alt-dalgalarının her birinin iç swing sayıları.
+///
+/// Motive dalga (W1,W3,W5) 5 alt-dalgadan oluşur → sub-W1,3,5 ≥ 2 iç swing, sub-W2,4 ≥ 1.
+/// Corrective dalga (W2,W4) 3 alt-dalgadan oluşur → sub-A,C ≥ 2 iç swing, sub-B ≥ 1.
+pub fn validate_subwave_deep(
+    swv: &mut SubWaveValidation,
+    level2_counts: &[Vec<usize>; 5],
+) {
+    let mut checked: u8 = 0;
+    let mut conforming: u8 = 0;
+
+    for (w, sub_counts) in level2_counts.iter().enumerate() {
+        let is_motive = w == 0 || w == 2 || w == 4; // W1, W3, W5
+        if is_motive {
+            if sub_counts.len() >= 5 {
+                checked += 1;
+                let sub_w1_ok = sub_counts[0] >= 2;
+                let sub_w2_ok = sub_counts[1] >= 1;
+                let sub_w3_ok = sub_counts[2] >= 2;
+                let sub_w4_ok = sub_counts[3] >= 1;
+                let sub_w5_ok = sub_counts[4] >= 2;
+                let ok_count = [sub_w1_ok, sub_w2_ok, sub_w3_ok, sub_w4_ok, sub_w5_ok]
+                    .iter()
+                    .filter(|&&x| x)
+                    .count();
+                if ok_count >= 3 {
+                    conforming += 1;
+                }
+            }
+        } else {
+            if sub_counts.len() >= 3 {
+                checked += 1;
+                let sub_a_ok = sub_counts[0] >= 2;
+                let sub_b_ok = sub_counts[1] >= 1;
+                let sub_c_ok = sub_counts[2] >= 2;
+                let ok_count = [sub_a_ok, sub_b_ok, sub_c_ok]
+                    .iter()
+                    .filter(|&&x| x)
+                    .count();
+                if ok_count >= 2 {
+                    conforming += 1;
+                }
+            }
+        }
+    }
+
+    swv.deep_total_checked = Some(checked);
+    swv.deep_conforming = Some(conforming);
+    swv.deep_valid = if checked >= 2 {
+        Some(conforming as f64 / checked as f64 >= 0.5)
+    } else {
+        None // yetersiz veri
+    };
+}
+
+/// Nested extension tespiti: bir dalganın kendi içinde de extension olup olmadığını kontrol et.
+/// PDF p.16: "the third wave of an extended third wave is itself an extension"
+/// inner_swings: ilgili dalga aralığındaki iç swing'ler
+/// Dönüş: (nested_extended: bool, nested_ratio: f64)
+pub fn detect_nested_extension(inner_swings: &[(i64, f64, bool)]) -> (bool, f64) {
+    if inner_swings.len() < 5 {
+        return (false, 0.0);
+    }
+    // İç dalga bacaklarını hesapla
+    let mut legs: Vec<f64> = Vec::new();
+    for i in 0..inner_swings.len() - 1 {
+        legs.push((inner_swings[i + 1].1 - inner_swings[i].1).abs());
+    }
+    if legs.len() < 3 {
+        return (false, 0.0);
+    }
+    // En uzun bacağı bul
+    let max_leg = legs.iter().cloned().fold(0.0_f64, f64::max);
+    let avg_leg = legs.iter().sum::<f64>() / legs.len() as f64;
+    if avg_leg < 1e-10 {
+        return (false, 0.0);
+    }
+    let ratio = max_leg / avg_leg;
+    // 1.618'den büyük oran → iç extension
+    (ratio > 1.618, ratio)
+}
+
+/// Corrective dalganın iç yapı sayısını doğrula (Zigzag/Flat).
+/// PDF: Zigzag A=5dalga, B=3dalga, C=5dalga; Flat A=3, B=3, C=5
+/// inner_counts: [A_inner, B_inner, C_inner]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CorrSubWaveValidation {
+    pub a_inner: usize,
+    pub b_inner: usize,
+    pub c_inner: usize,
+    pub pattern: String,
+    pub valid: bool,
+}
+
+pub fn validate_corrective_subwaves(
+    inner_counts: [usize; 3],
+    is_zigzag: bool,
+) -> CorrSubWaveValidation {
+    let (a_ok, b_ok, c_ok, pattern) = if is_zigzag {
+        (inner_counts[0] >= 4, inner_counts[1] >= 2, inner_counts[2] >= 4, "5-3-5")
+    } else {
+        (inner_counts[0] >= 2, inner_counts[1] >= 2, inner_counts[2] >= 4, "3-3-5")
+    };
+    let valid = [a_ok, b_ok, c_ok].iter().filter(|&&x| x).count() >= 2;
+    CorrSubWaveValidation {
+        a_inner: inner_counts[0],
+        b_inner: inner_counts[1],
+        c_inner: inner_counts[2],
+        pattern: pattern.to_string(),
+        valid,
+    }
 }

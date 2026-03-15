@@ -43,6 +43,31 @@ pub enum TradeAction {
     None,
 }
 
+/// Risk bazlı pozisyon boyutu hesaplama.
+/// `account_balance * risk_pct / 100` = riske edilecek tutar;
+/// SL mesafesi ile bölünerek miktar (qty) bulunur.
+pub fn calculate_position_size(
+    account_balance: f64,
+    risk_pct: f64,
+    entry: f64,
+    stop_loss: f64,
+    leverage: f64,
+) -> f64 {
+    let sl_distance = (entry - stop_loss).abs();
+    if sl_distance < 1e-10 || entry < 1e-10 {
+        return 0.0;
+    }
+    let risk_amount = account_balance * risk_pct / 100.0;
+    let raw_qty = risk_amount / sl_distance;
+    let notional = raw_qty * entry;
+    let max_notional = account_balance * leverage;
+    if notional > max_notional {
+        max_notional / entry
+    } else {
+        raw_qty
+    }
+}
+
 /// Kar koruma ve trailing stop yönetimi
 pub struct TradeManager {
     config: Config,

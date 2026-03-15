@@ -2,8 +2,7 @@
 
 use iqai_core::{
     config::Config,
-    elliott::{validate_diagonal, validate_impulse},
-    impulse_detector::detect_impulse,
+    elliott_detector::compute_elliott,
     indicators::{pivot_high, pivot_low, rsi, sma},
     types::Candle,
 };
@@ -19,6 +18,21 @@ pub struct ChartAnnotations {
     pub support_line: Option<Line>,
     pub resistance_line: Option<Line>,
     pub elliott: ElliottAnnotations,
+    /// Zigzag çizgisi – swing noktaları (time, price)
+    pub zigzag: Vec<ZigzagPoint>,
+}
+
+#[derive(serde::Serialize)]
+pub struct ZigzagPoint {
+    pub time: i64,
+    pub price: f64,
+}
+
+/// Elliott projeksiyon hedefi
+#[derive(serde::Serialize)]
+pub struct ElliottProjection {
+    pub price: f64,
+    pub label: String,
 }
 
 /// Elliott Wave çizim verileri – swing bazlı dalga bacakları ve seviyeler
@@ -41,6 +55,65 @@ pub struct ElliottAnnotations {
     /// Kurallar geçerli mi (W2<=W0 iptal, W3 en kısa değil, W4-W1 örtüşmez)
     pub validation_ok: Option<bool>,
     pub validation_msg: Option<String>,
+    /// Devam eden formasyon (3 veya 4 swing ile henüz tamamlanmamış)
+    pub in_progress: Option<bool>,
+    /// Projeksiyon hedefleri (W3/W5 veya C) – in_progress iken dolu
+    pub projections: Option<Vec<ElliottProjection>>,
+    /// EWM tarzı sarı noktalı kanal çizgileri (üst: 1-3-5, alt: 2-4)
+    pub channel_upper: Option<Line>,
+    pub channel_lower: Option<Line>,
+    /// Dalga derecesi
+    pub degree: Option<iqai_core::elliott::WaveDegree>,
+    /// Truncation
+    pub truncation: Option<bool>,
+    /// Alternation
+    pub alternation: Option<iqai_core::elliott::AlternationResult>,
+    /// Impulse kanal (W2-W4 baz + W3 paralel)
+    pub channel: Option<iqai_core::elliott::ImpulseChannel>,
+    /// W5 giriş teyidi
+    pub w5_confirmation: Option<iqai_core::impulse_detector::W5Confirmation>,
+    /// W3 hacim kontrolü
+    pub w3_volume_ok: Option<bool>,
+    /// W5 süre hedefleri
+    pub w5_time_targets: Option<(i64, i64, i64)>,
+    /// W5 throw-over
+    pub throw_over: Option<bool>,
+    /// Extended dalga (1/3/5, oran)
+    pub extended_wave: Option<(u8, f64)>,
+    /// W1≈W5 eşitlik oranı
+    pub w1_w5_eq: Option<f64>,
+    /// W5 RSI divergence (W5 zayıflama sinyali)
+    pub w5_divergence: Option<bool>,
+    /// Yapısal alternation (W2 formasyon tipi vs W4 formasyon tipi)
+    pub alternation_structural: Option<iqai_core::elliott::AlternationResult>,
+    /// W2 düzeltme tipi (Sharp/Sideways)
+    pub w2_corr_type: Option<iqai_core::elliott::CorrWaveType>,
+    /// W4 düzeltme tipi (Sharp/Sideways)
+    pub w4_corr_type: Option<iqai_core::elliott::CorrWaveType>,
+    /// Diagonal iç yapı (LD: 5-3-5-3-5, ED: 3-3-3-3-3)
+    pub diagonal_sub: Option<iqai_core::elliott::DiagonalSubStructure>,
+    /// Diagonal iç swing sayıları [W1,W2,W3,W4,W5]
+    pub diagonal_inner_counts: Option<[usize; 5]>,
+    /// Corrective trade setup (Zigzag C veya Triangle E breakout)
+    pub corr_setup: Option<iqai_core::elliott::CorrSetup>,
+    /// Alternatif kanal (W3 güçlü ise W1 tepesinden paralel)
+    pub channel_alt: Option<iqai_core::elliott::ImpulseChannel>,
+    /// Semi-log kanal W5 hedefi
+    pub channel_semilog_target: Option<f64>,
+    /// W5 extension sinyali (vol W5 >= vol W3)
+    pub w5_vol_extension: Option<bool>,
+    /// W4 Golden Section
+    pub w4_golden_section: Option<f64>,
+    /// W2 depth target (W1 iç W4 seviyesi)
+    pub w2_depth_target: Option<f64>,
+    /// W4 depth target (W3 iç W4 seviyesi)
+    pub w4_depth_target: Option<f64>,
+    /// Alt-dalga yapısı doğrulaması (Impulse W1-W5)
+    pub subwave_validation: Option<iqai_core::elliott::SubWaveValidation>,
+    /// Nested extension (W3 iç ext)
+    pub nested_extension: Option<(bool, f64)>,
+    /// Corrective alt-dalga doğrulaması (Zigzag/Flat A,B,C)
+    pub corr_subwave_validation: Option<iqai_core::elliott::CorrSubWaveValidation>,
 }
 
 #[derive(serde::Serialize)]
@@ -67,6 +140,9 @@ pub struct ElliottWaveLeg {
     pub price2: f64,
     pub label: String,
     pub color: String,
+    /// Tamamlanmamış dalga (projeksiyon) ise true – noktalı çizilir
+    #[serde(default)]
+    pub dotted: bool,
 }
 
 #[derive(serde::Serialize)]
@@ -117,6 +193,18 @@ pub struct DivergenceEvent {
     pub color: String,
 }
 
+/// Geçmiş veride bulunan geçerli Elliott formasyonu
+#[derive(serde::Serialize)]
+pub struct HistoricalFormation {
+    pub end_time: i64,
+    pub formation: String,
+    pub formation_type: String,
+    pub is_bullish: bool,
+    pub wave_points: Vec<ElliottWavePoint>,
+    pub wave_legs: Vec<ElliottWaveLeg>,
+    pub w5_targets: Option<(f64, f64, f64)>,
+}
+
 #[derive(serde::Serialize)]
 pub struct Line {
     pub time1: i64,
@@ -128,7 +216,12 @@ pub struct Line {
     pub color: String,
 }
 
-pub fn compute_annotations(candles: &[Candle], config: &Config) -> ChartAnnotations {
+/// Elliott seçenekleri (API'den gelen)
+pub struct ElliottOptions {
+    pub invert: bool,
+}
+
+pub fn compute_annotations(candles: &[Candle], config: &Config, opts: Option<&ElliottOptions>) -> ChartAnnotations {
     let pl = config.pivot_length as usize;
     let mut choch = Vec::new();
     let mut bos = Vec::new();
@@ -148,6 +241,7 @@ pub fn compute_annotations(candles: &[Candle], config: &Config) -> ChartAnnotati
             support_line: None,
             resistance_line: None,
             elliott: ElliottAnnotations::default(),
+            zigzag: vec![],
         };
     }
 
@@ -372,46 +466,84 @@ pub fn compute_annotations(candles: &[Candle], config: &Config) -> ChartAnnotati
                 highest_x1 = j;
             }
         }
-        let last_time = candles[n - 1].time / 1000;
+        // Work consistently in seconds for all time-based calculations to avoid
+        // unit mismatches (milliseconds vs seconds) that flatten the slope.
+        let last_time_sec = candles[n - 1].time / 1000;
         if lowest_x1 > 0 && lowest_x2 > 0 {
-            let dt = candles[n - 1 - lowest_x2].time - candles[n - 1 - lowest_x1].time;
-            let slope = if dt != 0 {
-                (lowest_y2 - lowest_y1) as f64 / dt as f64 * 1000.0
+            let t1_sec = candles[n - 1 - lowest_x1].time / 1000;
+            let t2_sec = candles[n - 1 - lowest_x2].time / 1000;
+            let dt_sec = t2_sec - t1_sec;
+            let slope = if dt_sec != 0 {
+                (lowest_y2 - lowest_y1) as f64 / dt_sec as f64
             } else {
                 0.0
             };
-            let price3 = lowest_y2 + slope * (last_time - candles[n - 1 - lowest_x2].time / 1000) as f64;
+            let price3 = lowest_y2 + slope * (last_time_sec - t2_sec) as f64;
             support_line = Some(Line {
-                time1: candles[n - 1 - lowest_x1].time / 1000,
+                time1: t1_sec,
                 price1: lowest_y1,
-                time2: candles[n - 1 - lowest_x2].time / 1000,
+                time2: t2_sec,
                 price2: lowest_y2,
-                time3: last_time,
+                time3: last_time_sec,
                 price3,
                 color: "#00E676".to_string(),
             });
         }
         if highest_x1 > 0 && highest_x2 > 0 {
-            let dt = candles[n - 1 - highest_x2].time - candles[n - 1 - highest_x1].time;
-            let slope = if dt != 0 {
-                (highest_y2 - highest_y1) as f64 / dt as f64 * 1000.0
+            let t1_sec = candles[n - 1 - highest_x1].time / 1000;
+            let t2_sec = candles[n - 1 - highest_x2].time / 1000;
+            let dt_sec = t2_sec - t1_sec;
+            let slope = if dt_sec != 0 {
+                (highest_y2 - highest_y1) as f64 / dt_sec as f64
             } else {
                 0.0
             };
-            let price3 = highest_y2 + slope * (last_time - candles[n - 1 - highest_x2].time / 1000) as f64;
+            let price3 = highest_y2 + slope * (last_time_sec - t2_sec) as f64;
             resistance_line = Some(Line {
-                time1: candles[n - 1 - highest_x1].time / 1000,
+                time1: t1_sec,
                 price1: highest_y1,
-                time2: candles[n - 1 - highest_x2].time / 1000,
+                time2: t2_sec,
                 price2: highest_y2,
-                time3: last_time,
+                time3: last_time_sec,
                 price3,
                 color: "#FF1744".to_string(),
             });
         }
     }
 
-    let elliott = compute_elliott_annotations(candles, config);
+    let invert = opts.map(|o| o.invert).unwrap_or(false);
+    let mut elliott = elliott_result_to_annotations(compute_elliott(candles, config, invert));
+    let last_sec = candles.last().map(|c| c.time / 1000).unwrap_or(0);
+    if let Some((upper, lower)) = compute_elliott_channel_lines(&elliott, last_sec) {
+        elliott.channel_upper = Some(upper);
+        elliott.channel_lower = Some(lower);
+    }
+
+    // Elliott Fibo seviyelerini dalga çiziminden sonra, sağ tarafta kısa yatay çizgiler
+    // olarak göster: önce küçük bir boşluk (gap), sonra sabit uzunluk.
+    if !elliott.fibo_levels.is_empty() && candles.len() >= 2 {
+        let last = candles.last().unwrap();
+        let prev = &candles[candles.len() - 2];
+        let bar_sec = ((last.time - prev.time) / 1000).max(1);
+        let gap_bars = config.elliott_fibo_gap_bars.max(1) as i64;
+        let len_bars = config.elliott_fibo_length_bars.max(1) as i64;
+
+        // Son dalga noktası varsa onu referans al, yoksa son mum zamanı
+        let anchor_time = elliott
+            .wave_points
+            .last()
+            .map(|p| p.time)
+            .unwrap_or(last_sec);
+
+        let start = anchor_time + gap_bars * bar_sec as i64;
+        let end = start + len_bars * bar_sec as i64;
+
+        for f in elliott.fibo_levels.iter_mut() {
+            f.time1 = start;
+            f.time2 = end;
+        }
+    }
+    let zigzag = collect_zigzag_swings(candles, pl);
 
     ChartAnnotations {
         choch,
@@ -423,262 +555,406 @@ pub fn compute_annotations(candles: &[Candle], config: &Config) -> ChartAnnotati
         support_line,
         resistance_line,
         elliott,
+        zigzag,
     }
 }
 
-/// Pivot bazlı swing noktalarından Elliott dalga bacaklarını türet
-/// EWT kuralları: W2<=W0 iptal, W3 en kısa olamaz, W4-W1 örtüşmez
-fn compute_elliott_annotations(candles: &[Candle], config: &Config) -> ElliottAnnotations {
-    let pivot_len = config.pivot_length as usize;
-    let mut wave_legs = Vec::new();
-    let mut fibo_levels = Vec::new();
-    let mut formation = "—".to_string();
-    let mut formation_type = "—".to_string();
-    let mut wave_points = Vec::new();
-    let mut w5_targets = None;
-    let mut validation_ok = None;
-    let mut validation_msg = None;
+/// Zigzag için minimum fiyat değişimi (deviation) – gürültüyü filtreler (yön değişiminde)
+const ZIGZAG_DEVIATION_PCT: f64 = 0.005; // %0.5 – TradingView benzeri
 
+/// Pivot bazlı swing noktalarını topla – zigzag çizgisi için
+/// LuxAlgo mantığı: aynı yönde daha ekstrem pivot geldiğinde son noktayı güncelle (extend)
+/// Deviation: yön değişiminde yeni nokta eklemek için min % hareket gerekir
+fn collect_zigzag_swings(candles: &[Candle], pivot_len: usize) -> Vec<ZigzagPoint> {
+    let mut result = Vec::new();
     if candles.len() < pivot_len * 4 + 2 {
-        return ElliottAnnotations {
-            wave_legs,
-            fibo_levels,
-            formation,
-            formation_type,
-            wave_points,
-            w5_targets: None,
-            impulse_state: None,
-            validation_ok: None,
-            validation_msg: None,
-        };
+        return result;
     }
-
-    let imp = detect_impulse(candles, config);
-    let impulse_state = Some(ImpulseState {
-        stage: format!("{:?}", imp.stage),
-        message: imp.message.clone(),
-        is_bullish: imp.is_bullish,
-        setup_w3: imp.setup_w3.as_ref().map(|s| {
-            serde_json::json!({
-                "entry": s.entry,
-                "sl": s.stop_loss,
-                "tp1": s.tp1,
-                "tp2": s.tp2,
-                "is_long": s.is_long
-            })
-        }),
-        setup_w5: imp.setup_w5.as_ref().map(|s| {
-            serde_json::json!({
-                "entry": s.entry,
-                "sl": s.stop_loss,
-                "tp": s.tp,
-                "tp_alt": s.tp_alternate,
-                "is_long": s.is_long
-            })
-        }),
-    });
-
-    // Swing high/low noktalarını sırayla topla (alternating)
-    let mut swings: Vec<(i64, f64, bool)> = Vec::new();
     let mut last_was_high = Option::<bool>::None;
+    let mut last_price: Option<f64> = None;
+
     for i in (pivot_len * 2 + 1)..(candles.len().saturating_sub(pivot_len)) {
         let sub = &candles[..=i + pivot_len];
         let pivot_idx = sub.len() - 1 - pivot_len;
-        let t = candles[pivot_idx].time;
+        let t = candles[pivot_idx].time / 1000;
 
         if let Some(ph) = pivot_high(sub, pivot_len) {
             if last_was_high != Some(true) {
-                swings.push((t, ph, true));
-                last_was_high = Some(true);
+                // Yön değişimi: önceki low veya ilk nokta – deviation kontrolü ile ekle
+                let ok = last_price
+                    .map(|lp| (ph - lp).abs() / lp.max(1e-10) >= ZIGZAG_DEVIATION_PCT)
+                    .unwrap_or(true);
+                if ok {
+                    result.push(ZigzagPoint { time: t, price: ph });
+                    last_was_high = Some(true);
+                    last_price = Some(ph);
+                }
+            } else if ph > last_price.unwrap_or(0.0) {
+                // LuxAlgo extend: aynı yönde daha yüksek high – son noktayı güncelle
+                if let Some(last) = result.last_mut() {
+                    last.time = t;
+                    last.price = ph;
+                }
+                last_price = Some(ph);
             }
         }
         if let Some(pl_val) = pivot_low(sub, pivot_len) {
             if last_was_high != Some(false) {
-                swings.push((t, pl_val, false));
-                last_was_high = Some(false);
+                // Yön değişimi: önceki high veya ilk nokta
+                let ok = last_price
+                    .map(|lp| (pl_val - lp).abs() / lp.max(1e-10) >= ZIGZAG_DEVIATION_PCT)
+                    .unwrap_or(true);
+                if ok {
+                    result.push(ZigzagPoint { time: t, price: pl_val });
+                    last_was_high = Some(false);
+                    last_price = Some(pl_val);
+                }
+            } else if pl_val < last_price.unwrap_or(f64::INFINITY) {
+                // LuxAlgo extend: aynı yönde daha düşük low – son noktayı güncelle
+                if let Some(last) = result.last_mut() {
+                    last.time = t;
+                    last.price = pl_val;
+                }
+                last_price = Some(pl_val);
             }
         }
     }
+    result
+}
 
-    // Elliott kuralları: Bullish W0=low,W1=high,W2=low,W3=high,W4=low
-    // Bearish W0=high,W1=low,W2=high,W3=low,W4=high
-    // Hem bullish hem bearish deneyerek geçerli impulse veren pencere seç
-    let (recent, is_bullish): (Vec<_>, bool) = {
-        let take = swings.len().min(9);
-        let base_start = swings.len().saturating_sub(take);
-        let base: Vec<_> = swings[base_start..].to_vec();
-        if base.len() < 5 {
-            (base, imp.is_bullish)
+/// Merkezi Elliott sonucunu Web GUI için görsel formata dönüştür (renk ekle)
+fn leg_color(label: &str) -> &'static str {
+    match label {
+        "1" | "3" | "5" | "A" | "C" | "E" => "#00E5FF",
+        _ => "#00BFA5",
+    }
+}
+
+/// EWM tarzı sarı noktalı kanal çizgileri. Impulse/Diagonal: üst (1-3-5), alt (2-4). Triangle: üst (B-D), alt (A-C). Zigzag/Flat: üst (A'-C veya A-B), alt (A-B veya A'-C).
+fn compute_elliott_channel_lines(
+    ann: &ElliottAnnotations,
+    last_candle_time_sec: i64,
+) -> Option<(Line, Line)> {
+    if ann.validation_ok != Some(true) {
+        return None;
+    }
+    let yellow = "#FFD700".to_string();
+    let t_sec = |p: &ElliottWavePoint| if p.time > 1_000_000_000_000 { p.time / 1000 } else { p.time };
+    let pr = |p: &ElliottWavePoint| p.price;
+
+    if ann.formation == "Triangle" {
+        let pts = &ann.wave_points;
+        let by_label = |l: &str| pts.iter().find(|p| p.label == l);
+        let pa = by_label("A")?;
+        let pb = by_label("B")?;
+        let pc = by_label("C")?;
+        let pd = by_label("D")?;
+        // EWM: üst çizgi B-D, alt çizgi A-C (daralan üçgen)
+        let (ta, pra) = (t_sec(pa), pr(pa));
+        let (tb, prb) = (t_sec(pb), pr(pb));
+        let (tc, prc) = (t_sec(pc), pr(pc));
+        let (td, prd) = (t_sec(pd), pr(pd));
+        let dt_upper = td - tb;
+        let slope_upper = if dt_upper != 0 {
+            (prd - prb) as f64 / dt_upper as f64
         } else {
-            let mut valid_window: Option<(Vec<_>, bool)> = None;
-            let mut fallback: Option<(Vec<_>, bool)> = None;
-            for is_bull in [imp.is_bullish, !imp.is_bullish] {
-                let need_first_high = !is_bull;
-                for s in (0..=base.len().saturating_sub(5)).rev() {
-                    let w = &base[s..s + 5];
-                    let first_high = w[0].2;
-                    if first_high != need_first_high || w[1].2 == first_high || w[2].2 != first_high || w[3].2 == first_high || w[4].2 != first_high {
-                        continue;
-                    }
-                    let (p0, p1, p2, p3, p4) = (w[0].1, w[1].1, w[2].1, w[3].1, w[4].1);
-                    let (w0, w1_h, w1_l, w2_ext, w3_ext, w4_ext) = if is_bull {
-                        (p0, p1, p0, p2, p3, p4)
-                    } else {
-                        (p0, p0, p1, p2, p3, p4)
-                    };
-                    let val = validate_impulse(w0, w1_h, w1_l, w2_ext, w3_ext, w4_ext, is_bull);
-                    if fallback.is_none() {
-                        fallback = Some((w.to_vec(), is_bull));
-                    }
-                    if val.formation_valid {
-                        valid_window = Some((w.to_vec(), is_bull));
-                        break;
-                    }
-                }
-                if valid_window.is_some() {
-                    break;
-                }
-            }
-            valid_window
-                .or(fallback)
-                .unwrap_or_else(|| (base[base.len().saturating_sub(5)..].to_vec(), imp.is_bullish))
-        }
-    };
-
-    if recent.len() >= 3 {
-        let (t0, p0, _) = recent[0];
-        let (t1, p1, _) = recent[1];
-        let (t2, p2, _) = recent[2];
-
-        wave_points.push(ElliottWavePoint { time: t0 / 1000, price: p0, label: "0".to_string() });
-        wave_points.push(ElliottWavePoint { time: t1 / 1000, price: p1, label: "1".to_string() });
-        wave_points.push(ElliottWavePoint { time: t2 / 1000, price: p2, label: "2".to_string() });
-        if recent.len() < 5 {
-            formation = "Impulse (1-2)".to_string();
-            formation_type = "Motif (İtki)".to_string();
-        }
-
-        wave_legs.push(ElliottWaveLeg {
-            time1: t0 / 1000,
-            price1: p0,
-            time2: t1 / 1000,
-            price2: p1,
-            label: "1".to_string(),
-            color: "#00E5FF".to_string(),
-        });
-        wave_legs.push(ElliottWaveLeg {
-            time1: t1 / 1000,
-            price1: p1,
-            time2: t2 / 1000,
-            price2: p2,
-            label: "2".to_string(),
-            color: "#00BFA5".to_string(),
-        });
-
-        if recent.len() >= 5 {
-            let (t3, p3, _) = recent[3];
-            let (t4, p4, _) = recent[4];
-            wave_points.push(ElliottWavePoint { time: t3 / 1000, price: p3, label: "3".to_string() });
-            wave_points.push(ElliottWavePoint { time: t4 / 1000, price: p4, label: "4".to_string() });
-
-            wave_legs.push(ElliottWaveLeg {
-                time1: t2 / 1000,
-                price1: p2,
-                time2: t3 / 1000,
-                price2: p3,
-                label: "3".to_string(),
-                color: "#00E5FF".to_string(),
-            });
-            wave_legs.push(ElliottWaveLeg {
-                time1: t3 / 1000,
-                price1: p3,
-                time2: t4 / 1000,
-                price2: p4,
-                label: "4".to_string(),
-                color: "#00BFA5".to_string(),
-            });
-
-            // EWT kuralları: W2<=W0 iptal, W3 en kısa olamaz, W4-W1 örtüşmez
-            let bullish = is_bullish;
-            let (w0, w1_h, w1_l, w2_ext, w3_ext, w4_ext) = if bullish {
-                (p0, p1, p0, p2, p3, p4)
-            } else {
-                (p0, p0, p1, p2, p3, p4)
-            };
-            let val = validate_impulse(w0, w1_h, w1_l, w2_ext, w3_ext, w4_ext, bullish);
-            let diag = validate_diagonal(w0, w1_h, w1_l, w2_ext, w3_ext, w4_ext, bullish);
-            // W4-W1 örtüşmesi varsa Impulse geçersiz; Diagonal (ED/CD) alternatifi değerlendir
-            let (validation_ok_val, validation_msg_val, formation_label, formation_type_label) =
-                if val.formation_valid {
-                    (Some(true), Some("Kurallar geçerli".to_string()), "Impulse".to_string(), "Motif (İtki)".to_string())
-                } else if !val.w4_valid && val.w2_valid && val.w3_valid && diag.formation_valid {
-                    // Sadece W4-W1 örtüşme ihlali; Diagonal geçerli
-                    (Some(true), Some("Diagonal: W4-W1 örtüşmesi kabul (ED/CD)".to_string()), "Diagonal".to_string(), "Motif (Bitiş Diyagonal)".to_string())
-                } else {
-                    let mut parts = vec![];
-                    if !val.w2_valid {
-                        parts.push("W2<=W0");
-                    }
-                    if !val.w3_valid {
-                        parts.push("W3 en kısa");
-                    }
-                    if !val.w4_valid {
-                        parts.push("W4-W1 örtüşme");
-                    }
-                    if !val.no_triple_extension_valid {
-                        parts.push("Triple extension");
-                    }
-                    let msg = format!("İhlal: {}", parts.join(", "));
-                    (Some(false), Some(msg), "Impulse".to_string(), "Motif (İtki)".to_string())
-                };
-            validation_ok = validation_ok_val;
-            validation_msg = validation_msg_val;
-            formation = formation_label;
-            formation_type = formation_type_label;
-
-            // W5 tahminleri: W1=W5, 0.618×(W0→W3), W4 inverse 123.6% (EWF)
-            let w1_len = (p1 - p0).abs();
-            let w1_3_len = (p3 - p0).abs();
-            let w4_len = (p3 - p4).abs();
-            let w5_eq = if bullish { p4 + w1_len } else { p4 - w1_len };
-            let w5_618 = if bullish { p4 + 0.618 * w1_3_len } else { p4 - 0.618 * w1_3_len };
-            let w5_inv = if bullish { p4 + 1.236 * w4_len } else { p4 - 1.236 * w4_len };
-            w5_targets = Some((w5_eq, w5_618, w5_inv));
-
-            let low = [p0, p1, p2].into_iter().fold(f64::INFINITY, f64::min);
-            let high = [p0, p1, p2].into_iter().fold(f64::NEG_INFINITY, f64::max);
-            let range = high - low;
-            if range > 0.0 {
-                let last_time = candles.last().map(|c| c.time / 1000).unwrap_or(t4 / 1000);
-                for (ratio, label, color) in [
-                    (0.146, "14.6%", "#66BB6A"),
-                    (0.236, "23.6%", "#4CAF50"),
-                    (0.382, "38.2%", "#8BC34A"),
-                    (0.5, "50%", "#FFEB3B"),
-                    (0.618, "61.8%", "#FF9800"),
-                ] {
-                    let price = low + range * ratio;
-                    fibo_levels.push(FiboLevel {
-                        time1: t0 / 1000,
-                        time2: last_time,
-                        price,
-                        label: label.to_string(),
-                        color: color.to_string(),
-                    });
-                }
-            }
-        }
+            0.0
+        };
+        let price3_upper = prd + slope_upper * (last_candle_time_sec - td) as f64;
+        let dt_lower = tc - ta;
+        let slope_lower = if dt_lower != 0 {
+            (prc - pra) as f64 / dt_lower as f64
+        } else {
+            0.0
+        };
+        let price3_lower = prc + slope_lower * (last_candle_time_sec - tc) as f64;
+        let upper = Line {
+            time1: tb,
+            price1: prb,
+            time2: td,
+            price2: prd,
+            time3: last_candle_time_sec,
+            price3: price3_upper,
+            color: yellow.clone(),
+        };
+        let lower = Line {
+            time1: ta,
+            price1: pra,
+            time2: tc,
+            price2: prc,
+            time3: last_candle_time_sec,
+            price3: price3_lower,
+            color: yellow,
+        };
+        return Some((upper, lower));
     }
+
+    if ann.formation == "Zigzag" || ann.formation.starts_with("Flat") {
+        let pts = &ann.wave_points;
+        let by_label = |l: &str| pts.iter().find(|p| p.label == l);
+        // Flat: 0, A, B, C (Regular/Expanded/Running). Zigzag: A, A', B, C.
+        let (pa, pa2) = if ann.formation.starts_with("Flat") {
+            (by_label("0")?, by_label("A")?)
+        } else {
+            (by_label("A")?, by_label("A'")?)
+        };
+        let pb = by_label("B")?;
+        let pc = by_label("C")?;
+        let (ta, pra) = (t_sec(pa), pr(pa));
+        let (ta2, pra2) = (t_sec(pa2), pr(pa2));
+        let (tb, prb) = (t_sec(pb), pr(pb));
+        let (tc, prc) = (t_sec(pc), pr(pc));
+        let (upper_t1, upper_p1, upper_t2, upper_p2, lower_t1, lower_p1, lower_t2, lower_p2) =
+            if pra < pra2 && prc > prb {
+                (ta2, pra2, tc, prc, ta, pra, tb, prb)
+            } else {
+                (ta, pra, tb, prb, ta2, pra2, tc, prc)
+            };
+        let dt_u = upper_t2 - upper_t1;
+        let slope_u = if dt_u != 0 {
+            (upper_p2 - upper_p1) as f64 / dt_u as f64
+        } else {
+            0.0
+        };
+        let price3_u = upper_p2 + slope_u * (last_candle_time_sec - upper_t2) as f64;
+        let dt_l = lower_t2 - lower_t1;
+        let slope_l = if dt_l != 0 {
+            (lower_p2 - lower_p1) as f64 / dt_l as f64
+        } else {
+            0.0
+        };
+        let price3_l = lower_p2 + slope_l * (last_candle_time_sec - lower_t2) as f64;
+        let upper = Line {
+            time1: upper_t1,
+            price1: upper_p1,
+            time2: upper_t2,
+            price2: upper_p2,
+            time3: last_candle_time_sec,
+            price3: price3_u,
+            color: yellow.clone(),
+        };
+        let lower = Line {
+            time1: lower_t1,
+            price1: lower_p1,
+            time2: lower_t2,
+            price2: lower_p2,
+            time3: last_candle_time_sec,
+            price3: price3_l,
+            color: yellow,
+        };
+        return Some((upper, lower));
+    }
+
+    if ann.formation != "Impulse" && ann.formation != "Diagonal" {
+        return None;
+    }
+    let pts = &ann.wave_points;
+    let by_label = |l: &str| pts.iter().find(|p| p.label == l);
+    let p1 = by_label("1")?;
+    let p2 = by_label("2")?;
+    let p3 = by_label("3")?;
+    let p4 = by_label("4")?;
+    let p5 = by_label("5");
+    let (t1, pr1) = (t_sec(p1), pr(p1));
+    let (t2, pr2) = (t_sec(p2), pr(p2));
+    let (t3, pr3) = (t_sec(p3), pr(p3));
+    let (t4, pr4) = (t_sec(p4), pr(p4));
+    let upper_t2 = p5.map(|p| t_sec(p)).unwrap_or(t3);
+    let upper_pr2 = p5.map(|p| pr(p)).unwrap_or(pr3);
+    let dt_u = upper_t2 - t1;
+    let slope_u = if dt_u != 0 {
+        (upper_pr2 - pr1) as f64 / dt_u as f64
+    } else {
+        0.0
+    };
+    let price3_u = upper_pr2 + slope_u * (last_candle_time_sec - upper_t2) as f64;
+    let dt_l = t4 - t2;
+    let slope_l = if dt_l != 0 {
+        (pr4 - pr2) as f64 / dt_l as f64
+    } else {
+        0.0
+    };
+    let price3_l = pr4 + slope_l * (last_candle_time_sec - t4) as f64;
+    let upper = Line {
+        time1: t1,
+        price1: pr1,
+        time2: upper_t2,
+        price2: upper_pr2,
+        time3: last_candle_time_sec,
+        price3: price3_u,
+        color: yellow.clone(),
+    };
+    let lower = Line {
+        time1: t2,
+        price1: pr2,
+        time2: t4,
+        price2: pr4,
+        time3: last_candle_time_sec,
+        price3: price3_l,
+        color: yellow,
+    };
+    Some((upper, lower))
+}
+
+fn fibo_color(label: &str) -> &'static str {
+    match label {
+        "14.6%" => "#66BB6A",
+        "23.6%" => "#4CAF50",
+        "38.2%" => "#8BC34A",
+        "50%" => "#FFEB3B",
+        "61.8%" => "#FF9800",
+        _ => "#8BC34A",
+    }
+}
+
+fn elliott_result_to_annotations(
+    r: iqai_core::elliott_detector::ElliottDetectorResult,
+) -> ElliottAnnotations {
+    let wave_points: Vec<_> = r
+        .wave_points
+        .into_iter()
+        .map(|p| ElliottWavePoint {
+            time: p.time,
+            price: p.price,
+            label: p.label,
+        })
+        .collect();
+
+    let wave_legs: Vec<_> = r
+        .wave_legs
+        .into_iter()
+        .map(|l| {
+            let color = leg_color(&l.label).to_string();
+            ElliottWaveLeg {
+                time1: l.time1,
+                price1: l.price1,
+                time2: l.time2,
+                price2: l.price2,
+                label: l.label,
+                color,
+                dotted: l.dotted,
+            }
+        })
+        .collect();
+
+    let fibo_levels: Vec<_> = r
+        .fibo_levels
+        .into_iter()
+        .map(|f| FiboLevel {
+            time1: f.time1,
+            time2: f.time2,
+            price: f.price,
+            label: f.label.clone(),
+            color: fibo_color(&f.label).to_string(),
+        })
+        .collect();
+
+    let impulse_state = r.impulse_state.map(|s| ImpulseState {
+        stage: s.stage,
+        message: s.message,
+        is_bullish: s.is_bullish,
+        setup_w3: s.setup_w3,
+        setup_w5: s.setup_w5,
+    });
+
+    let projections = r.projections.map(|v| {
+        v.into_iter()
+            .map(|p| ElliottProjection {
+                price: p.price,
+                label: p.label,
+            })
+            .collect()
+    });
 
     ElliottAnnotations {
         wave_legs,
         fibo_levels,
-        formation,
-        formation_type,
+        formation: r.formation,
+        formation_type: r.formation_type,
         wave_points,
-        w5_targets,
+        w5_targets: r.w5_targets,
         impulse_state,
-        validation_ok,
-        validation_msg,
+        validation_ok: r.validation_ok,
+        validation_msg: r.validation_msg,
+        in_progress: r.in_progress,
+        projections,
+        channel_upper: None,
+        channel_lower: None,
+        degree: r.degree,
+        truncation: r.truncation,
+        alternation: r.alternation,
+        channel: r.channel,
+        w5_confirmation: r.w5_confirmation,
+        w3_volume_ok: r.w3_volume_ok,
+        w5_time_targets: r.w5_time_targets,
+        throw_over: r.throw_over,
+        extended_wave: r.extended_wave,
+        w1_w5_eq: r.w1_w5_eq,
+        w5_divergence: r.w5_divergence,
+        alternation_structural: r.alternation_structural,
+        w2_corr_type: r.w2_corr_type,
+        w4_corr_type: r.w4_corr_type,
+        diagonal_sub: r.diagonal_sub,
+        diagonal_inner_counts: r.diagonal_inner_counts,
+        corr_setup: r.corr_setup,
+        channel_alt: r.channel_alt,
+        channel_semilog_target: r.channel_semilog_target,
+        w5_vol_extension: r.w5_vol_extension,
+        w4_golden_section: r.w4_golden_section,
+        w2_depth_target: r.w2_depth_target,
+        w4_depth_target: r.w4_depth_target,
+        subwave_validation: r.subwave_validation,
+        nested_extension: r.nested_extension,
+        corr_subwave_validation: r.corr_subwave_validation,
     }
+}
+
+/// Geçmiş verilerde geçerli Elliott formasyonlarını tara (sliding window)
+pub fn scan_elliott_formations(candles: &[Candle], config: &Config) -> Vec<HistoricalFormation> {
+    let pivot_len = config.pivot_length as usize;
+    let min_len = pivot_len * 4 + 2;
+    let step = pivot_len.max(10); // Adım: pivot_length veya en az 10 bar
+
+    let mut results = Vec::new();
+    let mut last_w4_time: Option<i64> = None;
+
+    for end in (min_len..candles.len()).step_by(step) {
+        let slice = &candles[..=end];
+        let ew = elliott_result_to_annotations(compute_elliott(slice, config, false));
+
+        if ew.validation_ok != Some(true) || ew.wave_points.len() < 4 {
+            continue;
+        }
+
+        let last_time = ew
+            .wave_points
+            .iter()
+            .find(|p| matches!(p.label.as_str(), "4" | "C" | "E"))
+            .map(|p| p.time)
+            .or_else(|| ew.wave_points.last().map(|p| p.time));
+        if let Some(t) = last_time {
+            if last_w4_time == Some(t) {
+                continue;
+            }
+            last_w4_time = Some(t);
+        }
+
+        let is_bullish = ew
+            .impulse_state
+            .as_ref()
+            .map(|s| s.is_bullish)
+            .unwrap_or(true);
+
+        results.push(HistoricalFormation {
+            end_time: candles[end].time,
+            formation: ew.formation.clone(),
+            formation_type: ew.formation_type.clone(),
+            is_bullish,
+            wave_points: ew.wave_points,
+            wave_legs: ew.wave_legs,
+            w5_targets: ew.w5_targets,
+        });
+    }
+
+    results
 }

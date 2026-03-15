@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IQAI | Pozisyon Metrikleri</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #050816;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: radial-gradient(circle at top left, #1f2937, #020617);
+      border-radius: 16px;
+      padding: 20px 24px;
+      width: 380px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(0, 217, 255, 0.25);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+    .card-header h1 {
+      font-size: 18px;
+      color: #00f5ff;
+    }
+    .card-header span {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .field-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 4px 0;
+    }
+    .field-label { color: #9ca3af; }
+    .field-value { font-weight: 500; }
+    .strength-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .strength-good {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.6);
+    }
+    .strength-mid {
+      background: rgba(234, 179, 8, 0.12);
+      color: #facc15;
+      border: 1px solid rgba(234, 179, 8, 0.6);
+    }
+    .strength-weak {
+      background: rgba(248, 113, 113, 0.12);
+      color: #fca5a5;
+      border: 1px solid rgba(248, 113, 113, 0.6);
+    }
+    .section-title {
+      font-size: 12px;
+      color: #818cf8;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+    .badge-up { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; }
+    .badge-down { background: rgba(248, 113, 113, 0.18); color: #fca5a5; }
+    .badge-flat { background: rgba(148, 163, 184, 0.18); color: #cbd5f5; }
+    .warn {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #fbbf24;
+    }
+    .warn strong { color: #f97316; }
+    .inputs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .inputs input, .inputs select {
+      flex: 1;
+      background: #020617;
+      border: 1px solid #1f2937;
+      color: #e5e7eb;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .inputs button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      background: #22d3ee;
+      color: #020617;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .inputs button:hover { background: #06b6d4; }
+    .error {
+      font-size: 11px;
+      color: #fca5a5;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>Pozisyon Metrikleri</h1>
+      <span id="symbolInfo">—</span>
+    </div>
+    <div class="inputs">
+      <input id="symbolInput" placeholder="Sembol (örn. ETHUSDT)" />
+      <select id="tfSelect">
+        <option value="5M">5M</option>
+        <option value="15M">15M</option>
+        <option value="1H">1H</option>
+        <option value="4H">4H</option>
+      </select>
+      <button id="refreshBtn">Yenile</button>
+    </div>
+    <div id="errorBox" class="error"></div>
+
+    <div class="section-title">Durum</div>
+    <div class="field-row">
+      <span class="field-label">Durum</span>
+      <span id="positionState" class="field-value">—</span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Piyasa Modu</span>
+      <span id="marketMode" class="field-value">—</span>
+    </div>
+
+    <div class="section-title">Trend</div>
+    <div class="field-row">
+      <span class="field-label">Yerel Trend</span>
+      <span id="localTrend" class="field-value">—</span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Global Trend</span>
+      <span id="globalTrend" class="field-value">—</span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Oynaklık</span>
+      <span id="volatility" class="field-value">—</span>
+    </div>
+
+    <div class="section-title">Momentum &amp; Risk</div>
+    <div class="field-row">
+      <span class="field-label">Momentum (kısa / uzun)</span>
+      <span id="momentum" class="field-value">—</span>
+    </div>
+    <div class="section-title">Giriş / SL / TP</div>
+    <div class="field-row">
+      <span class="field-label">Giriş (setup)</span>
+      <span id="entryPrice" class="field-value">—</span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Stop (ilk)</span>
+      <span id="stopInitial" class="field-value">—</span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Kar Al (ilk)</span>
+      <span id="tpInitial" class="field-value">—</span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Risk / Ödül (RR)</span>
+      <span id="rr" class="field-value">—</span>
+    </div>
+
+    <div class="section-title">Güç (T / M / R)</div>
+    <div class="field-row">
+      <span class="field-label">Trend / Momentum / Risk</span>
+      <span id="tmrPoints" class="field-value">—</span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Pozisyon Gücü</span>
+      <span id="strengthChip" class="field-value">
+        <span class="strength-chip strength-weak">—</span>
+      </span>
+    </div>
+
+    <div id="flags" class="warn"></div>
+  </div>
+
+  <script>
+    function classifyTrendLabel(v) {
+      if (v > 0) return '<span class="badge badge-up">YUKARI</span>';
+      if (v < 0) return '<span class="badge badge-down">AŞAĞI</span>';
+      return '<span class="badge badge-flat">YATAY</span>';
+    }
+
+    function classifyStrengthChip(points) {
+      if (!points) {
+        return '<span class="strength-chip strength-weak">—</span>';
+      }
+      let cls = 'strength-weak';
+      if (points >= 8) cls = 'strength-good';
+      else if (points >= 5) cls = 'strength-mid';
+      return '<span class="strength-chip ' + cls + '">Güç ' + points + ' / 10</span>';
+    }
+
+    async function loadMetrics() {
+      const symbol = document.getElementById('symbolInput').value.trim() || 'ETHUSDT';
+      const tf = document.getElementById('tfSelect').value || '5M';
+      const errorBox = document.getElementById('errorBox');
+      errorBox.textContent = '';
+      try {
+        const params = new URLSearchParams({ symbol, market: 'futures', tf });
+        const res = await fetch('/api/chart?' + params.toString());
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const m = data.position_metrics;
+        document.getElementById('symbolInfo').textContent =
+          (data.symbol || symbol) + ' • ' + (data.timeframe || tf);
+        if (!m) {
+          document.getElementById('positionState').textContent = '—';
+          document.getElementById('marketMode').textContent = '—';
+          document.getElementById('localTrend').innerHTML = '—';
+          document.getElementById('globalTrend').innerHTML = '—';
+          document.getElementById('volatility').textContent = '—';
+          document.getElementById('momentum').textContent = '—';
+          document.getElementById('rr').textContent = '—';
+          document.getElementById('entryPrice').textContent = '—';
+          document.getElementById('stopInitial').textContent = '—';
+          document.getElementById('tpInitial').textContent = '—';
+          document.getElementById('tmrPoints').textContent = '—';
+          document.getElementById('strengthChip').innerHTML = classifyStrengthChip(null);
+          document.getElementById('flags').innerHTML =
+            '<strong>Not:</strong> Bu sembol/zaman dilimi için yeterli veri yok veya metrik üretilemedi.';
+          return;
+        }
+        document.getElementById('positionState').textContent = m.position_state || '—';
+        document.getElementById('marketMode').textContent = m.market_mode || '—';
+        document.getElementById('localTrend').innerHTML = classifyTrendLabel(m.local_trend);
+        document.getElementById('globalTrend').innerHTML = classifyTrendLabel(m.global_trend);
+        document.getElementById('volatility').textContent = m.volatility_pct != null
+          ? m.volatility_pct.toFixed(2) + ' %'
+          : '—';
+        const mShort = (m.momentum_short * 100).toFixed(2);
+        const mLong = (m.momentum_long * 100).toFixed(2);
+        document.getElementById('momentum').textContent = mShort + ' % / ' + mLong + ' %';
+        document.getElementById('rr').textContent = m.rr != null ? m.rr.toFixed(2) : '—';
+        document.getElementById('entryPrice').textContent =
+          m.entry_price != null ? m.entry_price.toFixed(4) : '—';
+        document.getElementById('stopInitial').textContent =
+          m.stop_loss_initial != null ? m.stop_loss_initial.toFixed(4) : '—';
+        document.getElementById('tpInitial').textContent =
+          m.take_profit_initial != null ? m.take_profit_initial.toFixed(4) : '—';
+        if (m.tmr_scores) {
+          const t = m.tmr_scores;
+          document.getElementById('tmrPoints').textContent =
+            (t.trend_points ?? 0) + ' / ' + (t.momentum_points ?? 0) + ' / ' + (t.rr_points ?? 0);
+          document.getElementById('strengthChip').innerHTML = classifyStrengthChip(t.strength_points);
+        } else {
+          document.getElementById('tmrPoints').textContent = '—';
+          document.getElementById('strengthChip').innerHTML = classifyStrengthChip(null);
+        }
+        const flags = [];
+        if (m.trend_exhaustion) {
+          flags.push('Trend tükenmesi <strong>tespit edildi</strong>.');
+        }
+        if (m.structure_shift) {
+          flags.push('Yapı kayması (structure shift) <strong>tespit edildi</strong>.');
+        }
+        document.getElementById('flags').innerHTML = flags.length
+          ? flags.join(' ')
+          : 'Trend ve yapı açısından kritik bir uyarı yok.';
+      } catch (e) {
+        console.error(e);
+        errorBox.textContent = 'Veri alınırken hata oluştu: ' + (e.message || e);
+      }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadMetrics);
+    window.addEventListener('load', loadMetrics);
+  </script>
+</body>
+</html>
+

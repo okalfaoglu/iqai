@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IQAI | Q-Analiz (tüm semboller)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #050816;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: radial-gradient(circle at top left, #1f2937, #020617);
+      border-radius: 16px;
+      padding: 20px 24px;
+      max-width: 1400px;
+      margin: 0 auto 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(0, 217, 255, 0.25);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .card-header h1 {
+      font-size: 18px;
+      color: #00f5ff;
+    }
+    .nav-links {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+    }
+    .nav-links a {
+      color: #22d3ee;
+      text-decoration: none;
+    }
+    .nav-links a:hover { text-decoration: underline; }
+    .nav-links a.active { color: #00f5ff; font-weight: 600; }
+    .inputs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .inputs button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      background: #22d3ee;
+      color: #020617;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .inputs button:hover { background: #06b6d4; }
+    .error { font-size: 12px; color: #fca5a5; margin-bottom: 10px; }
+    .section-title {
+      font-size: 12px;
+      color: #818cf8;
+      margin-top: 14px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .q-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .q-panel {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(0, 217, 255, 0.2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 12px;
+    }
+    .q-panel-title {
+      font-weight: 700;
+      color: #00f5ff;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(0, 217, 255, 0.2);
+    }
+    .q-panel .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .q-panel .row:last-child { border-bottom: none; }
+    .q-panel .label { color: #9ca3af; flex-shrink: 0; }
+    .q-panel .value { text-align: right; word-break: break-all; }
+    .q-panel .value strong { color: #e0e0e0; }
+    .q-none { color: #6b7280; font-style: italic; }
+    .dir-long { color: #6ee7b7; }
+    .dir-short { color: #fca5a5; }
+    #loading { color: #9ca3af; font-size: 13px; }
+    table.detections { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    table.detections th, table.detections td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #1f2937; }
+    table.detections th { color: #9ca3af; font-weight: 600; }
+    table.detections .time { color: #818cf8; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>Q-Analiz (tüm semboller)</h1>
+      <div class="nav-links">
+        <a href="/">Grafik</a>
+        <a href="/pnl">Kar / Zarar</a>
+        <a href="/q-analiz" class="active">Q-Analiz</a>
+        <a href="/metrics">Metrikler</a>
+        <a href="/settings">Ayarlar</a>
+      </div>
+    </div>
+    <div class="inputs">
+      <button id="refreshBtn">Yenile</button>
+    </div>
+    <div id="errorBox" class="error"></div>
+    <div id="loading"></div>
+
+    <div class="section-title">İzlenen semboller × timeframe (config.json)</div>
+    <div id="qGrid" class="q-grid"></div>
+
+    <div class="section-title">Son tespitler (DB) — daemon tarafından kaydedilen kayıtlar</div>
+    <div id="detectionsLoading" class="q-none">Yükleniyor...</div>
+    <div style="overflow-x: auto;">
+      <table class="detections" id="detectionsTable" style="display: none;">
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Sembol</th>
+            <th>TF</th>
+            <th>Tespit</th>
+            <th>Yön</th>
+            <th>Güven</th>
+            <th>Erken</th>
+            <th>Tavsiye</th>
+            <th>Fiyat</th>
+          </tr>
+        </thead>
+        <tbody id="detectionsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function formatRow(label, value) {
+      if (value == null || value === '' || value === '—') return '<div class="row"><span class="label">' + label + '</span><span class="value">—</span></div>';
+      return '<div class="row"><span class="label">' + label + '</span><span class="value">' + value + '</span></div>';
+    }
+    function buildCard(r) {
+      const sym = r.symbol || '—';
+      const tf = (r.timeframe && (typeof r.timeframe === 'string' ? r.timeframe : r.timeframe.toUpperCase && r.timeframe.toUpperCase())) || '—';
+      const title = sym + ' · ' + tf;
+      const price = r.reference_price != null ? Number(r.reference_price).toFixed(2) : '—';
+      const dir = r.direction || '—';
+      const dirIcon = dir === 'LONG' ? '▲' : dir === 'SHORT' ? '▼' : '━';
+      const dirCls = dir === 'LONG' ? 'dir-long' : dir === 'SHORT' ? 'dir-short' : '';
+      const detection = r.detection || '—';
+      const conf = r.confidence_score != null ? (Number(r.confidence_score).toFixed(1) + '/10') : '—';
+      const early = r.early_warning_score != null
+        ? (dir === 'SHORT' ? 'TEPE ' : 'DİP ') + Number(r.early_warning_score).toFixed(0) + '/10'
+        : '—';
+      const rec = r.recommendation || '—';
+      const layers = r.confirmation_layers || '';
+      let html = '<div class="q-panel">';
+      html += '<div class="q-panel-title">' + title + '</div>';
+      html += formatRow('Fiyat', price);
+      html += '<div class="row"><span class="label">YÖN</span><span class="value ' + dirCls + '">' + dirIcon + ' ' + dir + '</span></div>';
+      html += formatRow('Tespit', detection ? '<strong>' + detection + '</strong>' : '—');
+      html += formatRow('Güven', conf);
+      html += formatRow('Erken Uyarı', early);
+      html += formatRow('Tavsiye', rec);
+      if (layers) html += formatRow('Onay', layers);
+      html += '</div>';
+      return html;
+    }
+    async function load() {
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('errorBox');
+      const gridEl = document.getElementById('qGrid');
+      errorEl.textContent = '';
+      loadingEl.textContent = 'Yükleniyor...';
+      gridEl.innerHTML = '';
+      try {
+        const res = await fetch('/api/q-analysis');
+        const data = await res.json();
+        loadingEl.textContent = '';
+        if (data.error) {
+          errorEl.textContent = data.error;
+          return;
+        }
+        const results = data.results || [];
+        if (results.length === 0) {
+          gridEl.innerHTML = '<div class="q-none">Sonuç yok (config.json trading.symbols ve timeframes kontrol edin).</div>';
+          return;
+        }
+        gridEl.innerHTML = results.map(buildCard).join('');
+      } catch (e) {
+        loadingEl.textContent = '';
+        errorEl.textContent = 'Yükleme hatası: ' + e.message;
+      }
+    }
+    async function loadDetections() {
+      const el = document.getElementById('detectionsLoading');
+      const table = document.getElementById('detectionsTable');
+      const body = document.getElementById('detectionsBody');
+      el.textContent = 'Yükleniyor...';
+      table.style.display = 'none';
+      try {
+        const res = await fetch('/api/q-analiz/detections?limit=100');
+        const data = await res.json();
+        el.textContent = '';
+        if (data.error) {
+          el.textContent = 'Hata: ' + data.error;
+          return;
+        }
+        const list = data.detections || [];
+        if (list.length === 0) {
+          el.textContent = 'Henüz tespit kaydı yok. Q-Analiz daemon çalıştırın: iqai q-analiz-daemon -i 300';
+          return;
+        }
+        const fmt = function(ts) {
+          if (ts == null) return '—';
+          const d = new Date(ts);
+          return isNaN(d.getTime()) ? String(ts) : d.toLocaleString('tr-TR');
+        };
+        body.innerHTML = list.map(function(r) {
+          const time = r.created_at != null ? fmt(r.created_at) : '—';
+          return '<tr><td class="time">' + time + '</td><td>' + (r.symbol || '—') + '</td><td>' + (r.timeframe || '—') + '</td><td><strong>' + (r.detection || '—') + '</strong></td><td>' + (r.direction || '—') + '</td><td>' + (r.confidence_score != null ? Number(r.confidence_score).toFixed(1) + '/10' : '—') + '</td><td>' + (r.early_warning_score != null ? Number(r.early_warning_score).toFixed(0) + '/10' : '—') + '</td><td>' + (r.recommendation || '—') + '</td><td>' + (r.reference_price != null ? Number(r.reference_price).toFixed(2) : '—') + '</td></tr>';
+        }).join('');
+        table.style.display = 'table';
+      } catch (e) {
+        el.textContent = 'Yükleme hatası: ' + e.message;
+      }
+    }
+    document.getElementById('refreshBtn').addEventListener('click', function() { load(); loadDetections(); });
+    load();
+    loadDetections();
+  </script>
+</body>
+</html>

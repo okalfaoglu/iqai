@@ -5,14 +5,14 @@ use iqai_core::exchange::{ExchangeConnector, ExchangeError, ExchangeResult, Orde
 use iqai_core::types::{Candle, Exchange, MarketType, Timeframe};
 use reqwest::Client;
 
+use crate::sign;
+
 const BINANCE_SPOT_API: &str = "https://api.binance.com";
 
 /// Binance Spot market client
 pub struct BinanceSpotClient {
     client: Client,
-    #[allow(dead_code)] // Reserved for authenticated endpoints (orders, balance)
     api_key: Option<String>,
-    #[allow(dead_code)]
     secret_key: Option<String>,
 }
 
@@ -107,18 +107,127 @@ impl ExchangeConnector for BinanceSpotClient {
 
     async fn place_market_order(
         &self,
-        _symbol: &str,
-        _side: OrderSide,
-        _quantity: f64,
+        symbol: &str,
+        side: OrderSide,
+        quantity: f64,
     ) -> ExchangeResult<OrderResponse> {
-        Err(ExchangeError::Api(
-            "Binance Spot: configure API keys for trading".to_string(),
-        ))
+        let api_key = self.api_key.as_deref().ok_or_else(|| {
+            ExchangeError::Api("Binance Spot: API key not configured".into())
+        })?;
+        let secret = self.secret_key.as_deref().ok_or_else(|| {
+            ExchangeError::Api("Binance Spot: Secret key not configured".into())
+        })?;
+
+        let side_str = match side {
+            OrderSide::Buy => "BUY",
+            OrderSide::Sell => "SELL",
+        };
+        let ts = sign::timestamp_ms();
+        let query = format!(
+            "symbol={}&side={}&type=MARKET&quantity={:.6}&timestamp={}",
+            symbol.to_uppercase(),
+            side_str,
+            quantity,
+            ts
+        );
+        let signature = sign::sign(&query, secret);
+        let url = format!(
+            "{}/api/v3/order?{}&signature={}",
+            BINANCE_SPOT_API, query, signature
+        );
+
+        log::info!("[SPOT] Market order: {} {} qty={:.6}", side_str, symbol, quantity);
+
+        let resp = self
+            .client
+            .post(&url)
+            .header("X-MBX-APIKEY", api_key)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+
+        let status = resp.status();
+        let body: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+
+        if !status.is_success() {
+            let msg = body["msg"].as_str().unwrap_or("unknown error");
+            return Err(ExchangeError::Api(format!("Binance Spot {}: {}", status, msg)));
+        }
+
+        let fills = body["fills"].as_array();
+        let avg_price = fills
+            .and_then(|f| {
+                let (total_qty, total_cost) = f.iter().fold((0.0_f64, 0.0_f64), |(q, c), fill| {
+                    let fq: f64 = fill["qty"].as_str().and_then(|s| s.parse().ok()).unwrap_or(0.0);
+                    let fp: f64 = fill["price"].as_str().and_then(|s| s.parse().ok()).unwrap_or(0.0);
+                    (q + fq, c + fq * fp)
+                });
+                if total_qty > 0.0 { Some(total_cost / total_qty) } else { None }
+            })
+            .unwrap_or(0.0);
+
+        Ok(OrderResponse {
+            order_id: body["orderId"].to_string(),
+            symbol: body["symbol"].as_str().unwrap_or(symbol).to_string(),
+            side,
+            executed_qty: body["executedQty"]
+                .as_str()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(quantity),
+            avg_price,
+        })
     }
 
-    async fn get_balance(&self, _asset: &str) -> ExchangeResult<f64> {
-        Err(ExchangeError::Api(
-            "Binance Spot: configure API keys for balance".to_string(),
-        ))
+    async fn get_balance(&self, asset: &str) -> ExchangeResult<f64> {
+        let api_key = self.api_key.as_deref().ok_or_else(|| {
+            ExchangeError::Api("Binance Spot: API key not configured".into())
+        })?;
+        let secret = self.secret_key.as_deref().ok_or_else(|| {
+            ExchangeError::Api("Binance Spot: Secret key not configured".into())
+        })?;
+
+        let ts = sign::timestamp_ms();
+        let query = format!("timestamp={}", ts);
+        let signature = sign::sign(&query, secret);
+        let url = format!(
+            "{}/api/v3/account?{}&signature={}",
+            BINANCE_SPOT_API, query, signature
+        );
+
+        let resp = self
+            .client
+            .get(&url)
+            .header("X-MBX-APIKEY", api_key)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+
+        let status = resp.status();
+        let body: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+
+        if !status.is_success() {
+            let msg = body["msg"].as_str().unwrap_or("unknown error");
+            return Err(ExchangeError::Api(format!("Binance Spot {}: {}", status, msg)));
+        }
+
+        let asset_upper = asset.to_uppercase();
+        if let Some(balances) = body["balances"].as_array() {
+            for b in balances {
+                if b["asset"].as_str() == Some(&asset_upper) {
+                    let free: f64 = b["free"]
+                        .as_str()
+                        .and_then(|s| s.parse().ok())
+                        .unwrap_or(0.0);
+                    return Ok(free);
+                }
+            }
+        }
+        Ok(0.0)
     }
 }

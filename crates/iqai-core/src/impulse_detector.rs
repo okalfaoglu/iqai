@@ -27,6 +27,19 @@ pub enum ImpulseStage {
     Invalidated,
 }
 
+/// W5 giriş teyidi – W4 sonrası mini yapısal kırılım
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct W5Confirmation {
+    /// Teyit gerçekleşti mi
+    pub confirmed: bool,
+    /// Teyit türü: "mini_bos", "choch", "momentum" veya "pending"
+    pub signal_type: String,
+    /// Teyit anındaki fiyat
+    pub price: Option<f64>,
+    /// Teyit zamanı
+    pub time: Option<i64>,
+}
+
 /// Impulse tespit sonucu
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImpulseDetectorState {
@@ -43,6 +56,8 @@ pub struct ImpulseDetectorState {
     pub setup_w3: Option<SetupW3>,
     pub setup_w5: Option<SetupW5>,
     pub message: String,
+    /// W5 giriş teyidi: W4 sonrası mini ChoCh/BOS
+    pub w5_confirmation: Option<W5Confirmation>,
 }
 
 impl Default for ImpulseDetectorState {
@@ -61,6 +76,7 @@ impl Default for ImpulseDetectorState {
             setup_w3: None,
             setup_w5: None,
             message: "—".to_string(),
+            w5_confirmation: None,
         }
     }
 }

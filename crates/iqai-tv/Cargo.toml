@@ -1,0 +1,20 @@
+[package]
+name = "iqai-tv"
+version = "0.1.0"
+edition = "2021"
+description = "TradingView connector: native Rust WebSocket (no Python), optional HTTP/subprocess"
+
+[dependencies]
+iqai-core = { path = "../iqai-core" }
+async-trait = "0.1"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = { version = "0.21", features = ["native-tls"] }
+futures-util = "0.3"
+http = "1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rand = "0.8"
+regex = "1.10"
+thiserror = "1.0"
+tradingview = { git = "https://github.com/bitbytelabio/tradingview-rs.git", package = "tradingview-rs", branch = "main", features = ["user"] }

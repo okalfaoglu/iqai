@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IQAI | Kar / Zarar</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #050816;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: radial-gradient(circle at top left, #1f2937, #020617);
+      border-radius: 16px;
+      padding: 20px 24px;
+      max-width: 1200px;
+      margin: 0 auto 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(0, 217, 255, 0.25);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .card-header h1 {
+      font-size: 18px;
+      color: #00f5ff;
+    }
+    .nav-links {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+    }
+    .nav-links a {
+      color: #22d3ee;
+      text-decoration: none;
+    }
+    .nav-links a:hover { text-decoration: underline; }
+    .inputs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .inputs select {
+      background: #020617;
+      border: 1px solid #1f2937;
+      color: #e5e7eb;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .inputs button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      background: #22d3ee;
+      color: #020617;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .inputs button:hover { background: #06b6d4; }
+    .error {
+      font-size: 12px;
+      color: #fca5a5;
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 12px;
+      color: #818cf8;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: right;
+      border-bottom: 1px solid #1f2937;
+    }
+    th {
+      color: #9ca3af;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+    td:first-child, th:first-child { text-align: left; }
+    tr.total-row td {
+      font-weight: 600;
+      border-top: 2px solid rgba(0, 217, 255, 0.4);
+      padding-top: 10px;
+    }
+    .pnl-pos { color: #6ee7b7; }
+    .pnl-neg { color: #fca5a5; }
+    .pnl-zero { color: #9ca3af; }
+    .win-rate { color: #c4b5fd; }
+    #loading { color: #9ca3af; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>Kar / Zarar (sembol bazlı)</h1>
+      <div class="nav-links">
+        <a href="/">Grafik</a>
+        <a href="/pnl">Kar / Zarar</a>
+        <a href="/q-analiz">Q-Analiz</a>
+        <a href="/metrics">Metrikler</a>
+        <a href="/settings">Ayarlar</a>
+      </div>
+    </div>
+    <div class="inputs">
+      <select id="modeSelect">
+        <option value="paper">Paper</option>
+        <option value="dry">Dry</option>
+        <option value="live">Live</option>
+      </select>
+      <button id="refreshBtn">Yenile</button>
+    </div>
+    <div id="errorBox" class="error"></div>
+    <div id="loading"></div>
+
+    <div class="section-title">Özet</div>
+    <div id="summary" style="font-size: 13px; color: #9ca3af;"></div>
+
+    <div class="section-title">Sembol bazlı</div>
+    <div style="overflow-x: auto;">
+      <table id="pnlTable">
+        <thead>
+          <tr>
+            <th>Sembol</th>
+            <th>Açılan</th>
+            <th>Kapanan</th>
+            <th>Kar</th>
+            <th>Zarar</th>
+            <th>Başarı %</th>
+            <th>Günlük PnL</th>
+            <th>Haftalık PnL</th>
+            <th>Aylık PnL</th>
+            <th>Yıllık PnL</th>
+            <th>Toplam PnL</th>
+          </tr>
+        </thead>
+        <tbody id="pnlBody"></tbody>
+        <tfoot>
+          <tr class="total-row" id="totalRow">
+            <td>TOPLAM</td>
+            <td id="tOpened">—</td>
+            <td id="tClosed">—</td>
+            <td id="tWinners">—</td>
+            <td id="tLosers">—</td>
+            <td id="tWinRate">—</td>
+            <td id="tDaily">—</td>
+            <td id="tWeekly">—</td>
+            <td id="tMonthly">—</td>
+            <td id="tYearly">—</td>
+            <td id="tTotal">—</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function pnlClass(v) {
+      if (v == null || v === undefined) return 'pnl-zero';
+      if (typeof v === 'number') {
+        if (v > 0) return 'pnl-pos';
+        if (v < 0) return 'pnl-neg';
+      }
+      return 'pnl-zero';
+    }
+    function fmtNum(v) {
+      if (v == null || v === undefined) return '—';
+      if (typeof v === 'number') return v.toFixed(2);
+      return v;
+    }
+    function fmtPnl(v) {
+      if (v == null || v === undefined) return '—';
+      if (typeof v === 'number') {
+        const s = v >= 0 ? '+' : '';
+        return s + v.toFixed(2);
+      }
+      return v;
+    }
+
+    async function loadPnl() {
+      const mode = document.getElementById('modeSelect').value;
+      const errorBox = document.getElementById('errorBox');
+      const loading = document.getElementById('loading');
+      const tbody = document.getElementById('pnlBody');
+      errorBox.textContent = '';
+      loading.textContent = 'Yükleniyor…';
+      tbody.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/pnl/symbols?mode=' + encodeURIComponent(mode));
+        const data = await res.json();
+        loading.textContent = '';
+        if (data.error) {
+          errorBox.textContent = data.error;
+          return;
+        }
+        const symbols = data.symbols || [];
+        if (symbols.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#9ca3af;">Henüz işlem yok.</td></tr>';
+          document.getElementById('summary').textContent = 'Mod: ' + (data.mode || mode) + ' — Kayıtlı işlem bulunamadı.';
+          return;
+        }
+
+        let tOpened = 0, tClosed = 0, tWinners = 0, tLosers = 0;
+        let tDaily = 0, tWeekly = 0, tMonthly = 0, tYearly = 0, tTotal = 0;
+        symbols.forEach(function (r) {
+          tOpened += r.opened_count || 0;
+          tClosed += r.closed_count || 0;
+          tWinners += r.winners || 0;
+          tLosers += r.losers || 0;
+          tDaily += r.daily_pnl || 0;
+          tWeekly += r.weekly_pnl || 0;
+          tMonthly += r.monthly_pnl || 0;
+          tYearly += r.yearly_pnl || 0;
+          tTotal += r.total_pnl || 0;
+          const tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + (r.symbol || '—') + '</td>' +
+            '<td>' + fmtNum(r.opened_count) + '</td>' +
+            '<td>' + fmtNum(r.closed_count) + '</td>' +
+            '<td>' + fmtNum(r.winners) + '</td>' +
+            '<td>' + fmtNum(r.losers) + '</td>' +
+            '<td class="win-rate">' + fmtNum(r.win_rate_pct) + '%</td>' +
+            '<td class="' + pnlClass(r.daily_pnl) + '">' + fmtPnl(r.daily_pnl) + '</td>' +
+            '<td class="' + pnlClass(r.weekly_pnl) + '">' + fmtPnl(r.weekly_pnl) + '</td>' +
+            '<td class="' + pnlClass(r.monthly_pnl) + '">' + fmtPnl(r.monthly_pnl) + '</td>' +
+            '<td class="' + pnlClass(r.yearly_pnl) + '">' + fmtPnl(r.yearly_pnl) + '</td>' +
+            '<td class="' + pnlClass(r.total_pnl) + '">' + fmtPnl(r.total_pnl) + '</td>';
+          tbody.appendChild(tr);
+        });
+
+        const winRatePct = tClosed > 0 ? (tWinners / tClosed * 100).toFixed(1) : '—';
+        document.getElementById('tOpened').textContent = tOpened;
+        document.getElementById('tClosed').textContent = tClosed;
+        document.getElementById('tWinners').textContent = tWinners;
+        document.getElementById('tLosers').textContent = tLosers;
+        document.getElementById('tWinRate').innerHTML = '<span class="win-rate">' + winRatePct + (winRatePct !== '—' ? '%' : '') + '</span>';
+        document.getElementById('tDaily').textContent = fmtPnl(tDaily);
+        document.getElementById('tDaily').className = pnlClass(tDaily);
+        document.getElementById('tWeekly').textContent = fmtPnl(tWeekly);
+        document.getElementById('tWeekly').className = pnlClass(tWeekly);
+        document.getElementById('tMonthly').textContent = fmtPnl(tMonthly);
+        document.getElementById('tMonthly').className = pnlClass(tMonthly);
+        document.getElementById('tYearly').textContent = fmtPnl(tYearly);
+        document.getElementById('tYearly').className = pnlClass(tYearly);
+        document.getElementById('tTotal').textContent = fmtPnl(tTotal);
+        document.getElementById('tTotal').className = pnlClass(tTotal);
+
+        document.getElementById('summary').textContent =
+          'Mod: ' + (data.mode || mode) + ' — Açılan: ' + tOpened + ', Kapanan: ' + tClosed +
+          ' (Kar: ' + tWinners + ', Zarar: ' + tLosers + ') — Başarı: ' + winRatePct + (winRatePct !== '—' ? '%' : '') +
+          ' — Toplam PnL: ' + fmtPnl(tTotal) + ' USDT';
+      } catch (e) {
+        loading.textContent = '';
+        errorBox.textContent = 'Veri alınırken hata: ' + (e.message || e);
+      }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadPnl);
+    window.addEventListener('load', loadPnl);
+  </script>
+</body>
+</html>

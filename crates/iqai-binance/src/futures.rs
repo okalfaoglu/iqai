@@ -5,14 +5,14 @@ use iqai_core::exchange::{ExchangeConnector, ExchangeError, ExchangeResult, Orde
 use iqai_core::types::{Candle, Exchange, MarketType, Timeframe};
 use reqwest::Client;
 
+use crate::sign;
+
 const BINANCE_FUTURES_API: &str = "https://fapi.binance.com";
 
 /// Binance USDT-M Futures client
 pub struct BinanceFuturesClient {
     client: Client,
-    #[allow(dead_code)] // Reserved for authenticated endpoints (orders, balance)
     api_key: Option<String>,
-    #[allow(dead_code)]
     secret_key: Option<String>,
 }
 
@@ -82,6 +82,36 @@ impl BinanceFuturesClient {
             .collect();
         Ok(candles)
     }
+
+    /// Anlık fiyat (ticker) – REST; canlı mum için WebSocket kullanılmaz.
+    pub async fn fetch_ticker_price(&self, symbol: &str) -> Result<f64, ExchangeError> {
+        let symbol_futures = if symbol.ends_with("USDT") {
+            symbol.to_string()
+        } else {
+            format!("{}USDT", symbol)
+        };
+        let url = format!(
+            "{}/fapi/v1/ticker/price?symbol={}",
+            BINANCE_FUTURES_API,
+            symbol_futures
+        );
+        #[derive(serde::Deserialize)]
+        struct TickerPrice {
+            price: String,
+        }
+        let resp: TickerPrice = self
+            .client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+        resp.price
+            .parse()
+            .map_err(|_| ExchangeError::Api("Invalid ticker price".to_string()))
+    }
 }
 
 impl Default for BinanceFuturesClient {
@@ -112,18 +142,119 @@ impl ExchangeConnector for BinanceFuturesClient {
 
     async fn place_market_order(
         &self,
-        _symbol: &str,
-        _side: OrderSide,
-        _quantity: f64,
+        symbol: &str,
+        side: OrderSide,
+        quantity: f64,
     ) -> ExchangeResult<OrderResponse> {
-        Err(ExchangeError::Api(
-            "Binance Futures: configure API keys for trading".to_string(),
-        ))
+        let api_key = self.api_key.as_deref().ok_or_else(|| {
+            ExchangeError::Api("Binance Futures: API key not configured".into())
+        })?;
+        let secret = self.secret_key.as_deref().ok_or_else(|| {
+            ExchangeError::Api("Binance Futures: Secret key not configured".into())
+        })?;
+
+        let side_str = match side {
+            OrderSide::Buy => "BUY",
+            OrderSide::Sell => "SELL",
+        };
+        let ts = sign::timestamp_ms();
+        let query = format!(
+            "symbol={}&side={}&type=MARKET&quantity={:.6}&timestamp={}",
+            symbol.to_uppercase(),
+            side_str,
+            quantity,
+            ts
+        );
+        let signature = sign::sign(&query, secret);
+        let url = format!(
+            "{}/fapi/v1/order?{}&signature={}",
+            BINANCE_FUTURES_API, query, signature
+        );
+
+        log::info!("[FUTURES] Market order: {} {} qty={:.6}", side_str, symbol, quantity);
+
+        let resp = self
+            .client
+            .post(&url)
+            .header("X-MBX-APIKEY", api_key)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+
+        let status = resp.status();
+        let body: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+
+        if !status.is_success() {
+            let msg = body["msg"].as_str().unwrap_or("unknown error");
+            return Err(ExchangeError::Api(format!("Binance Futures {}: {}", status, msg)));
+        }
+
+        Ok(OrderResponse {
+            order_id: body["orderId"].to_string(),
+            symbol: body["symbol"].as_str().unwrap_or(symbol).to_string(),
+            side,
+            executed_qty: body["executedQty"]
+                .as_str()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(quantity),
+            avg_price: body["avgPrice"]
+                .as_str()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0.0),
+        })
     }
 
-    async fn get_balance(&self, _asset: &str) -> ExchangeResult<f64> {
-        Err(ExchangeError::Api(
-            "Binance Futures: configure API keys for balance".to_string(),
-        ))
+    async fn get_balance(&self, asset: &str) -> ExchangeResult<f64> {
+        let api_key = self.api_key.as_deref().ok_or_else(|| {
+            ExchangeError::Api("Binance Futures: API key not configured".into())
+        })?;
+        let secret = self.secret_key.as_deref().ok_or_else(|| {
+            ExchangeError::Api("Binance Futures: Secret key not configured".into())
+        })?;
+
+        let ts = sign::timestamp_ms();
+        let query = format!("timestamp={}", ts);
+        let signature = sign::sign(&query, secret);
+        let url = format!(
+            "{}/fapi/v2/balance?{}&signature={}",
+            BINANCE_FUTURES_API, query, signature
+        );
+
+        let resp = self
+            .client
+            .get(&url)
+            .header("X-MBX-APIKEY", api_key)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+
+        let status = resp.status();
+        let body: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+
+        if !status.is_success() {
+            let msg = body["msg"].as_str().unwrap_or("unknown error");
+            return Err(ExchangeError::Api(format!("Binance Futures {}: {}", status, msg)));
+        }
+
+        let arr = body.as_array().ok_or_else(|| {
+            ExchangeError::Api("Unexpected balance response format".into())
+        })?;
+        let asset_upper = asset.to_uppercase();
+        for item in arr {
+            if item["asset"].as_str() == Some(&asset_upper) {
+                let balance = item["balance"]
+                    .as_str()
+                    .and_then(|s| s.parse::<f64>().ok())
+                    .unwrap_or(0.0);
+                return Ok(balance);
+            }
+        }
+        Ok(0.0)
     }
 }
