@@ -39,6 +39,23 @@ pub trait ExchangeConnector: Send + Sync {
         quantity: f64,
     ) -> ExchangeResult<OrderResponse>;
 
+    /// Limit emir (IOC): en fazla limit fiyattan doldurulur; dolmayan kısım iptal.
+    async fn place_limit_order_ioc(
+        &self,
+        symbol: &str,
+        side: OrderSide,
+        quantity: f64,
+        limit_price: f64,
+    ) -> ExchangeResult<OrderResponse> {
+        let _ = (symbol, side, quantity, limit_price);
+        Err(ExchangeError::Api("Limit order (IOC) not supported".into()))
+    }
+
+    /// Kullanıcı komisyon oranı (basis points). None ise config'deki commission_bps kullanılır.
+    async fn get_commission_bps(&self, _symbol: &str) -> Option<u32> {
+        None
+    }
+
     /// Get account balance (optional)
     async fn get_balance(&self, asset: &str) -> ExchangeResult<f64>;
 }

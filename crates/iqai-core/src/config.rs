@@ -92,6 +92,13 @@ pub struct Config {
     /// Yapı TP’nin üst sınırı (R cinsinden; örn. 5.0)
     pub q_tp_max_r: f64,
 
+    /// Dip/tepe tespitinde MTF destek zorunlu olsun (true ise sadece confluence.mtf_support_near iken DİP/TEPE BÖLGESİ verilir)
+    pub q_require_mtf_for_dip_zone: bool,
+    /// RSI dip bölgesi eşiği: long için RSI < bu değer ise rsi_zone_ok (varsayılan 35)
+    pub q_rsi_oversold: f64,
+    /// RSI tepe bölgesi eşiği: short için RSI > bu değer ise rsi_zone_ok (varsayılan 65)
+    pub q_rsi_overbought: f64,
+
     // Q-Skor ağırlıkları (w1..w5, toplam 1): trend, structure, time, rr, momentum
     pub q_weight_trend: f64,
     pub q_weight_structure: f64,
@@ -166,6 +173,10 @@ impl Default for Config {
 
             q_tp_structure_ext: 1.618,
             q_tp_max_r: 5.0,
+
+            q_require_mtf_for_dip_zone: false,
+            q_rsi_oversold: 35.0,
+            q_rsi_overbought: 65.0,
 
             q_weight_trend: 0.35,
             q_weight_structure: 0.20,

@@ -1,15 +1,19 @@
 //! IQAI CLI - Trading bot command-line interface
 
 use anyhow::Result;
-use chrono::{Datelike, Timelike};
+use chrono::{Datelike, NaiveDate, TimeZone, Timelike, Utc};
 use clap::{Parser, Subcommand};
 use iqai_binance::{BinanceFuturesClient, BinanceSpotClient};
 use iqai_core::exchange::ExchangeConnector;
 use iqai_tv::TvConnectorClient;
 use iqai_web::chart_data::scan_elliott_formations;
+use iqai_web::ai;
+use iqai_core::elliott_detector::compute_elliott;
 use iqai_core::{
-    compute_elliott,
     compute_q_radar_opportunity,
+    run_backtest,
+    build_scenarios_for_series,
+    build_smart_money_context_for_series,
     Config, CandleBuffer, SignalEngine, SignalType, Timeframe,
     PositionSide, TradeAction, TradeManager,
 };
@@ -218,6 +222,52 @@ enum Commands {
         #[arg(short, long, default_value = "500")]
         limit: u32,
     },
+
+    /// Q-Analiz backtest: geçmiş veriyle Q-Setup simülasyonu, başlangıç/son sermaye ve getiri
+    Backtest {
+        /// Symbol (e.g. ETHUSDT, BTCUSDT)
+        #[arg(short, long)]
+        symbol: String,
+
+        /// Market: futures veya spot
+        #[arg(short, long, default_value = "futures")]
+        market: String,
+
+        /// Zaman dilimi (5M, 15M, 1H, 4H, D)
+        #[arg(short, long, default_value = "5M")]
+        timeframe: String,
+
+        /// Çekilecek mum sayısı (--from/--to yoksa kullanılır)
+        #[arg(short, long, default_value = "1000")]
+        limit: u32,
+
+        /// Tarih aralığı başlangıcı (YYYY-MM-DD). --to ile veya tek başına (bugüne kadar)
+        #[arg(long)]
+        from: Option<String>,
+
+        /// Tarih aralığı bitişi (YYYY-MM-DD). --from ile kullanın
+        #[arg(long)]
+        to: Option<String>,
+
+        /// Başlangıç sermayesi (USDT)
+        #[arg(long, default_value = "10000")]
+        capital: f64,
+
+        /// İşlem başına risk (%)
+        #[arg(long, default_value = "1.0")]
+        risk_pct: f64,
+
+        /// Maksimum kaldıraç
+        #[arg(long, default_value = "10")]
+        leverage: f64,
+
+        /// Q-Setup minimum skor (0–100). Düşürürseniz daha çok sinyal çıkar (varsayılan 70).
+        #[arg(long, default_value = "70")]
+        q_score_min: f64,
+    },
+
+    /// Ollama kurulumunu kontrol et (config.json ai.ollama_base_url veya http://localhost:11434)
+    OllamaCheck,
 }
 
 #[tokio::main]
@@ -276,6 +326,19 @@ async fn main() -> Result<()> {
             timeframe,
             limit,
         } => run_formations(&symbol, &market, &timeframe, limit).await?,
+        Commands::Backtest {
+            symbol,
+            market,
+            timeframe,
+            limit,
+            from,
+            to,
+            capital,
+            risk_pct,
+            leverage,
+            q_score_min,
+        } => run_backtest_cmd(&symbol, &market, &timeframe, limit, from.as_deref(), to.as_deref(), capital, risk_pct, leverage, q_score_min).await?,
+        Commands::OllamaCheck => run_ollama_check().await?,
     }
     Ok(())
 }
@@ -1189,7 +1252,26 @@ async fn run_q_analiz_daemon(interval_secs: u64) -> Result<()> {
 
     println!("📌 Q-Analiz Daemon başlatıldı");
     println!("   Aralık: {}s | Semboller: {:?} | TF: {:?}", interval_secs, symbols, timeframes);
-    println!("   DB: {} | Tespitler kaydedilip Telegram'a gönderilecek.\n", db_path.unwrap_or("data/trades.db"));
+    println!("   DB: {} | Tespitler kaydedilip Telegram'a gönderilecek.", db_path.unwrap_or("data/trades.db"));
+    if let Some(ref ai) = app_cfg.ai {
+        if ai.enabled == Some(true) {
+            let base = ai.ollama_base_url.as_deref().unwrap_or("http://localhost:11434");
+            let (ok, models) = ai::check_ollama(base).await;
+            if ok {
+                let model = ai.model.as_deref().unwrap_or("llama2");
+                let has_model = models.iter().any(|m| m.starts_with(model) || model.starts_with(m.split(':').next().unwrap_or("")));
+                println!("   AI (Ollama): {} | Model: {} | Yüklü modeller: {:?}", if has_model { "✓" } else { "?" }, model, models);
+                if !has_model && !models.is_empty() {
+                    println!("   Uyarı: '{}' modeli listede yok. ollama pull {} ile yükleyin.", model, model);
+                } else if !has_model {
+                    println!("   Uyarı: Ollama'da model yok. ollama pull {} ile yükleyin.", model);
+                }
+            } else {
+                println!("   AI (Ollama): ✗ Erişilemiyor ({}). AI yorum atlanacak. ollama serve ile başlatın.", base);
+            }
+        }
+    }
+    println!();
 
     let mut round: u64 = 0;
     loop {
@@ -1208,11 +1290,145 @@ async fn run_q_analiz_daemon(interval_secs: u64) -> Result<()> {
             for &tf in &timeframes {
                 let opp = compute_q_radar_opportunity(&buffer, tf, symbol, &sm_config);
                 if !opp.detection.is_empty() && opp.detection != "—" {
+                    let elliott_summary = buffer.get(tf).and_then(|candles| {
+                        let min_bars = (sm_config.pivot_length as usize) * 4 + 2;
+                        if candles.len() < min_bars {
+                            None
+                        } else {
+                            // Elliott bağlamı, strateji senaryoları ve Smart Money context'ini üret.
+                            let elliott = compute_elliott(candles, &sm_config, false);
+                            let scenarios = build_scenarios_for_series(symbol, tf, candles, &sm_config);
+                            let sm_ctx = build_smart_money_context_for_series(symbol, tf, candles, &sm_config);
+
+                            let mut lines = Vec::new();
+                            if !elliott.formation.is_empty() && elliott.formation != "—" {
+                                lines.push(format!("Elliott: {} ({})", elliott.formation, elliott.formation_type));
+                                if let Some(ref msg) = elliott.validation_msg {
+                                    if !msg.is_empty() {
+                                        lines.push(format!("  {}", msg));
+                                    }
+                                }
+                                if let Some(ref next) = elliott.next_formation_ref {
+                                    if !next.expected_formations.is_empty() {
+                                        lines.push(format!("  Sonra beklenen: {}", next.expected_formations.join(", ")));
+                                    }
+                                }
+                            }
+
+                            // Senaryolardan en güçlü primary/alternative'ı seçip özet çıkar (AI ve Telegram için).
+                            if let Some(best_scn) = scenarios
+                                .iter()
+                                .max_by(|a, b| {
+                                    let aq = a.plans.first().map(|p| p.q_score).unwrap_or(0.0);
+                                    let bq = b.plans.first().map(|p| p.q_score).unwrap_or(0.0);
+                                    aq.partial_cmp(&bq).unwrap_or(std::cmp::Ordering::Equal)
+                                })
+                            {
+                                if let Some(best) = best_scn.plans.first() {
+                                    let dir = match best.direction {
+                                        iqai_core::StrategyDirection::Long => "LONG",
+                                        iqai_core::StrategyDirection::Short => "SHORT",
+                                    };
+                                    lines.push(format!(
+                                        "Strateji ({}): {} {} @ {:.2} SL {:.2}",
+                                        format!("{:?}", best_scn.role),
+                                        dir,
+                                        best.timeframe.to_binance_interval(),
+                                        best.entry,
+                                        best.stop_loss
+                                    ));
+                                    if !best.targets.is_empty() {
+                                        let tps: Vec<String> = best.targets
+                                            .iter()
+                                            .take(3)
+                                            .map(|t| format!("{} {:.2}", t.label, t.price))
+                                            .collect();
+                                        lines.push(format!("  Hedefler: {}", tps.join(", ")));
+                                    }
+                                    if let Some(ref lbl) = best.classic_pattern_label {
+                                        lines.push(format!("  Klasik formasyon: {}", lbl));
+                                    }
+                                    if let Some(ref ef) = best.elliott_formation {
+                                        lines.push(format!("  Elliott formasyon: {}", ef));
+                                    }
+                                }
+                            }
+
+                            // Smart Money / likidite özeti.
+                            if let Some(ctx) = sm_ctx {
+                                if !ctx.liquidity_levels.is_empty() {
+                                    let lvls: Vec<String> = ctx
+                                        .liquidity_levels
+                                        .iter()
+                                        .take(3)
+                                        .map(|l| format!("{} @ {:.2}", l.label, l.price))
+                                        .collect();
+                                    lines.push(format!("Likidite: {}", lvls.join(", ")));
+                                }
+                                if !ctx.order_blocks.is_empty() {
+                                    let obs: Vec<String> = ctx
+                                        .order_blocks
+                                        .iter()
+                                        .take(2)
+                                        .map(|z| format!("{} [{:.2}-{:.2}]", z.label, z.low, z.high))
+                                        .collect();
+                                    lines.push(format!("Order Blocks: {}", obs.join(", ")));
+                                }
+                                if !ctx.wyckoff_tags.is_empty() {
+                                    let w: Vec<String> = ctx
+                                        .wyckoff_tags
+                                        .iter()
+                                        .take(2)
+                                        .map(|t| format!("{} @ {:.2}", t.label, t.price))
+                                        .collect();
+                                    lines.push(format!("Wyckoff: {}", w.join(", ")));
+                                }
+                                lines.push(format!("PO3 fazı: {:?}", ctx.po3_phase));
+                            }
+
+                            if lines.is_empty() {
+                                None
+                            } else {
+                                Some(lines.join("\n"))
+                            }
+                        }
+                    });
                     if let Err(e) = db.insert_q_analiz_detection(&opp) {
                         eprintln!("   DB yazma hatası {} {}: {}", symbol, tf.to_binance_interval(), e);
                     } else {
                         println!("   ✓ {} {} | {} | {}", symbol, tf.to_binance_interval(), opp.detection, opp.recommendation);
-                        if let Err(e) = notifier.notify_q_analysis(&opp).await {
+                        let mut extra = elliott_summary.clone().unwrap_or_default();
+                        if let Some(ref ai_cfg) = app_cfg.ai {
+                            if ai_cfg.enabled == Some(true) {
+                                let base = ai_cfg.ollama_base_url.as_deref().unwrap_or("http://localhost:11434");
+                                let model = ai_cfg.model.as_deref().unwrap_or("llama2");
+                                let elliott_part = if extra.is_empty() {
+                                    String::new()
+                                } else {
+                                    format!("\nElliott: {}", extra)
+                                };
+                                let context = format!(
+                                    "Sembol: {} | TF: {} | Tespit: {} | Yön: {} | Tavsiye: {} | Fiyat: {:.4}{}",
+                                    opp.symbol,
+                                    tf.to_binance_interval(),
+                                    opp.detection,
+                                    opp.direction,
+                                    opp.recommendation,
+                                    opp.reference_price,
+                                    elliott_part,
+                                );
+                                if let Some(ai_text) = ai::interpret_q_analysis(base, model, &context).await {
+                                    println!("   🤖 AI: {}", ai_text.trim());
+                                    if !extra.is_empty() {
+                                        extra.push_str("\n\n");
+                                    }
+                                    extra.push_str("🤖 ");
+                                    extra.push_str(&ai_text);
+                                }
+                            }
+                        }
+                        let extra_opt = if extra.is_empty() { None } else { Some(extra.as_str()) };
+                        if let Err(e) = notifier.notify_q_analysis(&opp, extra_opt).await {
                             eprintln!("   Bildirim hatası: {:?}", e);
                         }
                     }
@@ -1221,6 +1437,160 @@ async fn run_q_analiz_daemon(interval_secs: u64) -> Result<()> {
         }
         tokio::time::sleep(tokio::time::Duration::from_secs(interval_secs)).await;
     }
+}
+
+/// "YYYY-MM-DD" -> (o gün 00:00:00 UTC ms, o gün 23:59:59.999 UTC ms)
+fn parse_date_range(from: Option<&str>, to: Option<&str>) -> Result<(i64, i64)> {
+    fn day_start_ms(s: &str) -> Result<i64> {
+        let d = NaiveDate::parse_from_str(s, "%Y-%m-%d")
+            .map_err(|e| anyhow::anyhow!("Tarih formatı YYYY-MM-DD olmalı ({}): {}", s, e))?;
+        let ndt = d.and_hms_opt(0, 0, 0).unwrap();
+        Ok(Utc.from_utc_datetime(&ndt).timestamp_millis())
+    }
+    fn day_end_ms(s: &str) -> Result<i64> {
+        let d = NaiveDate::parse_from_str(s, "%Y-%m-%d")
+            .map_err(|e| anyhow::anyhow!("Tarih formatı YYYY-MM-DD olmalı ({}): {}", s, e))?;
+        let ndt = d.and_hms_opt(23, 59, 59).unwrap();
+        Ok(Utc.from_utc_datetime(&ndt).timestamp_millis() + 999)
+    }
+    let (start_ms, end_ms) = match (from, to) {
+        (Some(f), Some(t)) => (day_start_ms(f)?, day_end_ms(t)?),
+        (Some(f), None) => (day_start_ms(f)?, Utc::now().timestamp_millis()),
+        (None, Some(t)) => {
+            let end = day_end_ms(t)?;
+            let from_d = NaiveDate::parse_from_str(t, "%Y-%m-%d")
+                .map_err(|e| anyhow::anyhow!("Tarih formatı YYYY-MM-DD olmalı ({}): {}", t, e))?;
+            let start_d = from_d - chrono::Duration::days(365);
+            let ndt = start_d.and_hms_opt(0, 0, 0).unwrap();
+            (Utc.from_utc_datetime(&ndt).timestamp_millis(), end)
+        }
+        (None, None) => return Err(anyhow::anyhow!("Tarih aralığı için --from veya --to gerekir")),
+    };
+    if start_ms >= end_ms {
+        anyhow::bail!("--from tarihi --to tarihinden önce olmalı");
+    }
+    Ok((start_ms, end_ms))
+}
+
+async fn run_backtest_cmd(
+    symbol: &str,
+    market: &str,
+    timeframe: &str,
+    limit: u32,
+    from: Option<&str>,
+    to: Option<&str>,
+    capital: f64,
+    risk_pct: f64,
+    leverage: f64,
+    q_score_min: f64,
+) -> Result<()> {
+    let chart_tf = Timeframe::from_str(timeframe)
+        .ok_or_else(|| anyhow::anyhow!("Geçersiz timeframe: {} (5M, 15M, 1H, 4H, D)", timeframe))?;
+    let binance_interval = chart_tf.to_binance_interval();
+
+    let candles = if from.is_some() || to.is_some() {
+        let (start_ms, end_ms) = parse_date_range(from, to)?;
+        println!(
+            "📥 Geçmiş veri çekiliyor: {} {} ({} — {} tarih aralığı)...",
+            symbol,
+            timeframe,
+            from.unwrap_or("?"),
+            to.unwrap_or("bugün")
+        );
+        if market.eq_ignore_ascii_case("spot") {
+            BinanceSpotClient::new()
+                .fetch_klines_range(symbol, &binance_interval, start_ms, end_ms)
+                .await
+                .map_err(|e| anyhow::anyhow!("Klines hatası: {}", e))?
+        } else {
+            BinanceFuturesClient::new()
+                .fetch_klines_range(symbol, &binance_interval, start_ms, end_ms)
+                .await
+                .map_err(|e| anyhow::anyhow!("Klines hatası: {}", e))?
+        }
+    } else {
+        let client: Box<dyn ExchangeConnector> = if market.eq_ignore_ascii_case("spot") {
+            Box::new(BinanceSpotClient::new())
+        } else {
+            Box::new(BinanceFuturesClient::new())
+        };
+        println!("📥 Geçmiş veri çekiliyor: {} {} ({} bar)...", symbol, timeframe, limit);
+        client
+            .fetch_klines(symbol, chart_tf, limit)
+            .await
+            .map_err(|e| anyhow::anyhow!("Klines hatası: {}", e))?
+    };
+    if candles.len() < 100 {
+        anyhow::bail!("Yetersiz veri: {} bar. En az ~100 bar gerekir.", candles.len());
+    }
+    let app_cfg = iqai_core::AppConfig::load();
+    let mut config = Config::from_smart_money(app_cfg.as_ref().and_then(|c| c.smart_money.as_ref()));
+    config.q_score_threshold = q_score_min;
+    println!("🔄 Q-Analiz backtest çalıştırılıyor (sermaye: {:.0}, risk: %{}, kaldıraç: {}, Q-score ≥ {:.0})...", capital, risk_pct, leverage, q_score_min);
+    let result = run_backtest(
+        &candles,
+        &config,
+        chart_tf,
+        symbol,
+        capital,
+        risk_pct,
+        leverage,
+    );
+    println!();
+    println!("═══════════════════════════════════════════════════════════");
+    println!("  Q-ANALİZ BACKTEST SONUCU  |  {}  {}  ({} bar)", result.symbol, result.timeframe, result.bar_count);
+    println!("═══════════════════════════════════════════════════════════");
+    println!("  Başlangıç sermayesi  : {:>12.2} USDT", result.initial_capital);
+    println!("  Dönem sonu sermayesi : {:>12.2} USDT", result.final_capital);
+    println!("  Toplam getiri       : {:>12.2} %", result.total_return_pct);
+    println!("  Toplam PnL          : {:>+12.2} USDT", result.total_pnl);
+    println!("  İşlem sayısı        : {:>12}", result.trades.len());
+    println!("  Kazanan / Kaybeden  : {:>6} / {:>6}", result.win_count, result.loss_count);
+    println!("  Kazanç oranı        : {:>12.1} %", result.win_rate_pct);
+    println!("═══════════════════════════════════════════════════════════");
+    if !result.trades.is_empty() {
+        println!("  Son 10 işlem:");
+        for t in result.trades.iter().rev().take(10) {
+            println!(
+                "    Bar {}→{} | {} | Giriş: {:.4} Çıkış: {:.4} | PnL: {:+.2} ({:+.2}R) | {}",
+                t.entry_bar, t.exit_bar, t.side, t.entry_price, t.exit_price, t.pnl, t.pnl_r, t.exit_reason
+            );
+        }
+    }
+    println!();
+    Ok(())
+}
+
+async fn run_ollama_check() -> Result<()> {
+    let base = iqai_core::AppConfig::load()
+        .and_then(|c| c.ai.and_then(|a| a.ollama_base_url))
+        .unwrap_or_else(|| "http://localhost:11434".to_string());
+    println!("Ollama kontrol: {}", base);
+    let (ok, models) = ai::check_ollama(&base).await;
+    if ok {
+        println!("  Durum: ✓ Erişilebilir");
+        if models.is_empty() {
+            println!("  Modeller: (liste alınamadı veya boş)");
+        } else {
+            println!("  Yüklü modeller:");
+            for m in &models {
+                println!("    - {}", m);
+            }
+        }
+        let cfg_model = iqai_core::AppConfig::load()
+            .and_then(|c| c.ai.and_then(|a| a.model))
+            .unwrap_or_else(|| "llama2".to_string());
+        let has = models.iter().any(|m| m == &cfg_model || m.starts_with(&format!("{}:", cfg_model)));
+        if has {
+            println!("  Config model '{}': ✓ mevcut", cfg_model);
+        } else {
+            println!("  Config model '{}': ✗ yüklü değil. ollama pull {} çalıştırın.", cfg_model, cfg_model);
+        }
+    } else {
+        println!("  Durum: ✗ Erişilemiyor");
+        println!("  Ollama kurulu değilse: https://ollama.com | Kuruluysa: ollama serve");
+    }
+    Ok(())
 }
 
 async fn run_trade(symbol: &str, side: &str, quantity: f64, market: &str) -> Result<()> {

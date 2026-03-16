@@ -140,6 +140,26 @@ pub struct TradingConfig {
     pub symbols: Option<Vec<String>>,
     /// İzlenen timeframe listesi (ör. ["5m", "15m", "1h"])
     pub timeframes: Option<Vec<String>>,
+    /// Komisyon oranı (basis points, örn. 4 = %0.04). Yoksa Binance API'den çekilir; yine yoksa 4 kullanılır.
+    pub commission_bps: Option<u32>,
+    /// Kapanışta kayma (slippage) basis points (örn. 5 = %0.05). Simülasyonda daha gerçekçi fill.
+    pub slippage_bps: Option<u32>,
+    /// true ise piyasa emri yerine limit IOC kullanılır (maks kayma limit_slippage_bps ile sınırlı).
+    pub use_limit_order: Option<bool>,
+    /// Limit emirde izin verilen maks kayma (basis points, örn. 50 = %0.5). Sadece use_limit_order=true iken.
+    pub limit_slippage_bps: Option<u32>,
+}
+
+/// Q-Analiz tespitleri için AI yorumu (Ollama yerel).
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct AiConfig {
+    /// true ise tespit olduğunda Ollama ile kısa yorum/tahmin istenir (Türkçe).
+    pub enabled: Option<bool>,
+    /// Ollama model adı (örn. llama2, mistral, qwen2).
+    pub model: Option<String>,
+    /// Ollama base URL (örn. http://localhost:11434).
+    pub ollama_base_url: Option<String>,
 }
 
 /// Tek config.json dosyası: notification, logging, trading vb.
@@ -147,6 +167,8 @@ pub struct TradingConfig {
 #[serde(rename_all = "snake_case")]
 pub struct AppConfig {
     pub notification: Option<NotificationConfig>,
+    /// Q-Analiz tespitinde AI yorumu (tepe/dipte ne var, sonra ne olabilir).
+    pub ai: Option<AiConfig>,
     /// Loglama: seviye, hedef (console/file/both), dosya yolu.
     pub logging: Option<LoggingConfig>,
     /// Veri alma ayarları (bar limiti, native TF modu vb.).

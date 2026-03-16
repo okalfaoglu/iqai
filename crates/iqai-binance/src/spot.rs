@@ -58,24 +58,76 @@ impl BinanceSpotClient {
 
         let candles: Vec<Candle> = resp
             .into_iter()
-            .filter_map(|k| {
-                let t = k.get(0)?.as_i64()?;
-                let o = k.get(1)?.as_str()?.parse().ok()?;
-                let h = k.get(2)?.as_str()?.parse().ok()?;
-                let l = k.get(3)?.as_str()?.parse().ok()?;
-                let c = k.get(4)?.as_str()?.parse().ok()?;
-                let v = k.get(5)?.as_str()?.parse().ok()?;
-                Some(Candle {
-                    time: t,
-                    open: o,
-                    high: h,
-                    low: l,
-                    close: c,
-                    volume: v,
-                })
-            })
+            .filter_map(|k| Self::parse_kline(&k))
             .collect();
         Ok(candles)
+    }
+
+    fn parse_kline(k: &[serde_json::Value]) -> Option<Candle> {
+        let t = k.get(0)?.as_i64()?;
+        let o = k.get(1)?.as_str()?.parse().ok()?;
+        let h = k.get(2)?.as_str()?.parse().ok()?;
+        let l = k.get(3)?.as_str()?.parse().ok()?;
+        let c = k.get(4)?.as_str()?.parse().ok()?;
+        let v = k.get(5)?.as_str()?.parse().ok()?;
+        Some(Candle {
+            time: t,
+            open: o,
+            high: h,
+            low: l,
+            close: c,
+            volume: v,
+        })
+    }
+
+    /// Geçmiş mumları tarih aralığına göre çeker (startTime/endTime, 1000’lik chunk’lar).
+    pub async fn fetch_klines_range(
+        &self,
+        symbol: &str,
+        interval: &str,
+        start_time_ms: i64,
+        end_time_ms: i64,
+    ) -> Result<Vec<Candle>, ExchangeError> {
+        let mut all: Vec<Candle> = Vec::new();
+        let mut start = start_time_ms;
+        const CHUNK: u32 = 1000;
+        loop {
+            let url = format!(
+                "{}/api/v3/klines?symbol={}&interval={}&limit={}&startTime={}&endTime={}",
+                BINANCE_SPOT_API,
+                symbol.to_uppercase(),
+                interval,
+                CHUNK,
+                start,
+                end_time_ms
+            );
+            let resp: Vec<Vec<serde_json::Value>> = self
+                .client
+                .get(&url)
+                .send()
+                .await
+                .map_err(|e| ExchangeError::Http(e.to_string()))?
+                .json()
+                .await
+                .map_err(|e| ExchangeError::Http(e.to_string()))?;
+            if resp.is_empty() {
+                break;
+            }
+            let candles: Vec<Candle> = resp
+                .iter()
+                .filter_map(|k| Self::parse_kline(k))
+                .collect();
+            if candles.is_empty() {
+                break;
+            }
+            let last_time = candles.last().map(|c| c.time).unwrap_or(start);
+            all.extend(candles);
+            if last_time >= end_time_ms || resp.len() < CHUNK as usize {
+                break;
+            }
+            start = last_time + 1;
+        }
+        Ok(all)
     }
 }
 

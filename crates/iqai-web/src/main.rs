@@ -17,6 +17,8 @@ use iqai_core::{
     compute_q_radar_opportunity,
     exchange::ExchangeConnector,
     trade_db::TradeDb,
+    build_scenarios_for_series,
+    build_smart_money_context_for_series,
     Config, CandleBuffer, SignalEngine, SignalType, Timeframe, TradingMode,
 };
 use serde::Deserialize;
@@ -68,6 +70,7 @@ async fn main() -> Result<()> {
         .route("/api/pnl/symbols", get(api_pnl_symbols))
         .route("/api/q-analysis", get(api_q_analysis_all))
         .route("/api/q-analiz/detections", get(api_q_analiz_detections))
+        .route("/api/q-analiz/snapshot", get(api_q_analiz_snapshot))
         .route(
             "/api/config",
             get(api_get_config).post(api_update_config),
@@ -212,6 +215,80 @@ async fn api_q_analiz_detections(Query(params): Query<DetectionsQuery>) -> impl 
         Ok(detections) => axum::Json(serde_json::json!({ "detections": detections })),
         Err(e) => axum::Json(serde_json::json!({ "error": e.to_string(), "detections": [] })),
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct SnapshotQuery {
+    symbol: Option<String>,
+    #[serde(rename = "tf")]
+    timeframe: Option<String>,
+}
+
+/// Tek sembol + timeframe için Q-Analiz snapshot'ı:
+/// - Q-Radar opportunity
+/// - Strategy scenarios (primary/alternative/macro)
+/// - Smart Money context (likidite, OB, Wyckoff, PO3)
+/// GET /api/q-analiz/snapshot?symbol=ETHUSDT&tf=5m
+async fn api_q_analiz_snapshot(Query(params): Query<SnapshotQuery>) -> impl IntoResponse {
+    let app_cfg = iqai_core::AppConfig::load().unwrap_or_default();
+    let symbol = params
+        .symbol
+        .or_else(|| {
+            app_cfg
+                .trading
+                .as_ref()
+                .and_then(|t| t.symbols.as_ref())
+                .and_then(|v| v.first().cloned())
+        })
+        .unwrap_or_else(|| "ETHUSDT".to_string());
+    let tf_str = params
+        .timeframe
+        .or_else(|| {
+            app_cfg
+                .trading
+                .as_ref()
+                .and_then(|t| t.timeframes.as_ref())
+                .and_then(|v| v.first().cloned())
+        })
+        .unwrap_or_else(|| "5m".to_string());
+    let tf = match Timeframe::from_str(&tf_str) {
+        Some(t) => t,
+        None => {
+            return axum::Json(serde_json::json!({
+                "error": format!("Geçersiz timeframe: {}", tf_str),
+            }));
+        }
+    };
+
+    let sm_cfg = app_cfg.smart_money.as_ref();
+    let config = Config::from_smart_money(sm_cfg);
+    let client = BinanceFuturesClient::new();
+    let max_bars = app_cfg.data.and_then(|d| d.max_bars).unwrap_or(500);
+
+    let candles = match client.fetch_klines(&symbol, tf, max_bars).await {
+        Ok(c) if !c.is_empty() => c,
+        _ => {
+            return axum::Json(serde_json::json!({
+                "error": "Veri alınamadı",
+                "symbol": symbol,
+                "timeframe": tf.to_binance_interval(),
+            }));
+        }
+    };
+
+    let mut buffer = CandleBuffer::new();
+    buffer.update(tf, candles.clone());
+    let opportunity = compute_q_radar_opportunity(&buffer, tf, &symbol, &config);
+    let scenarios = build_scenarios_for_series(&symbol, tf, &candles, &config);
+    let sm_ctx = build_smart_money_context_for_series(&symbol, tf, &candles, &config);
+
+    axum::Json(serde_json::json!({
+        "symbol": symbol,
+        "timeframe": tf.to_binance_interval(),
+        "opportunity": opportunity,
+        "scenarios": scenarios,
+        "smart_money": sm_ctx,
+    }))
 }
 
 async fn api_get_config() -> impl IntoResponse {
@@ -430,7 +507,7 @@ async fn api_chart(Query(params): Query<ChartParams>) -> impl IntoResponse {
         let opp = q_radar_opportunity.clone();
         let notifier = Notifier::from_env();
         tokio::spawn(async move {
-            if let Err(e) = notifier.notify_q_analysis(&opp).await {
+            if let Err(e) = notifier.notify_q_analysis(&opp, None).await {
                 eprintln!("Q-analysis notification error: {:?}", e);
             }
         });

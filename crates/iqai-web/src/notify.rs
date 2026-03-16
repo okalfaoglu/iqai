@@ -262,8 +262,12 @@ impl Notifier {
 
     /// Q-Analiz tam panelini bildirim kanallarına gönder.
     /// Telegram’a ekteki gibi görsel kart (PNG) gönderilir; font yoksa veya hata olursa metin gider.
-    pub async fn notify_q_analysis(&self, opp: &QRadarOpportunityAnalysis) -> Result<()> {
-        let text = Self::format_q_analysis_panel(opp);
+    pub async fn notify_q_analysis(
+        &self,
+        opp: &QRadarOpportunityAnalysis,
+        elliott_summary: Option<&str>,
+    ) -> Result<()> {
+        let text = Self::format_q_analysis_panel(opp, elliott_summary);
         let channels = routing_rules(NotificationEventType::QAnalysis);
         let caption = format!("{} (Q) · {}", opp.symbol, opp.recommendation.as_str());
         match q_analiz_card::render_q_analiz_card(opp) {
@@ -291,7 +295,7 @@ impl Notifier {
         Ok(())
     }
 
-    fn format_q_analysis_panel(opp: &QRadarOpportunityAnalysis) -> String {
+    fn format_q_analysis_panel(opp: &QRadarOpportunityAnalysis, elliott_summary: Option<&str>) -> String {
         let tf_str = format!("{:?}", opp.timeframe);
         let price = opp.reference_price;
         let direction = if opp.direction.is_empty() { "—" } else { opp.direction.as_str() };
@@ -307,7 +311,7 @@ impl Notifier {
         };
         let recommendation = if opp.recommendation.is_empty() { "—" } else { opp.recommendation.as_str() };
         let bar: String = (0..10).map(|i| if i < conf_10 { "█" } else { "░" }).collect();
-        format!(
+        let mut s = format!(
             "📊 <b>{} (Q) · RADAR</b>\n\
              TF: {}\n\n\
              <b>Fiyat</b> {:.4}\n\
@@ -325,7 +329,14 @@ impl Notifier {
             conf_10,
             early_label,
             recommendation,
-        )
+        );
+        if let Some(ew) = elliott_summary {
+            if !ew.is_empty() {
+                s.push_str("\n\n<b>Elliott</b>\n");
+                s.push_str(ew);
+            }
+        }
+        s
     }
 
     /// Q-RADAR erken uyarısını bildirim kanallarına gönder (routing: Telegram + X).

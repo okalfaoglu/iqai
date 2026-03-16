@@ -94,7 +94,24 @@ pub fn compute_q_radar_opportunity(
         let boost = (confluence.layers_passed as f64 * CONFLUENCE_BOOST_PER_LAYER).min(CONFLUENCE_BOOST_CAP);
         confidence_score = (confidence_score + boost).min(10.0);
         early_warning_score = (early_warning_score + boost).min(10.0);
-        confirmation_layers = Some(format!("{}/4 katman", confluence.layers_passed));
+        confirmation_layers = Some(format!("{}/8 katman", confluence.layers_passed));
+        if config.q_require_mtf_for_dip_zone && !confluence.mtf_support_near {
+            // Opsiyonel: MTF destek yoksa dip/tepe tespitini gösterme
+            return QRadarOpportunityAnalysis {
+                symbol: symbol.to_string(),
+                timeframe: chart_tf,
+                radar,
+                dip,
+                peak,
+                detection: "—".to_string(),
+                confidence_score: 0.0,
+                early_warning_score: 0.0,
+                recommendation: "—".to_string(),
+                confirmation_layers: Some(format!("{}/8 katman (MTF yok)", confluence.layers_passed)),
+                direction: "—".to_string(),
+                reference_price,
+            };
+        }
         if confidence_score >= 7.0 && early_warning_score >= 7.0 {
             final_recommendation = if is_long {
                 "GÜÇLÜ DİP – İzle".to_string()

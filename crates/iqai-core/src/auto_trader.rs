@@ -16,6 +16,19 @@ use crate::trade_db::TradeDb;
 use crate::trade_manager::{calculate_position_size, Position, PositionSide, TradeAction, TradeManager};
 use crate::types::{Candle, QSetup, SignalType, Timeframe};
 
+/// Kapanışta kayma: long için fiyat aşağı, short için yukarı (olumsuz fill).
+fn apply_slippage(price: f64, is_long: bool, slippage_bps: u32) -> f64 {
+    if slippage_bps == 0 {
+        return price;
+    }
+    let pct = slippage_bps as f64 / 10_000.0;
+    if is_long {
+        price * (1.0 - pct)
+    } else {
+        price * (1.0 + pct)
+    }
+}
+
 // ──────────────────────────── Enums / structs ────────────────────────────
 
 /// Çalışma modu
@@ -224,6 +237,14 @@ pub struct AutoTraderConfig {
     pub use_radar_filter: bool,
     pub min_radar_confidence: f64,
     pub db_path: Option<String>,
+    /// Komisyon (basis points). Önce borsa API'sinden alınır; yoksa config (varsayılan 4).
+    pub commission_bps: u32,
+    /// Kapanışta kayma (basis points). Long kapanışta fiyat aşağı, short'ta yukarı uygulanır.
+    pub slippage_bps: u32,
+    /// true ise piyasa emri yerine limit IOC (maks kayma ile).
+    pub use_limit_order: bool,
+    /// Limit emirde izin verilen maks kayma, basis points (örn. 50 = %0.5).
+    pub limit_slippage_bps: u32,
 }
 
 impl Default for AutoTraderConfig {
@@ -240,6 +261,10 @@ impl Default for AutoTraderConfig {
             use_radar_filter: false,
             min_radar_confidence: 4.0,
             db_path: None,
+            commission_bps: 4,
+            slippage_bps: 0,
+            use_limit_order: false,
+            limit_slippage_bps: 50,
         }
     }
 }
@@ -258,6 +283,10 @@ impl AutoTraderConfig {
             use_radar_filter: tc.use_radar_filter.unwrap_or(false),
             min_radar_confidence: tc.min_radar_confidence.unwrap_or(4.0),
             db_path: tc.db_path.clone(),
+            commission_bps: tc.commission_bps.unwrap_or(4),
+            slippage_bps: tc.slippage_bps.unwrap_or(0),
+            use_limit_order: tc.use_limit_order.unwrap_or(false),
+            limit_slippage_bps: tc.limit_slippage_bps.unwrap_or(50),
         }
     }
 }
@@ -534,8 +563,22 @@ impl AutoTrader {
         let mode = self.config.mode;
 
         let (order_id, avg_price) = if mode.sends_real_orders() {
-            // LIVE: gerçek emir
-            match exchange.place_market_order(&signal.symbol, order_side, qty).await {
+            let fill_price = current_prices
+                .and_then(|m| m.get(&signal.symbol).copied())
+                .unwrap_or(signal.entry);
+            let limit_price = if signal.is_long {
+                fill_price * (1.0 + self.config.limit_slippage_bps as f64 / 10_000.0)
+            } else {
+                fill_price * (1.0 - self.config.limit_slippage_bps as f64 / 10_000.0)
+            };
+            let order_result = if self.config.use_limit_order {
+                exchange
+                    .place_limit_order_ioc(&signal.symbol, order_side, qty, limit_price)
+                    .await
+            } else {
+                exchange.place_market_order(&signal.symbol, order_side, qty).await
+            };
+            match order_result {
                 Ok(resp) => {
                     log::info!(
                         "[AutoTrader][LIVE] Order {} filled: {:.6} @ {:.2}",
@@ -679,7 +722,21 @@ impl AutoTrader {
         let close_qty = managed.position.quantity * managed.position.remaining_pct;
 
         if self.config.mode.sends_real_orders() && close_qty > 0.0 {
-            match exchange.place_market_order(&managed.signal.symbol, close_side, close_qty).await {
+            let limit_price = if managed.signal.is_long {
+                current_price * (1.0 - self.config.limit_slippage_bps as f64 / 10_000.0)
+            } else {
+                current_price * (1.0 + self.config.limit_slippage_bps as f64 / 10_000.0)
+            };
+            let order_result = if self.config.use_limit_order {
+                exchange
+                    .place_limit_order_ioc(&managed.signal.symbol, close_side, close_qty, limit_price)
+                    .await
+            } else {
+                exchange
+                    .place_market_order(&managed.signal.symbol, close_side, close_qty)
+                    .await
+            };
+            match order_result {
                 Ok(resp) => log::info!("[AutoTrader][LIVE] Close {}: {:.6} @ {:.2}", resp.order_id, resp.executed_qty, resp.avg_price),
                 Err(e) => {
                     log::error!("[AutoTrader] Kapanış emir hatası: {}", e);
@@ -688,11 +745,20 @@ impl AutoTrader {
             }
         }
 
-        let pnl = if managed.signal.is_long {
-            (current_price - managed.position.entry_price) * close_qty
+        let commission_bps = exchange
+            .get_commission_bps(&managed.signal.symbol)
+            .await
+            .unwrap_or(self.config.commission_bps);
+        let effective_exit = apply_slippage(current_price, managed.signal.is_long, self.config.slippage_bps);
+        let pnl_gross = if managed.signal.is_long {
+            (effective_exit - managed.position.entry_price) * close_qty
         } else {
-            (managed.position.entry_price - current_price) * close_qty
+            (managed.position.entry_price - effective_exit) * close_qty
         };
+        let notional_open = managed.position.entry_price * close_qty;
+        let notional_close = effective_exit * close_qty;
+        let fee = (notional_open + notional_close) * (commission_bps as f64 / 10_000.0);
+        let pnl = pnl_gross - fee;
         let pnl_r = pnl / (managed.position.risk_r * close_qty).max(1e-10);
         self.daily_pnl += pnl;
 
@@ -757,7 +823,21 @@ impl AutoTrader {
         let close_side = if managed.signal.is_long { OrderSide::Sell } else { OrderSide::Buy };
 
         if self.config.mode.sends_real_orders() && close_qty > 0.0 {
-            match exchange.place_market_order(&managed.signal.symbol, close_side, close_qty).await {
+            let limit_price = if managed.signal.is_long {
+                current_price * (1.0 - self.config.limit_slippage_bps as f64 / 10_000.0)
+            } else {
+                current_price * (1.0 + self.config.limit_slippage_bps as f64 / 10_000.0)
+            };
+            let order_result = if self.config.use_limit_order {
+                exchange
+                    .place_limit_order_ioc(&managed.signal.symbol, close_side, close_qty, limit_price)
+                    .await
+            } else {
+                exchange
+                    .place_market_order(&managed.signal.symbol, close_side, close_qty)
+                    .await
+            };
+            match order_result {
                 Ok(resp) => log::info!("[AutoTrader][LIVE] Partial close {}: {:.6} @ {:.2}", resp.order_id, resp.executed_qty, resp.avg_price),
                 Err(e) => return Err(format!("Kısmi kapanış hatası: {}", e)),
             }
@@ -766,11 +846,18 @@ impl AutoTrader {
         }
 
         if let Some(m) = self.open_positions.get_mut(key) {
-            let pnl_partial = if m.signal.is_long {
-                (current_price - m.position.entry_price) * close_qty
+            let commission_bps = exchange
+                .get_commission_bps(&m.signal.symbol)
+                .await
+                .unwrap_or(self.config.commission_bps);
+            let effective_exit = apply_slippage(current_price, m.signal.is_long, self.config.slippage_bps);
+            let pnl_gross = if m.signal.is_long {
+                (effective_exit - m.position.entry_price) * close_qty
             } else {
-                (m.position.entry_price - current_price) * close_qty
+                (m.position.entry_price - effective_exit) * close_qty
             };
+            let fee = (m.position.entry_price * close_qty + effective_exit * close_qty) * (commission_bps as f64 / 10_000.0);
+            let pnl_partial = pnl_gross - fee;
             m.realized_pnl += pnl_partial;
             self.daily_pnl += pnl_partial;
 
@@ -829,7 +916,10 @@ impl AutoTrader {
             .cloned()
             .filter(|k| !keys_before.contains(k))
             .collect();
-        let actions = self.tick_positions(current_prices, candles_map, Some(&opened_this_tick));
+        // Sadece Paper modda aynı bar'da açılan pozisyonları TP/SL'dan hariç tut (backtest look-ahead önlemi).
+        // Live/Dry'da mum içi SL tetiklenebilsin diye skip yapılmaz.
+        let skip_keys = (self.config.mode == TradingMode::Paper).then_some(&opened_this_tick);
+        let actions = self.tick_positions(current_prices, candles_map, skip_keys);
 
         for (key, action) in actions {
             let symbol = self.open_positions.get(&key).map(|m| m.signal.symbol.clone()).unwrap_or_default();

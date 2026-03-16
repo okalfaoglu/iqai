@@ -161,7 +161,7 @@
     }
     function buildCard(r) {
       const sym = r.symbol || '—';
-      const tf = (r.timeframe && (typeof r.timeframe === 'string' ? r.timeframe : r.timeframe.toUpperCase && r.timeframe.toUpperCase())) || '—';
+      const tf = (r.timeframe && (typeof r.timeframe === 'string' ? r.timeframe : (r.timeframe.toUpperCase && r.timeframe.toUpperCase()) || String(r.timeframe))) || '—';
       const title = sym + ' · ' + tf;
       const price = r.reference_price != null ? Number(r.reference_price).toFixed(2) : '—';
       const dir = r.direction || '—';
@@ -176,6 +176,7 @@
       const layers = r.confirmation_layers || '';
       let html = '<div class="q-panel">';
       html += '<div class="q-panel-title">' + title + '</div>';
+      html += formatRow('Zaman dilimi (TF)', '<strong>' + tf + '</strong>');
       html += formatRow('Fiyat', price);
       html += '<div class="row"><span class="label">YÖN</span><span class="value ' + dirCls + '">' + dirIcon + ' ' + dir + '</span></div>';
       html += formatRow('Tespit', detection ? '<strong>' + detection + '</strong>' : '—');

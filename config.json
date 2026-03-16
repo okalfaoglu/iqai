@@ -22,6 +22,11 @@
     "max_bars": 10000,
     "native_tf_mode": true
   },
+  "ai": {
+    "enabled": true,
+    "model": "llama3",
+    "ollama_base_url": "http://localhost:11434"
+  },
   "trading": {
     "enabled": false,
     "mode": "dry",

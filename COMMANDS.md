@@ -41,6 +41,12 @@ cargo run -p iqai-cli -- watch --symbol ETHUSDT --side long --entry 3500.0 --sl 
 cargo run -p iqai-cli -- formations -s ETHUSDT -m futures -t 15M --limit 500
 ```
 
+### Q-Analiz backtest (geçmiş veriyle sermaye simülasyonu)
+```bash
+cargo run -p iqai-cli -- backtest -s ETHUSDT -m futures -t 5M -l 1000 --capital 10000 --risk-pct 1.0 --leverage 10
+```
+*(Parametreler tire ile: `--risk-pct`, `--capital`.)*
+
 ### Config (varsayılan JSON / dosyaya yaz)
 ```bash
 cargo run -p iqai-cli -- config

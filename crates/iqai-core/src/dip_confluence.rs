@@ -38,13 +38,24 @@ pub struct DipConfluenceResult {
     pub fib_elliott_zone: bool,
     /// Fiyat LL + momentum (RSI) HL = pozitif uyumsuzluk
     pub divergence_ok: bool,
-    /// Kaç katman geçti (0–4)
+    /// Wyckoff Spring (dip) veya Upthrust (tepe) tespit edildi mi
+    pub spring_ok: bool,
+    /// Long: RSI < oversold eşiği; Short: RSI > overbought eşiği
+    pub rsi_zone_ok: bool,
+    /// Break of structure: long son tepe kırıldı mı, short son dip kırıldı mı
+    pub bos_ok: bool,
+    /// Absorption: destek/tepe bandında hacim artışı ve band tutunması
+    pub absorption_ok: bool,
+    /// Kaç katman geçti (0–8)
     pub layers_passed: u8,
 }
 
 const MTF_ATR_BAND: f64 = 0.5;
 const FIB_PRICE_BAND_PCT: f64 = 0.003;
 const STRUCTURE_SCORE_MIN: f64 = 0.55;
+const ABSORPTION_ATR_MARGIN: f64 = 0.3;
+const ABSORPTION_BARS: usize = 5;
+const ABSORPTION_VOLUME_RATIO: f64 = 1.5;
 
 /// Çoklu doğrulama katmanlarını hesapla. LONG için dip, SHORT için tepe.
 pub fn compute_dip_confluence(
@@ -53,8 +64,8 @@ pub fn compute_dip_confluence(
     config: &Config,
     reference_price: f64,
     is_long: bool,
-    _dip: Option<&DipAnalysis>,
-    _peak: Option<&PeakAnalysis>,
+    dip: Option<&DipAnalysis>,
+    peak: Option<&PeakAnalysis>,
 ) -> DipConfluenceResult {
     let candles = match buffer.get(chart_tf) {
         Some(c) if c.len() >= config.pivot_length as usize * 3 + 20 => c,
@@ -144,16 +155,88 @@ pub fn compute_dip_confluence(
         bearish_divergence(candles, pivot_len)
     };
 
-    let layers_passed = [mtf_support_near, ltf_structure_ok, fib_elliott_zone, divergence_ok]
-        .into_iter()
-        .filter(|&x| x)
-        .count() as u8;
+    let spring_ok = if is_long {
+        dip.map(|d| d.spring_detected).unwrap_or(false)
+    } else {
+        peak.map(|p| p.upthrust_detected).unwrap_or(false)
+    };
+
+    let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
+    let last_rsi = rsi(&closes, 14);
+    let rsi_zone_ok = match last_rsi {
+        Some(r) => {
+            if is_long {
+                r < config.q_rsi_oversold
+            } else {
+                r > config.q_rsi_overbought
+            }
+        }
+        None => false,
+    };
+
+    let last = candles.last().unwrap();
+    let bos_ok = if is_long {
+        let phs = last_two_pivot_highs(candles, pivot_len);
+        phs.first()
+            .map(|(_, ph)| last.close > *ph)
+            .unwrap_or(false)
+    } else {
+        let pls = last_two_pivot_lows(candles, pivot_len);
+        pls.first()
+            .map(|(_, pl)| last.close < *pl)
+            .unwrap_or(false)
+    };
+
+    let band_center = if is_long {
+        dip.map(|d| d.dip_price)
+    } else {
+        peak.map(|p| p.peak_price)
+    };
+    let absorption_ok = band_center.map_or(false, |center| {
+        let band = atr_val * ABSORPTION_ATR_MARGIN;
+        let band_low = center - band;
+        let band_high = center + band;
+        if candles.len() < ABSORPTION_BARS + 20 {
+            return false;
+        }
+        let start = candles.len().saturating_sub(20);
+        let vol_avg_20: f64 = candles[start..].iter().map(|c| c.volume).sum::<f64>() / 20.0_f64;
+        let last_n = candles.len().saturating_sub(ABSORPTION_BARS);
+        let vol_sum_n: f64 = candles[last_n..].iter().map(|c| c.volume).sum();
+        let vol_avg_n = vol_sum_n / ABSORPTION_BARS as f64;
+        if vol_avg_20 <= 0.0 || vol_avg_n < vol_avg_20 * ABSORPTION_VOLUME_RATIO {
+            return false;
+        }
+        if is_long {
+            !candles[last_n..].iter().any(|c| c.close < band_low)
+        } else {
+            !candles[last_n..].iter().any(|c| c.close > band_high)
+        }
+    });
+
+    let layers_passed = [
+        mtf_support_near,
+        ltf_structure_ok,
+        fib_elliott_zone,
+        divergence_ok,
+        spring_ok,
+        rsi_zone_ok,
+        bos_ok,
+        absorption_ok,
+    ]
+    .into_iter()
+    .filter(|&x| x)
+    .count() as u8;
 
     DipConfluenceResult {
         mtf_support_near,
         ltf_structure_ok,
         fib_elliott_zone,
         divergence_ok,
+        spring_ok,
+        rsi_zone_ok,
+        bos_ok,
+        absorption_ok,
         layers_passed,
     }
 }

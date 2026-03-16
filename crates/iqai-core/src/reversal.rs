@@ -19,6 +19,8 @@ const REVERSAL_MARGIN_ATR: f64 = 0.2;
 const REVERSAL_MARGIN_ATR_DOWN: f64 = 0.2;
 /// Güç skoru: bu kadar ATR hareket = 1.0 (tam güç)
 const STRENGTH_ATR_FULL: f64 = 2.0;
+/// Spring: dip altına indikten sonra en fazla bu kadar bar içinde tekrar üstüne dönmeli
+const SPRING_RECOVERY_BARS: usize = 4;
 
 /// Bir sembol/timeframe için dip analizi: dip fiyatı, dipten dönüş tespiti, dönüş gücü.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +41,8 @@ pub struct DipAnalysis {
     pub bounce_from_dip: f64,
     /// Bounce’un ATR cinsinden katı (kaç R).
     pub bounce_r: f64,
+    /// Wyckoff Spring: dip barından sonra fiyat dip altına inip tekrar üstüne dönmüş mü (likidite avı).
+    pub spring_detected: bool,
 }
 
 /// Bir sembol/timeframe için tepe analizi: tepe fiyatı, tepeden dönüş (düşüş), düşüş gücü.
@@ -56,6 +60,8 @@ pub struct PeakAnalysis {
     /// Tepe – son kapanış farkı (mutlak).
     pub decline_from_peak: f64,
     pub decline_r: f64,
+    /// Wyckoff Upthrust: tepe barından sonra fiyat tepe üstüne çıkıp tekrar altına dönmüş mü.
+    pub upthrust_detected: bool,
 }
 
 /// Dip ve tepe analizini bir arada döndüren sonuç.
@@ -146,6 +152,44 @@ fn reversal_strength_from_dip(
     (combined.min(1.0), bounce, bounce_r)
 }
 
+/// Wyckoff Spring: dip barından sonra herhangi bir barın low'u dip altına inmiş, ardından en fazla SPRING_RECOVERY_BARS içinde close dip üstüne dönmüş mü.
+fn detect_spring(candles: &[Candle], dip_price: f64, dip_bar_index: usize) -> bool {
+    if dip_bar_index + 1 >= candles.len() {
+        return false;
+    }
+    for j in (dip_bar_index + 1)..candles.len() {
+        if candles[j].low < dip_price {
+            let end = (j + SPRING_RECOVERY_BARS).min(candles.len());
+            for k in (j + 1)..end {
+                if candles[k].close > dip_price {
+                    return true;
+                }
+            }
+            break;
+        }
+    }
+    false
+}
+
+/// Wyckoff Upthrust: tepe barından sonra herhangi bir barın high'ı tepe üstüne çıkmış, ardından en fazla SPRING_RECOVERY_BARS içinde close tepe altına dönmüş mü.
+fn detect_upthrust(candles: &[Candle], peak_price: f64, peak_bar_index: usize) -> bool {
+    if peak_bar_index + 1 >= candles.len() {
+        return false;
+    }
+    for j in (peak_bar_index + 1)..candles.len() {
+        if candles[j].high > peak_price {
+            let end = (j + SPRING_RECOVERY_BARS).min(candles.len());
+            for k in (j + 1)..end {
+                if candles[k].close < peak_price {
+                    return true;
+                }
+            }
+            break;
+        }
+    }
+    false
+}
+
 /// Tepeden dönüş (düşüş) var mı.
 fn is_reversal_from_peak(
     candles: &[Candle],
@@ -222,6 +266,7 @@ pub fn compute_reversal_analysis(
         let (reversal_strength, bounce_from_dip, bounce_r) =
             reversal_strength_from_dip(candles, dip_price, atr_val);
 
+        let spring_detected = detect_spring(candles, dip_price, dip_bar_index);
         dip = Some(DipAnalysis {
             dip_price,
             dip_time,
@@ -231,6 +276,7 @@ pub fn compute_reversal_analysis(
             reversal_strength,
             bounce_from_dip,
             bounce_r,
+            spring_detected,
         });
     }
 
@@ -241,6 +287,7 @@ pub fn compute_reversal_analysis(
         let (decline_strength, decline_from_peak, decline_r) =
             decline_strength_from_peak(candles, peak_price, atr_val);
 
+        let upthrust_detected = detect_upthrust(candles, peak_price, peak_bar_index);
         peak = Some(PeakAnalysis {
             peak_price,
             peak_time,
@@ -250,6 +297,7 @@ pub fn compute_reversal_analysis(
             decline_strength,
             decline_from_peak,
             decline_r,
+            upthrust_detected,
         });
     }
 
