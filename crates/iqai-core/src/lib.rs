@@ -3,9 +3,11 @@
 pub mod app_config;
 pub mod auto_trader;
 pub mod backtest;
+pub mod candlestick_patterns;
 pub mod config;
 pub mod classic_patterns;
 pub mod dip_confluence;
+pub mod dip_tepe_scoring;
 pub mod logging;
 pub mod elliott;
 pub mod elliott_detector;
@@ -32,6 +34,8 @@ pub use signal::{CandleBuffer, SignalEngine};
 pub use elliott_detector::{collect_swings, compute_elliott, ElliottDetectorResult};
 pub use impulse_detector::{detect_impulse, ImpulseDetectorState, ImpulseStage};
 pub use q_radar_analysis::{compute_q_radar_opportunity, QRadarOpportunityAnalysis};
+pub use dip_tepe_scoring::{compute_dip_tepe_score, DipTepeScore, SignalScore};
+pub use candlestick_patterns::{detect_candle_patterns, CandlePatternSignals};
 pub use reversal::{
     compute_reversal_analysis, get_dip_price_and_index, get_peak_price_and_index,
     DipAnalysis, PeakAnalysis, ReversalAnalysis,

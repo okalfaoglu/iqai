@@ -97,6 +97,12 @@ pub struct SmartMoneyConfig {
     pub volume_long_period: Option<u32>,
     pub volume_short_period: Option<u32>,
     pub breakout_period: Option<u32>,
+
+    // Q-Analiz RSI eşikleri (Madde 4: klasik 30/70 veya yumuşak 35/65)
+    /// Dip: RSI < bu değer ise aşırı satım (varsayılan 35; klasik 30)
+    pub q_rsi_oversold: Option<f64>,
+    /// Tepe: RSI > bu değer ise aşırı alım (varsayılan 65; klasik 70)
+    pub q_rsi_overbought: Option<f64>,
 }
 
 /// Otomatik trading ayarları – config.json "trading" bölümü.

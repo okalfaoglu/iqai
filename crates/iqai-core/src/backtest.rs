@@ -280,38 +280,3 @@ mod tests {
         assert!(result.final_capital >= 0.0);
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::types::Candle;
-
-    fn make_candle(t: i64, o: f64, h: f64, l: f64, c: f64, v: f64) -> Candle {
-        Candle { time: t, open: o, high: h, low: l, close: c, volume: v }
-    }
-
-    /// Az veri: min_len altında boş döner.
-    #[test]
-    fn backtest_returns_empty_for_insufficient_candles() {
-        let config = Config::default();
-        let min_len = (config.pivot_length * 4 + 50) as usize;
-        let candles: Vec<Candle> = (0..min_len.saturating_sub(1))
-            .map(|i| make_candle(i as i64 * 60_000, 100.0, 101.0, 99.0, 100.5, 1000.0))
-            .collect();
-        let out = scan_historical_q_setups(&candles, &config, Timeframe::M5, "TEST");
-        assert!(out.is_empty());
-    }
-
-    /// Yeterli bar sayısında fonksiyon çalışır (setup bulunmasa da panic yok).
-    #[test]
-    fn backtest_runs_without_panic_for_minimum_bars() {
-        let config = Config::default();
-        let min_len = (config.pivot_length * 4 + 50) as usize;
-        let candles: Vec<Candle> = (0..min_len + 10)
-            .map(|i| make_candle(i as i64 * 60_000, 100.0, 101.0, 99.0, 100.5, 1000.0))
-            .collect();
-        let out = scan_historical_q_setups(&candles, &config, Timeframe::M5, "TEST");
-        // Sentetik düz veride setup çıkmayabilir; sadece çalıştığını doğrula
-        assert!(out.len() <= candles.len());
-    }
-}

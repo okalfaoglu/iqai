@@ -65,8 +65,8 @@ pub fn rsi(prices: &[f64], period: usize) -> Option<f64> {
     Some(100.0 - (100.0 / (1.0 + rs)))
 }
 
-/// Pivot High - returns Some(high) if valid pivot, None otherwise
-/// Pine: ta.pivothigh(high, length, length)
+/// Pivot High (tepe) – Doc §2: merkez barın high'ı sol/sağdaki length barın high'larından kesinlikle yüksek.
+/// Pine: ta.pivothigh(high, length, length). Dip/tepe arama: reversal.rs.
 pub fn pivot_high(candles: &[Candle], length: usize) -> Option<f64> {
     if candles.len() < length * 2 + 1 {
         return None;
@@ -83,7 +83,8 @@ pub fn pivot_high(candles: &[Candle], length: usize) -> Option<f64> {
     Some(pivot_bar)
 }
 
-/// Pivot Low
+/// Pivot Low (dip) – Doc §2: merkez barın low'u sol/sağdaki length barın low'larından kesinlikle düşük.
+/// Pine: ta.pivotlow(low, length, length). Dip/tepe arama: reversal.rs.
 pub fn pivot_low(candles: &[Candle], length: usize) -> Option<f64> {
     if candles.len() < length * 2 + 1 {
         return None;
@@ -142,4 +143,76 @@ pub fn lowest(lows: &[f64], period: usize) -> Option<f64> {
             .cloned()
             .fold(f64::INFINITY, f64::min),
     )
+}
+
+// -----------------------------------------------------------------------------
+// MACD (Madde 5: MACD Divergence için)
+// -----------------------------------------------------------------------------
+
+/// MACD sonuçları: line, signal, histogram (Pine: macd, signal, hist)
+#[derive(Debug, Clone, Copy)]
+pub struct MacdResult {
+    pub line: f64,
+    pub signal: f64,
+    pub histogram: f64,
+}
+
+/// MACD(close, fast=12, slow=26, signal=9). Son bar için değerler.
+pub fn macd(prices: &[f64], fast: usize, slow: usize, signal_len: usize) -> Option<MacdResult> {
+    if prices.len() < slow + signal_len {
+        return None;
+    }
+    let mut ema_f = ema(&prices[..slow], fast)?;
+    let mut ema_s = ema(&prices[..slow], slow)?;
+    let mut macd_line = ema_f - ema_s;
+    let k_fast = 2.0 / (fast as f64 + 1.0);
+    let k_slow = 2.0 / (slow as f64 + 1.0);
+    let k_sig = 2.0 / (signal_len as f64 + 1.0);
+    let mut signal_ema = macd_line;
+    for i in slow..prices.len() {
+        let p = prices[i];
+        ema_f = (p - ema_f) * k_fast + ema_f;
+        ema_s = (p - ema_s) * k_slow + ema_s;
+        macd_line = ema_f - ema_s;
+        signal_ema = (macd_line - signal_ema) * k_sig + signal_ema;
+    }
+    let histogram = macd_line - signal_ema;
+    Some(MacdResult {
+        line: macd_line,
+        signal: signal_ema,
+        histogram,
+    })
+}
+
+/// Belirli bir bar indeksinde MACD line (divergence için iki pivot'ta çağrılır).
+pub fn macd_line_at(prices: &[f64], end_idx: usize, fast: usize, slow: usize) -> Option<f64> {
+    if end_idx + 1 < slow {
+        return None;
+    }
+    let slice = &prices[..=end_idx];
+    let ema_f = ema(slice, fast)?;
+    let ema_s = ema(slice, slow)?;
+    Some(ema_f - ema_s)
+}
+
+// -----------------------------------------------------------------------------
+// Bollinger Bands (Madde 6: Mean reversion – dip: Close < lower, tepe: Close > upper)
+// -----------------------------------------------------------------------------
+
+/// Bollinger: middle = SMA(close, period), upper = middle + mult*std, lower = middle - mult*std
+pub fn bollinger(
+    prices: &[f64],
+    period: usize,
+    mult: f64,
+) -> Option<(f64, f64, f64)> {
+    if prices.len() < period {
+        return None;
+    }
+    let slice = &prices[prices.len() - period..];
+    let middle = slice.iter().sum::<f64>() / period as f64;
+    let variance = slice.iter().map(|p| (p - middle).powi(2)).sum::<f64>() / period as f64;
+    let std = variance.sqrt().max(0.0);
+    let upper = middle + mult * std;
+    let lower = middle - mult * std;
+    Some((lower, middle, upper))
 }

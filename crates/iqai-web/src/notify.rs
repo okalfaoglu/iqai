@@ -330,6 +330,20 @@ impl Notifier {
             early_label,
             recommendation,
         );
+        if let Some(ref ds) = opp.discrete_score {
+            s.push_str("\n\n<b>Skor (sinyal)</b> ");
+            s.push_str(&ds.total.to_string());
+            s.push_str("/10 · ");
+            s.push_str(&ds.recommendation);
+            if ds.early_warning_momentum {
+                s.push_str(" · ⚡ Momentum dönüşü");
+            }
+            let active: Vec<&str> = ds.signals.iter().filter(|x| x.active).map(|x| x.name.as_str()).collect();
+            if !active.is_empty() {
+                s.push_str("\n• ");
+                s.push_str(&active.join(", "));
+            }
+        }
         if let Some(ew) = elliott_summary {
             if !ew.is_empty() {
                 s.push_str("\n\n<b>Elliott</b>\n");

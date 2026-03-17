@@ -223,6 +223,8 @@ impl Config {
             if let Some(v) = c.volume_long_period { base.volume_long_period = v; }
             if let Some(v) = c.volume_short_period { base.volume_short_period = v; }
             if let Some(v) = c.breakout_period { base.breakout_period = v; }
+            if let Some(v) = c.q_rsi_oversold { base.q_rsi_oversold = v; }
+            if let Some(v) = c.q_rsi_overbought { base.q_rsi_overbought = v; }
         }
         base
     }

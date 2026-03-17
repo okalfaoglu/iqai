@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::Config;
 use crate::dip_confluence::compute_dip_confluence;
+use crate::dip_tepe_scoring::compute_dip_tepe_score;
 use crate::reversal::{compute_reversal_analysis, DipAnalysis, PeakAnalysis};
 use crate::signal::{CandleBuffer, SignalEngine};
 use crate::types::{QRadarSignal, SignalType, Timeframe};
@@ -45,6 +46,8 @@ pub struct QRadarOpportunityAnalysis {
     pub direction: String,
     /// Referans fiyat (son kapanış veya RADAR reference)
     pub reference_price: f64,
+    /// Madde 15: Sinyal bazlı skorlama (RSI +1, Support +2, … toplam 0–10). Tespit varken dolu.
+    pub discrete_score: Option<crate::dip_tepe_scoring::DipTepeScore>,
 }
 
 /// Merkezi Q-RADAR fırsat analizi. CLI ve Web bu fonksiyonu çağırır.
@@ -81,6 +84,7 @@ pub fn compute_q_radar_opportunity(
 
     let is_long = direction == "LONG";
     let mut final_recommendation = recommendation.clone();
+    let mut discrete_score: Option<crate::dip_tepe_scoring::DipTepeScore> = None;
     if detection != "—" && (is_long || direction == "SHORT") {
         let confluence = compute_dip_confluence(
             buffer,
@@ -96,7 +100,6 @@ pub fn compute_q_radar_opportunity(
         early_warning_score = (early_warning_score + boost).min(10.0);
         confirmation_layers = Some(format!("{}/8 katman", confluence.layers_passed));
         if config.q_require_mtf_for_dip_zone && !confluence.mtf_support_near {
-            // Opsiyonel: MTF destek yoksa dip/tepe tespitini gösterme
             return QRadarOpportunityAnalysis {
                 symbol: symbol.to_string(),
                 timeframe: chart_tf,
@@ -110,6 +113,7 @@ pub fn compute_q_radar_opportunity(
                 confirmation_layers: Some(format!("{}/8 katman (MTF yok)", confluence.layers_passed)),
                 direction: "—".to_string(),
                 reference_price,
+                discrete_score: None,
             };
         }
         if confidence_score >= 7.0 && early_warning_score >= 7.0 {
@@ -124,6 +128,28 @@ pub fn compute_q_radar_opportunity(
             } else {
                 "ZAYIF TEPE – İzle".to_string()
             };
+        }
+        // Madde 15: Sinyal bazlı skorlama (0–10)
+        if let Some(candles_slice) = candles {
+            let side = if is_long {
+                SignalType::Buy
+            } else {
+                SignalType::Sell
+            };
+            let structure_score = engine.structure_score(
+                candles_slice,
+                side,
+                config.pivot_length as usize,
+            );
+            discrete_score = Some(compute_dip_tepe_score(
+                candles_slice,
+                config,
+                is_long,
+                dip.as_ref(),
+                peak.as_ref(),
+                structure_score,
+                confluence.mtf_support_near,
+            ));
         }
     }
 
@@ -140,6 +166,7 @@ pub fn compute_q_radar_opportunity(
         confirmation_layers,
         direction,
         reference_price,
+        discrete_score,
     }
 }
 

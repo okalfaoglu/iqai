@@ -1407,14 +1407,28 @@ async fn run_q_analiz_daemon(interval_secs: u64) -> Result<()> {
                                 } else {
                                     format!("\nElliott: {}", extra)
                                 };
+                                let discrete_part = opp.discrete_score.as_ref().map(|ds| {
+                                    let active: Vec<&str> = ds.signals.iter().filter(|s| s.active).map(|s| s.name.as_str()).collect();
+                                    let active_str: String = if active.is_empty() { "yok".to_string() } else { active.join(", ") };
+                                    format!(
+                                        "\nSkor (sinyal): {}/10 | {} | Aktif sinyaller: {}",
+                                        ds.total,
+                                        ds.recommendation,
+                                        active_str
+                                    )
+                                }).unwrap_or_default();
                                 let context = format!(
-                                    "Sembol: {} | TF: {} | Tespit: {} | Yön: {} | Tavsiye: {} | Fiyat: {:.4}{}",
+                                    "Sembol: {} | TF: {} | Tespit: {} | Yön: {} | Tavsiye: {} | Güven: {:.1}/10 | Erken uyarı: {:.1}/10 | Fiyat: {:.4}{}{}{}",
                                     opp.symbol,
                                     tf.to_binance_interval(),
                                     opp.detection,
                                     opp.direction,
                                     opp.recommendation,
+                                    opp.confidence_score,
+                                    opp.early_warning_score,
                                     opp.reference_price,
+                                    opp.confirmation_layers.as_deref().map(|c| format!("\nOnay: {}", c)).unwrap_or_default(),
+                                    discrete_part,
                                     elliott_part,
                                 );
                                 if let Some(ai_text) = ai::interpret_q_analysis(base, model, &context).await {

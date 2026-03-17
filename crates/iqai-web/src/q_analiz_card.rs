@@ -100,6 +100,12 @@ pub fn render_q_analiz_card(opp: &QRadarOpportunityAnalysis) -> Result<Vec<u8>> 
     if !layers.is_empty() {
         draw_text_mut(&mut img, gray_label, PAD, y, scale_small, &font, "Onay:");
         draw_text_mut(&mut img, white, LEFT_COL_W, y, scale_small, &font, layers);
+        y += ROW_H as i32;
+    }
+    if let Some(ref ds) = opp.discrete_score {
+        let score_line = format!("{} /10 · {}", ds.total, ds.recommendation);
+        draw_text_mut(&mut img, gray_label, PAD, y, scale_small, &font, "Skor:");
+        draw_text_mut(&mut img, green, LEFT_COL_W, y, scale_small, &font, &score_line);
     }
 
     let mut buf = Vec::new();
