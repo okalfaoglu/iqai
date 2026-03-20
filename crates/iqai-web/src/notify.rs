@@ -3,6 +3,9 @@ use iqai_core::auto_trader::TradeEvent;
 use iqai_core::{AppConfig, ProtectSignal, QRadarOpportunityAnalysis, QRadarSignal, QSetup};
 
 use crate::q_analiz_card;
+use crate::q_setup_card;
+use crate::trade_open_card;
+use crate::trade_close_card;
 
 fn html_escape(s: &str) -> String {
     s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
@@ -256,8 +259,37 @@ impl Notifier {
 
     /// Q-Analiz sonucunu routing_rules(QSetup) kanallarına gönder.
     pub async fn notify_q_setup(&self, setup: &QSetup) -> Result<()> {
+        self.notify_q_setup_with_price(setup, None).await
+    }
+
+    /// Q-Setup bildirimini Telegram’da kart olarak gönder (opsiyonel current_price ile).
+    pub async fn notify_q_setup_with_price(&self, setup: &QSetup, current_price: Option<f64>) -> Result<()> {
         let text = self.format_q_setup(setup);
-        self.send_to_channels(&text, routing_rules(NotificationEventType::QSetup), Some(setup)).await
+        let channels = routing_rules(NotificationEventType::QSetup);
+        let caption = format!("{} (Q) · Q-SETUP · {:.0}/100", setup.symbol, setup.q_score);
+        match q_setup_card::render_q_setup_card(setup, current_price) {
+            Ok(png_bytes) => {
+                for ch in &channels {
+                    match ch {
+                        Channel::Telegram => {
+                            if let Some(ref tg) = self.telegram {
+                                if let Err(e) = self.notify_telegram_photo(tg, &png_bytes, &caption).await {
+                                    let _ = self.notify_telegram(tg, &text).await;
+                                    log::warn!("Telegram Q-Setup foto gönderilemedi, metin gönderildi: {:?}", e);
+                                }
+                            }
+                        }
+                        _ => {
+                            self.send_to_channels(&text, vec![*ch], Some(setup)).await?;
+                        }
+                    }
+                }
+            }
+            Err(_) => {
+                self.send_to_channels(&text, channels, Some(setup)).await?;
+            }
+        }
+        Ok(())
     }
 
     /// Q-Analiz tam panelini bildirim kanallarına gönder.
@@ -317,7 +349,7 @@ impl Notifier {
              <b>Fiyat</b> {:.4}\n\
              <b>YÖN</b> {}\n\
              <b>Tespit</b> {}\n\
-             <b>Güven</b> {} {}/10\n\
+             <b>Güven (Radar)</b> {} {}/10\n\
              <b>Erken Uyarı</b> {}\n\
              <b>Tavsiye</b> {}",
             opp.symbol,
@@ -331,7 +363,7 @@ impl Notifier {
             recommendation,
         );
         if let Some(ref ds) = opp.discrete_score {
-            s.push_str("\n\n<b>Skor (sinyal)</b> ");
+            s.push_str("\n\n<b>Skor (Dip/Tepe · sinyal)</b> ");
             s.push_str(&ds.total.to_string());
             s.push_str("/10 · ");
             s.push_str(&ds.recommendation);
@@ -339,6 +371,22 @@ impl Notifier {
                 s.push_str(" · ⚡ Momentum dönüşü");
             }
             let active: Vec<&str> = ds.signals.iter().filter(|x| x.active).map(|x| x.name.as_str()).collect();
+            if !active.is_empty() {
+                s.push_str("\n• ");
+                s.push_str(&active.join(", "));
+            }
+        }
+        if let Some(ref sm) = opp.smart_money_score {
+            s.push_str("\n\n<b>Skor (Smart Money Radar)</b> ");
+            s.push_str(&sm.total.to_string());
+            s.push_str("/10 · ");
+            s.push_str(&sm.recommendation);
+            let active: Vec<&str> = sm
+                .signals
+                .iter()
+                .filter(|x| x.active)
+                .map(|x| x.name.as_str())
+                .collect();
             if !active.is_empty() {
                 s.push_str("\n• ");
                 s.push_str(&active.join(", "));
@@ -488,9 +536,129 @@ Kural: Poz Koruma geldiğinde çıkış zorunlu.",
     }
 
     /// AutoTrader olaylarını Telegram'a (ve diğer kanallara) ilet.
+    /// Pozisyon açıldı/kapandı için Telegram'a görsel kart gönderilir (font varsa).
     pub async fn notify_trade_event(&self, event: &TradeEvent) -> Result<()> {
         let (text, event_type) = Self::format_trade_event(event);
-        self.send_to_channels(&text, routing_rules(event_type), None).await
+        let channels = routing_rules(event_type);
+
+        let telegram_sent_photo = match event {
+            TradeEvent::PositionOpened { signal, quantity: _, avg_price, mode } => {
+                let side = if signal.is_long { "LONG" } else { "SHORT" };
+                if let Some(ref tg) = self.telegram {
+                    match trade_open_card::render_trade_open_card(
+                        &signal.symbol,
+                        side,
+                        &mode.to_string(),
+                        signal.entry,
+                        *avg_price,
+                        signal.stop_loss,
+                        signal.take_profit,
+                        signal.score,
+                        signal.rr,
+                    ) {
+                        Ok(png_bytes) => {
+                            let caption = format!("{} · {} @ {:.4}", signal.symbol, side, avg_price);
+                            if self.notify_telegram_photo(tg, &png_bytes, &caption).await.is_ok() {
+                                true
+                            } else {
+                                let _ = self.notify_telegram(tg, &text).await;
+                                false
+                            }
+                        }
+                        Err(_) => {
+                            let _ = self.notify_telegram(tg, &text).await;
+                            false
+                        }
+                    }
+                } else {
+                    false
+                }
+            }
+            TradeEvent::PositionClosed { symbol, side, entry, exit, pnl, .. } => {
+                let pnl_pct = if entry.abs() >= 1e-12 {
+                    (exit - entry) / entry * 100.0
+                } else {
+                    0.0
+                };
+                if let Some(ref tg) = self.telegram {
+                    match trade_close_card::render_trade_close_card(
+                        symbol,
+                        side,
+                        *entry,
+                        *exit,
+                        pnl_pct,
+                    ) {
+                        Ok(png_bytes) => {
+                            let caption = format!("{} · {} | PnL: {:+.2} ({:+.2}%)", symbol, side, pnl, pnl_pct);
+                            if self.notify_telegram_photo(tg, &png_bytes, &caption).await.is_ok() {
+                                true
+                            } else {
+                                let _ = self.notify_telegram(tg, &text).await;
+                                false
+                            }
+                        }
+                        Err(_) => {
+                            let _ = self.notify_telegram(tg, &text).await;
+                            false
+                        }
+                    }
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        };
+
+        let channels_to_send: Vec<Channel> = if telegram_sent_photo {
+            channels.iter().filter(|c| **c != Channel::Telegram).copied().collect()
+        } else {
+            channels
+        };
+        self.send_to_channels(&text, channels_to_send, None).await
+    }
+
+    /// Açık pozisyon için CANLI POZİSYON kartını saat başı hatırlatma olarak gönderir (Telegram PNG).
+    /// Pozisyon açıldığında değil, her saat başı pozisyon kapanana kadar tekrarlanacak çağrı için kullanılır.
+    pub async fn notify_live_position_card(
+        &self,
+        symbol: &str,
+        side: &str,
+        mode: &str,
+        entry: f64,
+        current_price: f64,
+        stop_loss: f64,
+        take_profit: f64,
+        score: f64,
+        rr: f64,
+    ) -> Result<()> {
+        if let Some(ref tg) = self.telegram {
+            match trade_open_card::render_trade_open_card(
+                symbol,
+                side,
+                mode,
+                entry,
+                current_price,
+                stop_loss,
+                take_profit,
+                score,
+                rr,
+            ) {
+                Ok(png_bytes) => {
+                    let caption = format!("🕐 CANLI POZİSYON · {} · {} @ {:.4}", symbol, side, current_price);
+                    self.notify_telegram_photo(tg, &png_bytes, &caption).await
+                }
+                Err(e) => {
+                    let text = format!(
+                        "🕐 CANLI POZİSYON\n{} · {} | Giriş: {:.4} → Güncel: {:.4} | SL: {:.4} | TP: {:.4}",
+                        symbol, side, entry, current_price, stop_loss, take_profit,
+                    );
+                    let _ = self.notify_telegram(tg, &text).await;
+                    Err(e.into())
+                }
+            }
+        } else {
+            Ok(())
+        }
     }
 
     /// Birden fazla trade event'i toplu gönder.

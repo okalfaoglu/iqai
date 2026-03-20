@@ -8,10 +8,11 @@ Bu doküman, IQAI’de bir sembol için **dip (bottom)** ve **tepe (top)** tespi
 
 | Veri | Kullanım |
 |------|----------|
-| **OHLCV** | Tüm hesaplamalar sadece **Open, High, Low, Close, Volume** ile yapılır. |
-| Order book, funding, open interest, on-chain | **Kullanılmıyor.** |
+| **OHLCV** | Tüm temel hesaplamalar sadece **Open, High, Low, Close, Volume** ile yapılır. |
+| **ATR, EMA, SMA, RSI, MACD, Bollinger, VWAP** | `indicators.rs` içinde tanımlı; dip/tepe confluence ve sinyal skorlama motorunda kullanılır (Madde 4, 5, 6, 9, 10, 11, 13). |
+| Order book, funding, open interest, likidasyon, on-chain | **Şu an dip/tepe skorlamasında kullanılmıyor.** Tipler ve (Binance futures için) veri çekme hazır; ileride confluence veya Smart Money Radar’a eklenebilir (bkz. §20). |
 
-Kaynak: `Candle` (`types.rs`), `CandleBuffer` ile çoklu timeframe (M1, M5, M15, M30, H1, H4, D1).
+Kaynak: `Candle` (`types.rs`), `CandleBuffer` ile çoklu timeframe (M1, M5, M15, M30, H1, H4, D1), `indicators.rs` teknik indikatörler (ATR, EMA, RSI, MACD, Bollinger, VWAP, …).
 
 ---
 
@@ -304,3 +305,19 @@ Q-Analiz daemon (`q-analiz-daemon`) tespit bulduğunda, config’te `ai.enabled:
 - İsteğe bağlı **Elliott özeti**
 
 Böylece AI, hem klasik alanları hem de sinyal bazlı skoru ve hangi sinyallerin tetikli olduğunu görerek yorum yapar. Q-Analiz yeni bilgileri (discrete_score, confidence, early_warning, confirmation_layers) AI ile kullanmaya hazırdır.
+
+---
+
+## 20. İleride eklenebilecek veriler
+
+Aşağıdaki veriler için **tipler** (`iqai-core` → `market_context.rs`) ve **Binance Futures veri çekme** (`iqai-binance` → `BinanceFuturesClient`) tanımlıdır. Confluence veya discrete skorlamaya entegre edilmedi; isterseniz tek tek eklenebilir.
+
+| Veri | Kaynak / API | Olası kullanım |
+|------|--------------|----------------|
+| **Order book** | `fetch_order_book_snapshot(symbol, levels)` → bid/ask notional, imbalance | Imbalance &gt; 0 alış ağırlıklı → dip confluence; &lt; 0 satış ağırlıklı → tepe |
+| **Funding rate** | `fetch_funding_rate(symbol)` → rate, next_funding_time | Aşırı pozitif (long baskı) → tepe riski; aşırı negatif → dip fırsatı |
+| **Open interest** | `fetch_open_interest(symbol)` → value, change_pct | OI düşüş + fiyat düşüşü → likidasyon; OI artış → trend devamı ipucu |
+| **Likidasyon bölgeleri** | Harici servis veya tahmini hesaplama | Fiyat likidasyon bandına yakınsa erken uyarı veya skor sinyali |
+| **On-chain** | Glassnode, CryptoQuant vb. (API key gerekir) | Borsa giriş/çıkış, whale hareketi → `OnChainSummary.note` / skor |
+
+**Tipler:** `MarketContext` (order_book, funding_rate, open_interest, liquidation_zones, on_chain). Daemon veya `compute_q_radar_opportunity` ileride opsiyonel `Option<MarketContext>` alarak bu verileri AI context’e veya ek bir confluence katmanına bağlayabilir.

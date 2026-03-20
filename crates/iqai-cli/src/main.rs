@@ -10,10 +10,12 @@ use iqai_web::chart_data::scan_elliott_formations;
 use iqai_web::ai;
 use iqai_core::elliott_detector::compute_elliott;
 use iqai_core::{
+    build_analysis_snapshot,
     compute_q_radar_opportunity,
     run_backtest,
     build_scenarios_for_series,
     build_smart_money_context_for_series,
+    detect_fake_breakout_signal, FakeBreakoutConfig,
     Config, CandleBuffer, SignalEngine, SignalType, Timeframe,
     PositionSide, TradeAction, TradeManager,
 };
@@ -24,6 +26,7 @@ use iqai_core::auto_trader::{
 use iqai_core::trade_db::TradeDb;
 use iqai_web::notify::Notifier;
 use std::path::PathBuf;
+use tokio::process::Command;
 
 /// Watchlist girişi: borsa/piyasa/sembol (watchlist.json)
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -195,6 +198,9 @@ enum Commands {
         /// Tarama aralığı (saniye, varsayılan 300)
         #[arg(short, long, default_value = "300")]
         interval: u64,
+        /// Tüm sembol+timeframe sonuçlarını yazdır (tespit olmasa bile)
+        #[arg(long)]
+        verbose: bool,
     },
 
     /// Load config from JSON file
@@ -268,6 +274,25 @@ enum Commands {
 
     /// Ollama kurulumunu kontrol et (config.json ai.ollama_base_url veya http://localhost:11434)
     OllamaCheck,
+
+    /// Run q-analiz-daemon + robot + web together
+    Stack {
+        /// Q-Analiz daemon interval (seconds)
+        #[arg(long, default_value = "300")]
+        q_interval: u64,
+
+        /// Robot interval (seconds)
+        #[arg(long, default_value = "60")]
+        robot_interval: u64,
+
+        /// Robot mode: dry | paper | live
+        #[arg(long, default_value = "dry")]
+        robot_mode: String,
+
+        /// Web port (iqai-web, default 8080)
+        #[arg(long, default_value = "8080")]
+        web_port: u16,
+    },
 }
 
 #[tokio::main]
@@ -303,7 +328,7 @@ async fn main() -> Result<()> {
             interval,
         } => run_watch(&symbol, &side, entry, sl, tp, quantity, &market, interval).await?,
         Commands::Robot { mode, interval } => run_robot(mode.as_deref(), interval).await?,
-        Commands::QAnalizDaemon { interval } => run_q_analiz_daemon(interval).await?,
+        Commands::QAnalizDaemon { interval, verbose } => run_q_analiz_daemon(interval, verbose).await?,
         Commands::Trade {
             symbol,
             side,
@@ -339,7 +364,81 @@ async fn main() -> Result<()> {
             q_score_min,
         } => run_backtest_cmd(&symbol, &market, &timeframe, limit, from.as_deref(), to.as_deref(), capital, risk_pct, leverage, q_score_min).await?,
         Commands::OllamaCheck => run_ollama_check().await?,
+        Commands::Stack { q_interval, robot_interval, robot_mode, web_port } => {
+            run_stack(q_interval, robot_interval, &robot_mode, web_port).await?
+        }
     }
+    Ok(())
+}
+
+async fn run_stack(q_interval: u64, robot_interval: u64, robot_mode: &str, web_port: u16) -> Result<()> {
+    let exe = std::env::current_exe()
+        .map_err(|e| anyhow::anyhow!("current_exe bulunamadı: {}", e))?;
+
+    // `iqai` aynı binary: q-analiz-daemon + robot
+    let mut q_child = Command::new(&exe)
+        .arg("q-analiz-daemon")
+        .arg("-i")
+        .arg(q_interval.to_string())
+        .kill_on_drop(true)
+        .stdout(std::process::Stdio::inherit())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+        .map_err(|e| anyhow::anyhow!("q-analiz-daemon başlatılamadı: {}", e))?;
+
+    let mut robot_child = Command::new(&exe)
+        .arg("robot")
+        .arg("--mode")
+        .arg(robot_mode)
+        .arg("--interval")
+        .arg(robot_interval.to_string())
+        .kill_on_drop(true)
+        .stdout(std::process::Stdio::inherit())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+        .map_err(|e| anyhow::anyhow!("robot başlatılamadı: {}", e))?;
+
+    // `iqai-web` ayrı binary; aynı target dizininde sibling olarak var.
+    let web_exe = exe
+        .parent()
+        .map(|p| p.join("iqai-web"))
+        .ok_or_else(|| anyhow::anyhow!("iqai-web path çözümlenemedi"))?;
+
+    // Web port override: IQAI_WEB_PORT env
+    let mut web_child = Command::new(&web_exe)
+        .env("IQAI_WEB_PORT", web_port.to_string())
+        .kill_on_drop(true)
+        .stdout(std::process::Stdio::inherit())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+        .map_err(|e| anyhow::anyhow!("iqai-web başlatılamadı ({}): {}", web_exe.display(), e))?;
+
+    println!(
+        "✅ Stack başladı: q-analiz-daemon(i={}) + robot(mode={}, i={}) + web(port={})",
+        q_interval, robot_mode, robot_interval, web_port
+    );
+    println!("   Durdurmak için Ctrl+C.");
+
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {
+            println!("⏹ Ctrl+C alındı, süreçler kapatılıyor...");
+        }
+        status = q_child.wait() => {
+            println!("⏹ q-analiz-daemon durdu: {:?}", status);
+        }
+        status = robot_child.wait() => {
+            println!("⏹ robot durdu: {:?}", status);
+        }
+        status = web_child.wait() => {
+            println!("⏹ web durdu: {:?}", status);
+        }
+    }
+
+    // Best-effort kill all.
+    let _ = q_child.kill().await;
+    let _ = robot_child.kill().await;
+    let _ = web_child.kill().await;
+
     Ok(())
 }
 
@@ -536,7 +635,8 @@ async fn run_scan_from_buffer(
         println!("  Q Skoru: {:.1} | Beklenen süre: ~{} bar", q.q_score, q.expected_bars);
         // Telegram ve diğer kanallara bildir (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID gerekir)
         let notifier = Notifier::from_env();
-        if let Err(e) = notifier.notify_q_setup(q).await {
+        let current_price = buffer.get(chart_tf).and_then(|c| c.last()).map(|c| c.close);
+        if let Err(e) = notifier.notify_q_setup_with_price(q, current_price).await {
             eprintln!("  [Bildirim hatası: {}]", e);
         } else {
             println!("  📤 Bildirim gönderildi (Telegram vb.).");
@@ -973,10 +1073,18 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
     let market = trading_cfg.market.as_deref().unwrap_or("futures");
 
     let exchange: Box<dyn ExchangeConnector> = if at_cfg.mode == TradingMode::Live {
-        let api_key = trading_cfg.api_key.clone()
-            .ok_or_else(|| anyhow::anyhow!("Live mod için api_key gerekli"))?;
-        let secret = trading_cfg.secret_key.clone()
-            .ok_or_else(|| anyhow::anyhow!("Live mod için secret_key gerekli"))?;
+        let api_key = trading_cfg
+            .api_key
+            .clone()
+            .filter(|s| !s.trim().is_empty())
+            .or_else(|| std::env::var("BINANCE_API_KEY").ok().filter(|s| !s.trim().is_empty()))
+            .ok_or_else(|| anyhow::anyhow!("Live mod için api_key gerekli (config.json trading.api_key veya BINANCE_API_KEY env)"))?;
+        let secret = trading_cfg
+            .secret_key
+            .clone()
+            .filter(|s| !s.trim().is_empty())
+            .or_else(|| std::env::var("BINANCE_SECRET_KEY").ok().filter(|s| !s.trim().is_empty()))
+            .ok_or_else(|| anyhow::anyhow!("Live mod için secret_key gerekli (config.json trading.secret_key veya BINANCE_SECRET_KEY env)"))?;
         if market.eq_ignore_ascii_case("spot") {
             Box::new(BinanceSpotClient::with_credentials(api_key, secret))
         } else {
@@ -1061,18 +1169,77 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
                         let opportunity = compute_q_radar_opportunity(&buffer, tf, symbol, &sm_config);
                         let q_radar = opportunity.radar.as_ref();
                         let engine = SignalEngine::new(sm_config.clone());
-                        let radar_ok = |is_long: bool| {
+                        let qanaliz_ok = |is_long: bool| {
                             if !at_cfg.use_radar_filter || opportunity.direction == "—" {
                                 return true;
                             }
                             let dir_ok = (is_long && opportunity.direction == "LONG")
                                 || (!is_long && opportunity.direction == "SHORT");
-                            dir_ok && opportunity.confidence_score >= at_cfg.min_radar_confidence
+                            let conf_ok = opportunity.confidence_score >= at_cfg.min_radar_confidence;
+                            let disc_ok = opportunity
+                                .discrete_score
+                                .as_ref()
+                                .map(|d| d.total >= at_cfg.min_qanaliz_discrete_score)
+                                .unwrap_or(false);
+                            let sm_ok = opportunity
+                                .smart_money_score
+                                .as_ref()
+                                .map(|s| s.total >= at_cfg.min_qanaliz_sm_score)
+                                .unwrap_or(false);
+                            dir_ok && conf_ok && disc_ok && sm_ok
                         };
                         if let Some(ref setup) = engine.compute_q_setup(&buffer, tf, symbol, q_radar) {
                             let is_long = matches!(setup.side, SignalType::Buy | SignalType::ChochBuy | SignalType::BosBuy);
-                            if radar_ok(is_long) {
+                            if qanaliz_ok(is_long) {
                                 all_signals.push(signal_from_q_setup(setup));
+                            }
+                        }
+
+                        // Fake Breakout (liq sweep + reclaim + BOS) – LONG/SHORT
+                        // Uses the same TF candles (conservative 2-candle pattern).
+                        let fb_cfg = FakeBreakoutConfig {
+                            lookback: at_cfg.fake_breakout_lookback,
+                            bos_lookback: at_cfg.fake_breakout_bos_lookback,
+                            min_wick_ratio: at_cfg.fake_breakout_min_wick_ratio,
+                            sl_atr_mult: at_cfg.fake_breakout_sl_atr_mult,
+                            tp_rr: at_cfg.fake_breakout_tp_rr,
+                        };
+                        if let Some(fb) = detect_fake_breakout_signal(&candles, false, fb_cfg) {
+                            if qanaliz_ok(false) {
+                                all_signals.push(iqai_core::auto_trader::TradeSignal {
+                                    source: SignalSource::FakeBreakout,
+                                    symbol: symbol.to_string(),
+                                    timeframe: tf,
+                                    is_long: false,
+                                    entry: fb.entry,
+                                    stop_loss: fb.stop_loss,
+                                    take_profit: fb.take_profit,
+                                    score: 75.0,
+                                    rr: {
+                                        let risk = (fb.entry - fb.stop_loss).abs();
+                                        if risk > 1e-10 { (fb.take_profit - fb.entry).abs() / risk } else { 0.0 }
+                                    },
+                                    timestamp: chrono::Utc::now().timestamp_millis(),
+                                });
+                            }
+                        }
+                        if let Some(fb) = detect_fake_breakout_signal(&candles, true, fb_cfg) {
+                            if qanaliz_ok(true) {
+                                all_signals.push(iqai_core::auto_trader::TradeSignal {
+                                    source: SignalSource::FakeBreakout,
+                                    symbol: symbol.to_string(),
+                                    timeframe: tf,
+                                    is_long: true,
+                                    entry: fb.entry,
+                                    stop_loss: fb.stop_loss,
+                                    take_profit: fb.take_profit,
+                                    score: 75.0,
+                                    rr: {
+                                        let risk = (fb.entry - fb.stop_loss).abs();
+                                        if risk > 1e-10 { (fb.take_profit - fb.entry).abs() / risk } else { 0.0 }
+                                    },
+                                    timestamp: chrono::Utc::now().timestamp_millis(),
+                                });
                             }
                         }
 
@@ -1088,7 +1255,7 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
                                         setup_json.get("tp1").and_then(|v| v.as_f64()),
                                     ) {
                                         let is_long = setup_json.get("is_long").and_then(|v| v.as_bool()).unwrap_or(imp.is_bullish);
-                                        if radar_ok(is_long) {
+                                        if qanaliz_ok(is_long) {
                                             all_signals.push(signal_from_elliott(
                                                 SignalSource::ElliottW3, symbol, tf, is_long, entry, sl, tp1, 80.0,
                                             ));
@@ -1102,7 +1269,7 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
                                         setup_json.get("tp").and_then(|v| v.as_f64()),
                                     ) {
                                         let is_long = setup_json.get("is_long").and_then(|v| v.as_bool()).unwrap_or(imp.is_bullish);
-                                        if radar_ok(is_long) {
+                                        if qanaliz_ok(is_long) {
                                             all_signals.push(signal_from_elliott(
                                                 SignalSource::ElliottW5, symbol, tf, is_long, entry, sl, tp, 75.0,
                                             ));
@@ -1111,7 +1278,7 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
                                 }
                             }
                             if let Some(ref corr) = elliott.corr_setup {
-                                if radar_ok(corr.is_long) {
+                                if qanaliz_ok(corr.is_long) {
                                     let source = if corr.setup_type.contains("Zigzag") {
                                         SignalSource::ZigzagC
                                     } else {
@@ -1226,13 +1393,40 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
             } else {
                 println!("  📤 Saatlik rapor bildirim kanallarına gönderildi.");
             }
+            // Saat başı her açık pozisyon için CANLI POZİSYON kartı (PNG) gönder; pozisyon kapanana kadar tekrarlanır.
+            for (_, mp) in &trader.open_positions {
+                let price = current_prices
+                    .get(&mp.signal.symbol)
+                    .copied()
+                    .unwrap_or(mp.position.entry_price);
+                let side = if mp.signal.is_long { "LONG" } else { "SHORT" };
+                let mode_str = format!("{}", trader.mode());
+                if let Err(e) = notifier
+                    .notify_live_position_card(
+                        &mp.signal.symbol,
+                        side,
+                        &mode_str,
+                        mp.position.entry_price,
+                        price,
+                        mp.position.current_sl,
+                        mp.position.initial_tp,
+                        mp.signal.score,
+                        mp.signal.rr,
+                    )
+                    .await
+                {
+                    eprintln!("  CANLI POZİSYON kartı gönderilemedi ({}): {:?}", mp.signal.symbol, e);
+                } else {
+                    println!("  📤 CANLI POZİSYON kartı gönderildi: {} {}", mp.signal.symbol, side);
+                }
+            }
         }
 
         tokio::time::sleep(tokio::time::Duration::from_secs(interval_secs)).await;
     }
 }
 
-async fn run_q_analiz_daemon(interval_secs: u64) -> Result<()> {
+async fn run_q_analiz_daemon(interval_secs: u64, verbose: bool) -> Result<()> {
     let app_cfg = iqai_core::AppConfig::load()
         .ok_or_else(|| anyhow::anyhow!("config.json bulunamadı"))?;
     let trading = app_cfg.trading.as_ref()
@@ -1287,9 +1481,50 @@ async fn run_q_analiz_daemon(interval_secs: u64) -> Result<()> {
                     }
                 }
             }
+            let engine = SignalEngine::new(sm_config.clone());
             for &tf in &timeframes {
                 let opp = compute_q_radar_opportunity(&buffer, tf, symbol, &sm_config);
+                let candles: &[iqai_core::Candle] = buffer.get(tf).map(|v| &v[..]).unwrap_or(&[]);
+                let mut snapshot = build_analysis_snapshot(&opp, candles, &sm_config);
+                let side = match snapshot.scenario_direction.as_deref() {
+                    Some("LONG") => Some(SignalType::Buy),
+                    Some("SHORT") => Some(SignalType::Sell),
+                    _ => None,
+                };
+                let entry = snapshot.scenario_entry.or_else(|| if snapshot.reference_price > 0.0 { Some(snapshot.reference_price) } else { None });
+                if let Some(m) = engine.compute_position_metrics(&buffer, tf, symbol, side, entry, snapshot.scenario_stop, snapshot.scenario_tp1) {
+                    snapshot.position_state = Some(m.position_state.clone());
+                    snapshot.market_mode = Some(m.market_mode);
+                    snapshot.local_trend = Some(m.local_trend);
+                    snapshot.global_trend = Some(m.global_trend);
+                    snapshot.volatility_pct = Some(m.volatility_pct);
+                    snapshot.momentum_short = Some(m.momentum_short);
+                    snapshot.momentum_long = Some(m.momentum_long);
+                    snapshot.rr = Some(m.rr);
+                    snapshot.tmr_trend_points = Some(m.tmr_scores.trend_points as i32);
+                    snapshot.tmr_momentum_points = Some(m.tmr_scores.momentum_points as i32);
+                    snapshot.tmr_rr_points = Some(m.tmr_scores.rr_points as i32);
+                    snapshot.tmr_strength_points = Some(m.tmr_scores.strength_points as i32);
+                    snapshot.trend_exhaustion = Some(m.trend_exhaustion);
+                    snapshot.structure_shift = Some(m.structure_shift);
+                    snapshot.position_side = Some(m.position_state.clone());
+                }
+                if let Err(e) = db.upsert_analysis_snapshot(&snapshot) {
+                    eprintln!("   Snapshot DB hatası {} {}: {}", symbol, tf.to_binance_interval(), e);
+                }
+                if verbose {
+                    println!(
+                        "   · {} {} | {} | {} | Güven {:.1}/10 | Erken {:.1}/10",
+                        symbol,
+                        tf.to_binance_interval(),
+                        if opp.detection.is_empty() { "—" } else { opp.detection.as_str() },
+                        if opp.recommendation.is_empty() { "—" } else { opp.recommendation.as_str() },
+                        opp.confidence_score,
+                        opp.early_warning_score
+                    );
+                }
                 if !opp.detection.is_empty() && opp.detection != "—" {
+                    let is_long_ctx = opp.direction == "LONG";
                     let elliott_summary = buffer.get(tf).and_then(|candles| {
                         let min_bars = (sm_config.pivot_length as usize) * 4 + 2;
                         if candles.len() < min_bars {
@@ -1354,25 +1589,77 @@ async fn run_q_analiz_daemon(interval_secs: u64) -> Result<()> {
                                 }
                             }
 
-                            // Smart Money / likidite özeti.
+                            // Smart Money / likidite özeti (yöne göre önceliklendirilir).
                             if let Some(ctx) = sm_ctx {
                                 if !ctx.liquidity_levels.is_empty() {
-                                    let lvls: Vec<String> = ctx
-                                        .liquidity_levels
-                                        .iter()
-                                        .take(3)
-                                        .map(|l| format!("{} @ {:.2}", l.label, l.price))
-                                        .collect();
-                                    lines.push(format!("Likidite: {}", lvls.join(", ")));
+                                    let mut lvls_all: Vec<String> = Vec::new();
+                                    // LONG: Equal lows / Previous low; SHORT: Equal highs / Previous high
+                                    let preferred = if is_long_ctx {
+                                        |k: iqai_core::LiquidityKind| matches!(k, iqai_core::LiquidityKind::EqualLows | iqai_core::LiquidityKind::PreviousLow)
+                                    } else {
+                                        |k: iqai_core::LiquidityKind| matches!(k, iqai_core::LiquidityKind::EqualHighs | iqai_core::LiquidityKind::PreviousHigh)
+                                    };
+                                    for l in ctx.liquidity_levels.iter().filter(|l| preferred(l.kind)).take(3) {
+                                        lvls_all.push(format!("{} @ {:.2}", l.label, l.price));
+                                    }
+                                    // Fallback: genel ilk seviyeler
+                                    if lvls_all.is_empty() {
+                                        for l in ctx.liquidity_levels.iter().take(3) {
+                                            lvls_all.push(format!("{} @ {:.2}", l.label, l.price));
+                                        }
+                                    }
+                                    lines.push(format!("Likidite: {}", lvls_all.join(", ")));
                                 }
                                 if !ctx.order_blocks.is_empty() {
-                                    let obs: Vec<String> = ctx
+                                    // LONG: Bullish OB; SHORT: Bearish OB. Karşıt OB varsa ayrı satır.
+                                    let want_bullish = is_long_ctx;
+                                    let mut primary: Vec<String> = ctx
                                         .order_blocks
                                         .iter()
+                                        .filter(|z| matches!(z.side, iqai_core::OrderBlockSide::Bullish) == want_bullish)
                                         .take(2)
                                         .map(|z| format!("{} [{:.2}-{:.2}]", z.label, z.low, z.high))
                                         .collect();
-                                    lines.push(format!("Order Blocks: {}", obs.join(", ")));
+                                    if primary.is_empty() {
+                                        primary = ctx
+                                            .order_blocks
+                                            .iter()
+                                            .take(2)
+                                            .map(|z| format!("{} [{:.2}-{:.2}]", z.label, z.low, z.high))
+                                            .collect();
+                                    }
+                                    lines.push(format!("Order Blocks: {}", primary.join(", ")));
+
+                                    let counter: Vec<String> = ctx
+                                        .order_blocks
+                                        .iter()
+                                        .filter(|z| matches!(z.side, iqai_core::OrderBlockSide::Bullish) != want_bullish)
+                                        .take(1)
+                                        .map(|z| format!("{} [{:.2}-{:.2}]", z.label, z.low, z.high))
+                                        .collect();
+                                    if !counter.is_empty() {
+                                        lines.push(format!("Karşıt OB: {}", counter.join(", ")));
+                                    }
+                                }
+                                if !ctx.fair_value_gaps.is_empty() {
+                                    // LONG: Bullish FVG; SHORT: Bearish FVG
+                                    let want_bullish = is_long_ctx;
+                                    let mut fvgs: Vec<String> = ctx
+                                        .fair_value_gaps
+                                        .iter()
+                                        .filter(|z| z.bullish == want_bullish)
+                                        .take(2)
+                                        .map(|z| format!("{} [{:.2}-{:.2}]", z.label, z.lower, z.upper))
+                                        .collect();
+                                    if fvgs.is_empty() {
+                                        fvgs = ctx
+                                            .fair_value_gaps
+                                            .iter()
+                                            .take(2)
+                                            .map(|z| format!("{} [{:.2}-{:.2}]", z.label, z.lower, z.upper))
+                                            .collect();
+                                    }
+                                    lines.push(format!("FVG: {}", fvgs.join(", ")));
                                 }
                                 if !ctx.wyckoff_tags.is_empty() {
                                     let w: Vec<String> = ctx
@@ -1396,41 +1683,139 @@ async fn run_q_analiz_daemon(interval_secs: u64) -> Result<()> {
                     if let Err(e) = db.insert_q_analiz_detection(&opp) {
                         eprintln!("   DB yazma hatası {} {}: {}", symbol, tf.to_binance_interval(), e);
                     } else {
-                        println!("   ✓ {} {} | {} | {}", symbol, tf.to_binance_interval(), opp.detection, opp.recommendation);
+                        println!(
+                            "   ✓ {} {} | {} | {}",
+                            symbol,
+                            tf.to_binance_interval(),
+                            opp.detection,
+                            opp.recommendation
+                        );
+                        // Skor breakdown (debug için): hangi sinyal kaç puan verdi?
+                        if let Some(ref ds) = opp.discrete_score {
+                            println!("      Skor: {}/10 | {}", ds.total, ds.recommendation);
+                            for s in &ds.signals {
+                                if s.active {
+                                    println!("        {}: +{}", s.name, s.points);
+                                }
+                            }
+                        }
+                        // Smart Money Radar breakdown: OB, FVG, likidite, Wyckoff, PO3
+                        if let Some(ref sm) = opp.smart_money_score {
+                            println!("      SM Skor: {}/10 | {}", sm.total, sm.recommendation);
+                            for s in &sm.signals {
+                                if s.active {
+                                    println!("        [SM] {}: +{}", s.name, s.points);
+                                }
+                            }
+                        }
                         let mut extra = elliott_summary.clone().unwrap_or_default();
                         if let Some(ref ai_cfg) = app_cfg.ai {
                             if ai_cfg.enabled == Some(true) {
                                 let base = ai_cfg.ollama_base_url.as_deref().unwrap_or("http://localhost:11434");
                                 let model = ai_cfg.model.as_deref().unwrap_or("llama2");
-                                let elliott_part = if extra.is_empty() {
-                                    String::new()
-                                } else {
-                                    format!("\nElliott: {}", extra)
-                                };
-                                let discrete_part = opp.discrete_score.as_ref().map(|ds| {
-                                    let active: Vec<&str> = ds.signals.iter().filter(|s| s.active).map(|s| s.name.as_str()).collect();
-                                    let active_str: String = if active.is_empty() { "yok".to_string() } else { active.join(", ") };
-                                    format!(
-                                        "\nSkor (sinyal): {}/10 | {} | Aktif sinyaller: {}",
-                                        ds.total,
-                                        ds.recommendation,
-                                        active_str
-                                    )
-                                }).unwrap_or_default();
-                                let context = format!(
-                                    "Sembol: {} | TF: {} | Tespit: {} | Yön: {} | Tavsiye: {} | Güven: {:.1}/10 | Erken uyarı: {:.1}/10 | Fiyat: {:.4}{}{}{}",
-                                    opp.symbol,
-                                    tf.to_binance_interval(),
+
+                                // Q-Analiz bloğu
+                                let q_block = format!(
+                                    "[Q-Analiz]\nTespit: {}\nYön: {}\nTavsiye: {}\nGüven: {:.1}/10\nErken uyarı: {:.1}/10\nFiyat: {:.4}{}",
                                     opp.detection,
                                     opp.direction,
                                     opp.recommendation,
                                     opp.confidence_score,
                                     opp.early_warning_score,
                                     opp.reference_price,
-                                    opp.confirmation_layers.as_deref().map(|c| format!("\nOnay: {}", c)).unwrap_or_default(),
+                                    opp.confirmation_layers
+                                        .as_deref()
+                                        .map(|c| format!("\nOnay: {}", c))
+                                        .unwrap_or_default(),
+                                );
+
+                                // Dip/tepe skor bloğu
+                                let discrete_part = opp.discrete_score.as_ref().map(|ds| {
+                                    let active: Vec<&str> = ds
+                                        .signals
+                                        .iter()
+                                        .filter(|s| s.active)
+                                        .map(|s| s.name.as_str())
+                                        .collect();
+                                    let active_str: String =
+                                        if active.is_empty() { "yok".to_string() } else { active.join(", ") };
+                                    format!(
+                                        "[Q-Analiz Skor]\nToplam: {}/10 | {}\nAktif sinyaller: {}",
+                                        ds.total, ds.recommendation, active_str
+                                    )
+                                }).unwrap_or_default();
+
+                                // Smart Money Radar bloğu
+                                let sm_part = opp.smart_money_score.as_ref().map(|sm| {
+                                    let active: Vec<&str> = sm
+                                        .signals
+                                        .iter()
+                                        .filter(|s| s.active)
+                                        .map(|s| s.name.as_str())
+                                        .collect();
+                                    let active_str: String =
+                                        if active.is_empty() { "yok".to_string() } else { active.join(", ") };
+                                    format!(
+                                        "[Smart Money Radar]\nToplam: {}/10 | {}\nAktif SM sinyaller: {}",
+                                        sm.total, sm.recommendation, active_str
+                                    )
+                                }).unwrap_or_default();
+
+                                // Q-Setup / Strateji bloğu – en güçlü senaryodan özet (isteğe bağlı)
+                                let qsetup_part = buffer.get(tf).map(|candles_for_tf| {
+                                    let strategies = iqai_core::build_strategies_for_series(
+                                        symbol,
+                                        tf,
+                                        candles_for_tf,
+                                        &sm_config,
+                                    );
+                                    if strategies.is_empty() {
+                                        return String::new();
+                                    }
+                                    let mut best = strategies[0].clone();
+                                    for p in &strategies {
+                                        if p.q_score > best.q_score {
+                                            best = p.clone();
+                                        }
+                                    }
+                                    let targets: Vec<String> = best
+                                        .targets
+                                        .iter()
+                                        .take(3)
+                                        .map(|t| format!("{} @ {:.2}", t.label, t.price))
+                                        .collect();
+                                    format!(
+                                        "[Q-Setup]\nYön: {:?}\nEntry: {:.2}\nSL: {:.2}\nTP'ler: {}\nQ-Score: {:.1}",
+                                        best.direction,
+                                        best.entry,
+                                        best.stop_loss,
+                                        if targets.is_empty() {
+                                            "yok".to_string()
+                                        } else {
+                                            targets.join(", ")
+                                        },
+                                        best.q_score
+                                    )
+                                }).unwrap_or_default();
+
+                                // Elliott / SMC ek açıklama bloğu
+                                let elliott_part = if extra.is_empty() {
+                                    String::new()
+                                } else {
+                                    format!("[Elliott/SMC]\n{}", extra)
+                                };
+
+                                let context = format!(
+                                    "Sembol: {} | TF: {}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}",
+                                    opp.symbol,
+                                    tf.to_binance_interval(),
+                                    q_block,
                                     discrete_part,
+                                    sm_part,
+                                    qsetup_part,
                                     elliott_part,
                                 );
+
                                 if let Some(ai_text) = ai::interpret_q_analysis(base, model, &context).await {
                                     println!("   🤖 AI: {}", ai_text.trim());
                                     if !extra.is_empty() {
@@ -1608,10 +1993,29 @@ async fn run_ollama_check() -> Result<()> {
 }
 
 async fn run_trade(symbol: &str, side: &str, quantity: f64, market: &str) -> Result<()> {
-    let client: Box<dyn ExchangeConnector> = if market.eq_ignore_ascii_case("spot") {
-        Box::new(BinanceSpotClient::new())
-    } else {
-        Box::new(BinanceFuturesClient::new())
+    let app_cfg = iqai_core::AppConfig::load().unwrap_or_default();
+    let tcfg = app_cfg.trading.unwrap_or_default();
+    let api_key = tcfg
+        .api_key
+        .clone()
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| std::env::var("BINANCE_API_KEY").ok().filter(|s| !s.trim().is_empty()));
+    let secret = tcfg
+        .secret_key
+        .clone()
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| std::env::var("BINANCE_SECRET_KEY").ok().filter(|s| !s.trim().is_empty()));
+    let client: Box<dyn ExchangeConnector> = match (api_key, secret) {
+        (Some(k), Some(s)) => {
+            if market.eq_ignore_ascii_case("spot") {
+                Box::new(BinanceSpotClient::with_credentials(k, s))
+            } else {
+                Box::new(BinanceFuturesClient::with_credentials(k, s))
+            }
+        }
+        _ => anyhow::bail!(
+            "Trade komutu için Binance API key gerekli (config.json trading.api_key/secret_key veya BINANCE_API_KEY/BINANCE_SECRET_KEY env)"
+        ),
     };
 
     let order_side = if side.eq_ignore_ascii_case("buy") {

@@ -32,9 +32,10 @@ impl Candle {
 }
 
 /// Timeframe in minutes (TradingView compatible)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum Timeframe {
     M1,   // 1
+    #[default]
     M5,   // 5
     M15,  // 15
     M30,  // 30

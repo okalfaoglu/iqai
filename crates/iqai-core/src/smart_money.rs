@@ -91,9 +91,46 @@ pub struct SmartMoneyContext {
     pub po3_phase: Po3Phase,
     pub liquidity_levels: Vec<LiquidityLevel>,
     pub order_blocks: Vec<OrderBlockZone>,
+    /// Fair Value Gap bölgeleri (boşluklar).
+    pub fair_value_gaps: Vec<FairValueGap>,
     pub wyckoff_tags: Vec<WyckoffTag>,
     pub wyckoff_state: Option<WyckoffState>,
 }
+
+/// Fair Value Gap (FVG) bölgesi – iki mum arasındaki boşluk.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FairValueGap {
+    pub bullish: bool,
+    pub upper: f64,
+    pub lower: f64,
+    pub label: String,
+}
+
+/// Tek bir Smart Money sinyali ve puanı.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SmartMoneyRadarSignal {
+    pub name: String,
+    pub points: u8,
+    pub active: bool,
+}
+
+/// Smart Money Radar skoru – likidite, OB, FVG, Wyckoff, PO3 birleşik skoru.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SmartMoneyRadarScore {
+    /// Sinyal bazlı puanlar.
+    pub signals: Vec<SmartMoneyRadarSignal>,
+    /// Toplam puan (0–10).
+    pub total: u8,
+    /// Sınıf: STRONG / ZONE / WATCH / NO SIGNAL.
+    pub recommendation: String,
+}
+
+const SM_EQ_LIQUIDITY_PTS: u8 = 1;
+const SM_ORDER_BLOCK_PTS: u8 = 2;
+const SM_FVG_PTS: u8 = 1;
+const SM_WYCKOFF_PTS: u8 = 1;
+const SM_PO3_PTS: u8 = 1;
+const SM_SCORE_CAP: u8 = 10;
 
 /// Verilen seri için basit bir Smart Money bağlamı oluştur.
 ///
@@ -116,6 +153,7 @@ pub fn build_smart_money_context_for_series(
 
     let liquidity_levels = detect_liquidity_levels(slice);
     let order_blocks = detect_order_blocks(slice);
+    let fair_value_gaps = detect_fair_value_gaps(slice);
     let po3_phase = infer_po3_phase(slice);
     let (wyckoff_tags, wyckoff_state) = infer_wyckoff_tags_and_state(slice);
 
@@ -125,9 +163,179 @@ pub fn build_smart_money_context_for_series(
         po3_phase,
         liquidity_levels,
         order_blocks,
+        fair_value_gaps,
         wyckoff_tags,
         wyckoff_state,
     })
+}
+
+/// Basit FVG tarayıcı – ardışık mumlar arasında gövde/fitil boşluklarını işaretler.
+fn detect_fair_value_gaps(candles: &[Candle]) -> Vec<FairValueGap> {
+    let mut out = Vec::new();
+    if candles.len() < 5 {
+        return out;
+    }
+    let start = candles.len().saturating_sub(150);
+    for i in start + 1..candles.len() {
+        let prev = &candles[i - 1];
+        let curr = &candles[i];
+        // Bullish FVG: curr.low > prev.high (aşağı yönlü boşluk doldurulmamış).
+        if curr.low > prev.high {
+            out.push(FairValueGap {
+                bullish: true,
+                upper: curr.low,
+                lower: prev.high,
+                label: "Bullish FVG".to_string(),
+            });
+        }
+        // Bearish FVG: curr.high < prev.low (yukarı yönlü boşluk doldurulmamış).
+        if curr.high < prev.low {
+            out.push(FairValueGap {
+                bullish: false,
+                upper: prev.low,
+                lower: curr.high,
+                label: "Bearish FVG".to_string(),
+            });
+        }
+    }
+    out
+}
+
+/// Smart Money Radar skoru: likidite, order block, FVG, Wyckoff ve PO3'ü birleştirir.
+pub fn compute_smart_money_radar_score(
+    candles: &[Candle],
+    ctx: &SmartMoneyContext,
+    is_long: bool,
+) -> SmartMoneyRadarScore {
+    let mut signals = Vec::new();
+    let mut total: i32 = 0;
+
+    let last_price = candles.last().map(|c| c.close).unwrap_or(0.0);
+
+    // 1) Equal High/Low likidite yakınlığı.
+    let eq_near = if last_price > 0.0 {
+        ctx.liquidity_levels
+            .iter()
+            .filter(|l| matches!(l.kind, LiquidityKind::EqualHighs | LiquidityKind::EqualLows))
+            .any(|l| {
+                let dist = (last_price - l.price).abs() / last_price.max(1e-9);
+                dist <= 0.003
+            })
+    } else {
+        false
+    };
+    if eq_near {
+        total += SM_EQ_LIQUIDITY_PTS as i32;
+    }
+    signals.push(SmartMoneyRadarSignal {
+        name: "Equal High/Low likidite yakın".to_string(),
+        points: SM_EQ_LIQUIDITY_PTS,
+        active: eq_near,
+    });
+
+    // 2) Order Block içinde veya hemen yakınında olmak.
+    let ob_match = if last_price > 0.0 {
+        ctx.order_blocks.iter().any(|ob| {
+            let in_zone = last_price >= ob.low && last_price <= ob.high;
+            let expanded = (ob.high - ob.low) * 0.25;
+            let near_zone = last_price >= ob.low - expanded && last_price <= ob.high + expanded;
+            let side_ok = if is_long {
+                matches!(ob.side, OrderBlockSide::Bullish)
+            } else {
+                matches!(ob.side, OrderBlockSide::Bearish)
+            };
+            side_ok && (in_zone || near_zone)
+        })
+    } else {
+        false
+    };
+    if ob_match {
+        total += SM_ORDER_BLOCK_PTS as i32;
+    }
+    signals.push(SmartMoneyRadarSignal {
+        name: "Order Block bölgesi".to_string(),
+        points: SM_ORDER_BLOCK_PTS,
+        active: ob_match,
+    });
+
+    // 3) FVG çevresinde olmak (boşluk etrafında mean reversion alanı).
+    let fvg_match = if last_price > 0.0 {
+        ctx.fair_value_gaps.iter().any(|fvg| {
+            let lower = fvg.lower.min(fvg.upper);
+            let upper = fvg.lower.max(fvg.upper);
+            let band = (upper - lower).max(last_price * 0.002);
+            last_price >= lower - band && last_price <= upper + band
+        })
+    } else {
+        false
+    };
+    if fvg_match {
+        total += SM_FVG_PTS as i32;
+    }
+    signals.push(SmartMoneyRadarSignal {
+        name: "FVG bölgesi".to_string(),
+        points: SM_FVG_PTS,
+        active: fvg_match,
+    });
+
+    // 4) Wyckoff Spring / UT / SOW etiketleri.
+    let wyckoff_match = ctx
+        .wyckoff_state
+        .as_ref()
+        .map(|st| {
+            st.events.iter().any(|(e, _, _)| match (e, is_long) {
+                (WyckoffEvent::Spring, true) => true,
+                (WyckoffEvent::Ut, false) => true,
+                (WyckoffEvent::Sow, false) => true,
+                _ => false,
+            })
+        })
+        .unwrap_or(false);
+    if wyckoff_match {
+        total += SM_WYCKOFF_PTS as i32;
+    }
+    signals.push(SmartMoneyRadarSignal {
+        name: "Wyckoff event".to_string(),
+        points: SM_WYCKOFF_PTS,
+        active: wyckoff_match,
+    });
+
+    // 5) PO3 fazı ile yön uyumu.
+    let po3_match = match (ctx.po3_phase, is_long) {
+        (Po3Phase::Accumulation, true) => true,
+        (Po3Phase::Expansion, false) => true,
+        _ => false,
+    };
+    if po3_match {
+        total += SM_PO3_PTS as i32;
+    }
+    signals.push(SmartMoneyRadarSignal {
+        name: "PO3 faz uyumu".to_string(),
+        points: SM_PO3_PTS,
+        active: po3_match,
+    });
+
+    let total_u8 = total.max(0).min(SM_SCORE_CAP as i32) as u8;
+    let recommendation = if total_u8 >= 8 {
+        if is_long {
+            "STRONG SM DIP"
+        } else {
+            "STRONG SM TEPE"
+        }
+    } else if total_u8 >= 6 {
+        "SM ZONE"
+    } else if total_u8 >= 4 {
+        "SM WATCH"
+    } else {
+        "NO SM SIGNAL"
+    }
+    .to_string();
+
+    SmartMoneyRadarScore {
+        signals,
+        total: total_u8,
+        recommendation,
+    }
 }
 
 fn detect_liquidity_levels(candles: &[Candle]) -> Vec<LiquidityLevel> {

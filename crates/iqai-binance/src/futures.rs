@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use iqai_core::exchange::{ExchangeConnector, ExchangeError, ExchangeResult, OrderResponse, OrderSide};
+use iqai_core::market_context::{FundingRate, OpenInterest, OrderBookSnapshot};
 use iqai_core::types::{Candle, Exchange, MarketType, Timeframe};
 use reqwest::Client;
 use tokio::sync::RwLock;
@@ -297,6 +298,145 @@ impl BinanceFuturesClient {
             start = last_time + 1;
         }
         Ok(all)
+    }
+
+    /// Funding rate (son periyot) – GET /fapi/v1/fundingRate
+    pub async fn fetch_funding_rate(&self, symbol: &str) -> Result<FundingRate, ExchangeError> {
+        let symbol_futures = if symbol.ends_with("USDT") {
+            symbol.to_string()
+        } else {
+            format!("{}USDT", symbol)
+        };
+        let url = format!(
+            "{}/fapi/v1/fundingRate?symbol={}&limit=1",
+            BINANCE_FUTURES_API,
+            symbol_futures
+        );
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct FundingRow {
+            funding_rate: String,
+            funding_time: i64,
+        }
+        let resp: Vec<FundingRow> = self
+            .client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+        let row = resp.into_iter().next().ok_or_else(|| {
+            ExchangeError::Api("fundingRate: empty response".into())
+        })?;
+        let rate: f64 = row
+            .funding_rate
+            .parse()
+            .map_err(|_| ExchangeError::Api("Invalid funding rate".into()))?;
+        Ok(FundingRate {
+            rate,
+            next_funding_time: Some(row.funding_time),
+        })
+    }
+
+    /// Açık pozisyon – GET /fapi/v1/openInterest
+    pub async fn fetch_open_interest(&self, symbol: &str) -> Result<OpenInterest, ExchangeError> {
+        let symbol_futures = if symbol.ends_with("USDT") {
+            symbol.to_string()
+        } else {
+            format!("{}USDT", symbol)
+        };
+        let url = format!(
+            "{}/fapi/v1/openInterest?symbol={}",
+            BINANCE_FUTURES_API,
+            symbol_futures
+        );
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct OiResp {
+            open_interest: String,
+        }
+        let resp: OiResp = self
+            .client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+        let value: f64 = resp
+            .open_interest
+            .parse()
+            .map_err(|_| ExchangeError::Api("Invalid open interest".into()))?;
+        Ok(OpenInterest {
+            value,
+            change_pct: None,
+        })
+    }
+
+    /// Order book derinliği – GET /fapi/v1/depth; ilk `levels` seviyeye göre notional ve imbalance.
+    pub async fn fetch_order_book_snapshot(
+        &self,
+        symbol: &str,
+        levels: u32,
+    ) -> Result<OrderBookSnapshot, ExchangeError> {
+        let symbol_futures = if symbol.ends_with("USDT") {
+            symbol.to_string()
+        } else {
+            format!("{}USDT", symbol)
+        };
+        let limit = levels.min(100);
+        let url = format!(
+            "{}/fapi/v1/depth?symbol={}&limit={}",
+            BINANCE_FUTURES_API,
+            symbol_futures,
+            limit
+        );
+        #[derive(serde::Deserialize)]
+        struct DepthResp {
+            bids: Vec<[String; 2]>,
+            asks: Vec<[String; 2]>,
+        }
+        let resp: DepthResp = self
+            .client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+        let bid_notional: f64 = resp
+            .bids
+            .iter()
+            .filter_map(|b| {
+                let price: f64 = b[0].parse().ok()?;
+                let qty: f64 = b[1].parse().ok()?;
+                Some(price * qty)
+            })
+            .sum();
+        let ask_notional: f64 = resp
+            .asks
+            .iter()
+            .filter_map(|a| {
+                let price: f64 = a[0].parse().ok()?;
+                let qty: f64 = a[1].parse().ok()?;
+                Some(price * qty)
+            })
+            .sum();
+        let total = bid_notional + ask_notional;
+        let imbalance = if total > 0.0 {
+            (bid_notional - ask_notional) / total
+        } else {
+            0.0
+        };
+        Ok(OrderBookSnapshot {
+            bid_notional,
+            ask_notional,
+            imbalance,
+        })
     }
 
     /// Anlık fiyat (ticker) – REST; canlı mum için WebSocket kullanılmaz.

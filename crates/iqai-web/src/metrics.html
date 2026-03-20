@@ -226,8 +226,8 @@
       const errorBox = document.getElementById('errorBox');
       errorBox.textContent = '';
       try {
-        const params = new URLSearchParams({ symbol, market: 'futures', tf });
-        const res = await fetch('/api/chart?' + params.toString());
+        const params = new URLSearchParams({ symbol, tf });
+        const res = await fetch('/api/metrics?' + params.toString());
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         const m = data.position_metrics;

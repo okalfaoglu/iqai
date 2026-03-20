@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::candlestick_patterns::{any_bearish_pattern, any_bullish_pattern, detect_candle_patterns};
 use crate::config::Config;
-use crate::indicators::{atr, bollinger, ema, macd, macd_line_at, pivot_high, pivot_low, rsi, sma};
+use crate::indicators::{atr, bollinger, ema, macd, macd_line_at, pivot_high, pivot_low, rsi, sma, vwap};
 use crate::reversal::{DipAnalysis, PeakAnalysis};
 use crate::types::Candle;
 
@@ -33,11 +33,15 @@ pub struct DipTepeScore {
     pub early_warning_momentum: bool,
 }
 
-// Puanlar (Madde 15 tablosu)
+// Puanlar (Madde 15 tablosu + ek sinyaller)
 const PTS_RSI: u8 = 1;
+const PTS_RSI_DIVERGENCE: u8 = 2;
 const PTS_MACD_DIV: u8 = 2;
 const PTS_SUPPORT_ZONE: u8 = 2;
 const PTS_VOLUME_SPIKE: u8 = 1;
+const PTS_LIQUIDITY_SWEEP: u8 = 1;
+const PTS_ATR_FILTER: u8 = 1;
+const PTS_VWAP_MEAN_REVERSION: u8 = 1;
 const PTS_BULLISH_CANDLE: u8 = 1;
 const PTS_FIB_LEVEL: u8 = 1;
 const PTS_EMA200_NEAR: u8 = 1;
@@ -72,7 +76,8 @@ fn support_zone_from_pivots(candles: &[Candle], pivot_len: usize, atr_val: f64) 
         return None;
     }
     let mut lows = Vec::new();
-    for i in (pl * 2 + 1)..=candles.len().saturating_sub(pl) {
+    let end_i = candles.len().saturating_sub(pl + 1);
+    for i in (pl * 2 + 1)..=end_i {
         let sub = &candles[..=i + pl];
         if sub.len() < pl * 2 + 1 {
             continue;
@@ -157,6 +162,95 @@ fn last_two_pivot_lows(candles: &[Candle], pivot_len: usize) -> Vec<(usize, f64)
         }
     }
     out
+}
+
+/// Bullish RSI divergence: son iki pivot low'ta fiyat LL, RSI HL.
+fn bullish_rsi_divergence(
+    candles: &[Candle],
+    pivot_low_indices: &[(usize, f64)],
+) -> bool {
+    if pivot_low_indices.len() < 2 {
+        return false;
+    }
+    let (idx1, price1) = pivot_low_indices[1];
+    let (idx2, price2) = pivot_low_indices[0];
+    if idx2 <= idx1 || price2 >= price1 {
+        return false;
+    }
+    let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
+    if closes.len() < 30 {
+        return false;
+    }
+    let r1 = rsi(&closes[..=idx1], 14);
+    let r2 = rsi(&closes[..=idx2], 14);
+    match (r1, r2) {
+        (Some(a), Some(b)) => b > a,
+        _ => false,
+    }
+}
+
+/// Bearish RSI divergence: son iki pivot high'ta fiyat HH, RSI LH.
+fn bearish_rsi_divergence(
+    candles: &[Candle],
+    pivot_high_indices: &[(usize, f64)],
+) -> bool {
+    if pivot_high_indices.len() < 2 {
+        return false;
+    }
+    let (idx1, price1) = pivot_high_indices[1];
+    let (idx2, price2) = pivot_high_indices[0];
+    if idx2 <= idx1 || price2 <= price1 {
+        return false;
+    }
+    let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
+    if closes.len() < 30 {
+        return false;
+    }
+    let r1 = rsi(&closes[..=idx1], 14);
+    let r2 = rsi(&closes[..=idx2], 14);
+    match (r1, r2) {
+        (Some(a), Some(b)) => b < a,
+        _ => false,
+    }
+}
+
+/// Liquidity sweep (liq grab) – son mum, son N barın en düşük/en yüksek seviyesini süpürüp
+/// gövdesi tekrar bandın içine kapanıyor mu.
+fn liquidity_sweep(candles: &[Candle], is_long: bool, lookback: usize) -> bool {
+    if candles.len() < lookback + 2 {
+        return false;
+    }
+    let last = candles.last().unwrap();
+    let start = candles.len().saturating_sub(lookback + 1);
+    let window = &candles[start..candles.len() - 1];
+    if window.is_empty() {
+        return false;
+    }
+    let min_low = window
+        .iter()
+        .map(|c| c.low)
+        .fold(f64::INFINITY, f64::min);
+    let max_high = window
+        .iter()
+        .map(|c| c.high)
+        .fold(0.0_f64, f64::max);
+    if is_long {
+        // Long: önceki diplerin altına iğne at, gövde tekrar bandın içinde kapansın.
+        last.low < min_low && last.close > min_low && last.close > last.open
+    } else {
+        // Short: önceki tepelerin üstüne iğne at, gövde tekrar bandın içinde kapansın.
+        last.high > max_high && last.close < max_high && last.close < last.open
+    }
+}
+
+/// ATR volatilite filtresi – volatilite çok düşük/çok yüksekse filtrele.
+fn atr_volatility_ok(atr_val: f64, last_price: f64) -> bool {
+    if last_price <= 0.0 {
+        return false;
+    }
+    let norm = atr_val / last_price;
+    // Çok sıkışık piyasa (< %0.3) ve aşırı patlamış (> %8) durumları ele.
+    norm >= 0.003 && norm <= 0.08
 }
 
 fn last_two_pivot_highs(candles: &[Candle], pivot_len: usize) -> Vec<(usize, f64)> {
@@ -284,7 +378,22 @@ pub fn compute_dip_tepe_score(
         active: macd_div,
     });
 
-    // 3. Support zone (pivot cluster ± ATR) veya MTF destek – Madde 3
+    // 3. RSI divergence – fiyat LL/HH, RSI HL/LH
+    let rsi_div = if is_long {
+        bullish_rsi_divergence(candles, &plows)
+    } else {
+        bearish_rsi_divergence(candles, &phighs)
+    };
+    if rsi_div {
+        total += PTS_RSI_DIVERGENCE as i32;
+    }
+    signals.push(SignalScore {
+        name: "RSI divergence".to_string(),
+        points: PTS_RSI_DIVERGENCE,
+        active: rsi_div,
+    });
+
+    // 4. Support zone (pivot cluster ± ATR) veya MTF destek – Madde 3
     let support_local = support_zone_from_pivots(candles, pivot_len, atr_val)
         .map_or(false, |(lo, hi)| last >= lo && last <= hi);
     let support_ok = support_local || mtf_support_near;
@@ -297,7 +406,7 @@ pub fn compute_dip_tepe_score(
         active: support_ok,
     });
 
-    // 4. Volume spike – Madde 8: volume > volume_MA * 1.5
+    // 5. Volume spike – Madde 8: volume > volume_MA * 1.5
     let vols: Vec<f64> = candles.iter().map(|c| c.volume).collect();
     let vol_ma = sma(&vols, 20.min(vols.len())).unwrap_or(0.0);
     let vol_spike = vol_ma > 0.0 && *vols.last().unwrap_or(&0.0) >= vol_ma * 1.5;
@@ -310,7 +419,18 @@ pub fn compute_dip_tepe_score(
         active: vol_spike,
     });
 
-    // 5. Bullish/Bearish candle (reversal candle) – Madde 9
+    // 6. Liquidity sweep – son iğne ile likidite temizliği
+    let liq_sweep = liquidity_sweep(candles, is_long, 20);
+    if liq_sweep {
+        total += PTS_LIQUIDITY_SWEEP as i32;
+    }
+    signals.push(SignalScore {
+        name: "Liquidity sweep".to_string(),
+        points: PTS_LIQUIDITY_SWEEP,
+        active: liq_sweep,
+    });
+
+    // 7. Bullish/Bearish candle (reversal candle) – Madde 9
     let candle_ok = if let Some(c) = candles.last() {
         if is_long {
             c.is_bullish()
@@ -340,7 +460,7 @@ pub fn compute_dip_tepe_score(
         active: candle_or_pattern,
     });
 
-    // 6. Fibonacci level – Madde 7
+    // 8. Fibonacci level – Madde 7
     let (swing_h, swing_l) = recent_swing_high_low(candles, 50);
     let fib_ok = price_near_fib_level(last, swing_h, swing_l, 0.005);
     if fib_ok {
@@ -352,7 +472,7 @@ pub fn compute_dip_tepe_score(
         active: fib_ok,
     });
 
-    // 7. EMA200 yakın – Madde 10
+    // 9. EMA200 yakın – Madde 10
     let ema200 = ema(&closes, 200.min(closes.len()));
     let near_ema200 = ema200.map_or(false, |e| {
         let dist = ((last - e) / e.max(1e-9)).abs();
@@ -367,7 +487,7 @@ pub fn compute_dip_tepe_score(
         active: near_ema200,
     });
 
-    // 8. Market structure (HL / LH) – Madde 11
+    // 10. Market structure (HL / LH) – Madde 11
     let structure_ok = structure_score_01 >= 0.55;
     if structure_ok {
         total += PTS_MARKET_STRUCTURE as i32;
@@ -378,7 +498,7 @@ pub fn compute_dip_tepe_score(
         active: structure_ok,
     });
 
-    // 9. Bollinger reversion – Madde 6: dip Close < lower_band, tepe Close > upper_band
+    // 11. Bollinger reversion – Madde 6: dip Close < lower_band, tepe Close > upper_band
     let bb = bollinger(&closes, 20, 2.0);
     let bollinger_ok = bb.map_or(false, |(lower, _mid, upper)| {
         if is_long {
@@ -396,7 +516,7 @@ pub fn compute_dip_tepe_score(
         active: bollinger_ok,
     });
 
-    // 10. Mean reversion distance – Madde 12: (price - MA) / MA, dip < -0.1
+    // 12. Mean reversion distance – Madde 12: (price - MA) / MA, dip < -0.1
     let ma = sma(&closes, 20.min(closes.len())).unwrap_or(last);
     let dist = if ma > 0.0 { (last - ma) / ma } else { 0.0 };
     let mean_rev_ok = if is_long {
@@ -411,6 +531,39 @@ pub fn compute_dip_tepe_score(
         name: "Ortalamadan sapma (mean reversion)".to_string(),
         points: PTS_MEAN_REVERSION,
         active: mean_rev_ok,
+    });
+
+    // 13. VWAP mean reversion – fiyat VWAP'ten yeterince uzak mı
+    let vwap_val = vwap(candles);
+    let vwap_ok = vwap_val.map_or(false, |vw| {
+        if vw <= 0.0 {
+            return false;
+        }
+        let d = (last - vw) / vw;
+        if is_long {
+            d < -0.03
+        } else {
+            d > 0.03
+        }
+    });
+    if vwap_ok {
+        total += PTS_VWAP_MEAN_REVERSION as i32;
+    }
+    signals.push(SignalScore {
+        name: "VWAP mean reversion".to_string(),
+        points: PTS_VWAP_MEAN_REVERSION,
+        active: vwap_ok,
+    });
+
+    // 14. ATR volatility filter – volatilite bandı içinde mi
+    let atr_ok = atr_volatility_ok(atr_val, last);
+    if atr_ok {
+        total += PTS_ATR_FILTER as i32;
+    }
+    signals.push(SignalScore {
+        name: "ATR volatilite filtresi".to_string(),
+        points: PTS_ATR_FILTER,
+        active: atr_ok,
     });
 
     let total_u8 = total.max(0).min(SCORE_CAP as i32) as u8;

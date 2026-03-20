@@ -1,0 +1,22 @@
+[Unit]
+Description=IQAI Stack (q-analiz-daemon + robot + web)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=qtss
+WorkingDirectory=/app/iqai
+
+# Prod'da release binary önerilir.
+ExecStart=/app/iqai/target/release/iqai stack --q-interval 30 --robot-interval 60 --robot-mode dry --web-port 8080
+
+Restart=always
+RestartSec=3
+
+# Log seviyesi (opsiyonel)
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=multi-user.target
+

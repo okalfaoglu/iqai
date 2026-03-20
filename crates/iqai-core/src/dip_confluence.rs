@@ -3,6 +3,8 @@
 //! Dokümandaki katmanlar: MTF destek, LTF yapı kırılımı (MSS), Elliott + Fib cluster,
 //! momentum divergence. Her katman "True" ise güven/erken uyarı skorları artar.
 
+use serde::{Deserialize, Serialize};
+
 use crate::config::Config;
 use crate::elliott_detector::compute_elliott;
 use crate::indicators::{atr, pivot_high, pivot_low, rsi};
@@ -28,7 +30,7 @@ fn higher_timeframes(chart_tf: Timeframe) -> Vec<Timeframe> {
 }
 
 /// Çoklu doğrulama sonucu – Q-RADAR güven/erken uyarı artırımında kullanılır.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DipConfluenceResult {
     /// Üst TF'de destek/dip bölgesine yakın mı (pivot low + ATR bandı)
     pub mtf_support_near: bool,

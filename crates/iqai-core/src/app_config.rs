@@ -142,6 +142,22 @@ pub struct TradingConfig {
     pub use_radar_filter: Option<bool>,
     /// RADAR filtre için min. güven skoru 0–10 (default 4.0)
     pub min_radar_confidence: Option<f64>,
+    /// Q-Analiz dip/tepe discrete skor filtresi (0–10). 4 = WATCH ve üstü.
+    pub min_qanaliz_discrete_score: Option<u8>,
+    /// Smart Money Radar skor filtresi (0–10). 4 = SM WATCH ve üstü.
+    pub min_qanaliz_sm_score: Option<u8>,
+
+    // ---- Fake Breakout (liq sweep) setup ----
+    /// Fake breakout: liquidity lookback (bar). Varsayılan: 40
+    pub fake_breakout_lookback: Option<u32>,
+    /// Fake breakout: BOS lookback (bar). Varsayılan: 6
+    pub fake_breakout_bos_lookback: Option<u32>,
+    /// Fake breakout: min wick ratio (0..1). Varsayılan: 0.35
+    pub fake_breakout_min_wick_ratio: Option<f64>,
+    /// Fake breakout: SL buffer ATR multiple. Varsayılan: 0.2
+    pub fake_breakout_sl_atr_mult: Option<f64>,
+    /// Fake breakout: fallback TP RR multiple. Varsayılan: 2.0
+    pub fake_breakout_tp_rr: Option<f64>,
     /// İzlenen sembol listesi (ör. ["ETHUSDT", "BTCUSDT"])
     pub symbols: Option<Vec<String>>,
     /// İzlenen timeframe listesi (ör. ["5m", "15m", "1h"])

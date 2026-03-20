@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::classic_patterns::{detect_classic_patterns, ClassicPatternDetection, ClassicPatternKind};
 use crate::config::Config;
 use crate::elliott_detector::compute_elliott;
+use crate::q_radar_analysis::QRadarOpportunityAnalysis;
 use crate::types::{Candle, QSetup, SignalType, Timeframe};
 use crate::backtest::scan_historical_q_setups;
 use crate::elliott_detector::ElliottDetectorResult;
@@ -382,6 +383,50 @@ pub fn build_scenarios_for_series(
     }
 
     scenarios
+}
+
+/// Filter strategy plans using Q-Analiz (Q-RADAR) context.
+///
+/// Typical usage: only trade plans when both dip/tepe discrete score and
+/// Smart Money Radar score are at least "WATCH" level (>= 4/10), and
+/// when the Q-RADAR direction matches the plan direction.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct StrategyFilterConfig {
+    /// Minimum dip/tepe discrete score required (0–10). Example: 4 = WATCH.
+    pub min_discrete_score: u8,
+    /// Minimum Smart Money Radar score required (0–10). Example: 4 = SM WATCH.
+    pub min_smart_money_score: u8,
+}
+
+pub fn filter_plans_with_q_radar(
+    plans: Vec<StrategyPlan>,
+    radar: &QRadarOpportunityAnalysis,
+    filt: &StrategyFilterConfig,
+) -> Vec<StrategyPlan> {
+    let disc_ok = radar
+        .discrete_score
+        .as_ref()
+        .map(|d| d.total >= filt.min_discrete_score)
+        .unwrap_or(false);
+
+    let sm_ok = radar
+        .smart_money_score
+        .as_ref()
+        .map(|s| s.total >= filt.min_smart_money_score)
+        .unwrap_or(false);
+
+    if !disc_ok || !sm_ok {
+        return Vec::new();
+    }
+
+    plans
+        .into_iter()
+        .filter(|p| match (radar.direction.as_str(), p.direction) {
+            ("LONG", StrategyDirection::Long) => true,
+            ("SHORT", StrategyDirection::Short) => true,
+            _ => false,
+        })
+        .collect()
 }
 
 

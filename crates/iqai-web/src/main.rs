@@ -15,8 +15,9 @@ use iqai_web::{
 };
 use iqai_core::{
     compute_q_radar_opportunity,
+    detect_classic_patterns,
     exchange::ExchangeConnector,
-    trade_db::TradeDb,
+    trade_db::{TradeDb, AnalysisSnapshotRecord},
     build_scenarios_for_series,
     build_smart_money_context_for_series,
     Config, CandleBuffer, SignalEngine, SignalType, Timeframe, TradingMode,
@@ -39,6 +40,18 @@ struct ChartParams {
     entry: Option<String>,
     /// Poz Koruma için stop loss (?sl=...)
     sl: Option<String>,
+    /// ?debug=1 → chart_bars ve klasik pattern sayısı (prod teşhisi)
+    debug: Option<String>,
+    /// Aynı amaç (?chart_debug=1) — bazı proxy'ler `debug` parametresini keser
+    #[serde(rename = "chart_debug")]
+    chart_debug: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MetricsParams {
+    symbol: Option<String>,
+    #[serde(rename = "tf")]
+    timeframe: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -65,12 +78,16 @@ async fn main() -> Result<()> {
         .route("/metrics", get(metrics_page))
         .route("/pnl", get(pnl_page))
         .route("/q-analiz", get(q_analiz_page))
+        .route("/snapshots", get(snapshots_page))
         .route("/api/chart", get(api_chart))
+        .route("/api/metrics", get(api_metrics))
         .route("/api/formations", get(api_formations))
         .route("/api/pnl/symbols", get(api_pnl_symbols))
         .route("/api/q-analysis", get(api_q_analysis_all))
         .route("/api/q-analiz/detections", get(api_q_analiz_detections))
         .route("/api/q-analiz/snapshot", get(api_q_analiz_snapshot))
+        .route("/api/analysis-snapshots", get(api_analysis_snapshots))
+        .route("/api/analysis-snapshots/report", get(api_analysis_snapshots_report))
         .route(
             "/api/config",
             get(api_get_config).post(api_update_config),
@@ -100,6 +117,10 @@ async fn pnl_page() -> impl IntoResponse {
 
 async fn q_analiz_page() -> impl IntoResponse {
     Html(include_str!("q_analiz.html"))
+}
+
+async fn snapshots_page() -> impl IntoResponse {
+    Html(include_str!("snapshots.html"))
 }
 
 #[derive(Debug, Deserialize)]
@@ -291,6 +312,142 @@ async fn api_q_analiz_snapshot(Query(params): Query<SnapshotQuery>) -> impl Into
     }))
 }
 
+#[derive(Debug, Deserialize)]
+struct AnalysisSnapshotsQuery {
+    symbol: Option<String>,
+}
+
+/// DB'deki analiz snapshot'ları (daemon'un yazdığı). GET /api/analysis-snapshots?symbol=BTCUSDT
+async fn api_analysis_snapshots(Query(params): Query<AnalysisSnapshotsQuery>) -> impl IntoResponse {
+    let path = match iqai_core::AppConfig::load().and_then(|c| c.trading.and_then(|t| t.db_path.clone())) {
+        Some(p) => p,
+        None => return axum::Json(serde_json::json!({ "error": "trading.db_path not set", "snapshots": [] })),
+    };
+    let db = match TradeDb::open(Some(path.as_str())) {
+        Ok(d) => d,
+        Err(e) => return axum::Json(serde_json::json!({ "error": e.to_string(), "snapshots": [] })),
+    };
+    let symbol = params.symbol.as_deref();
+    match db.get_analysis_snapshots(symbol) {
+        Ok(snapshots) => axum::Json(serde_json::json!({ "snapshots": snapshots })),
+        Err(e) => axum::Json(serde_json::json!({ "error": e.to_string(), "snapshots": [] })),
+    }
+}
+
+/// Bir sembol için tüm TF snapshot'larından AI büyük resim raporu. GET /api/analysis-snapshots/report?symbol=BTCUSDT
+async fn api_analysis_snapshots_report(Query(params): Query<AnalysisSnapshotsQuery>) -> impl IntoResponse {
+    let path = match iqai_core::AppConfig::load().and_then(|c| c.trading.and_then(|t| t.db_path.clone())) {
+        Some(p) => p,
+        None => return axum::Json(serde_json::json!({ "error": "trading.db_path not set", "report": null })),
+    };
+    let symbol = params.symbol.as_deref().unwrap_or("ETHUSDT");
+    let db = match TradeDb::open(Some(path.as_str())) {
+        Ok(d) => d,
+        Err(e) => return axum::Json(serde_json::json!({ "error": e.to_string(), "report": null })),
+    };
+    let snapshots: Vec<AnalysisSnapshotRecord> = match db.get_analysis_snapshots(Some(symbol)) {
+        Ok(s) => s,
+        Err(e) => return axum::Json(serde_json::json!({ "error": e.to_string(), "report": null })),
+    };
+    if snapshots.is_empty() {
+        return axum::Json(serde_json::json!({
+            "symbol": symbol,
+            "report": "Bu sembol için henüz snapshot yok. Q-Analiz daemon çalıştırılıyor olmalı.",
+            "ai": null,
+        }));
+    }
+    let context = format_snapshots_for_ai(symbol, &snapshots);
+    let app_cfg = iqai_core::AppConfig::load().unwrap_or_default();
+    let ai_text = if let Some(ref ai) = app_cfg.ai {
+        if ai.enabled == Some(true) {
+            let base = ai.ollama_base_url.as_deref().unwrap_or("http://localhost:11434");
+            let model = ai.model.as_deref().unwrap_or("llama2");
+            iqai_web::ai::interpret_big_picture(base, model, symbol, &context).await
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    axum::Json(serde_json::json!({
+        "symbol": symbol,
+        "snapshot_count": snapshots.len(),
+        "report": context,
+        "ai": ai_text,
+    }))
+}
+
+fn format_snapshots_for_ai(symbol: &str, snapshots: &[AnalysisSnapshotRecord]) -> String {
+    let mut lines = vec![format!("Sembol: {} | {} timeframe özeti:\n", symbol, snapshots.len())];
+    for s in snapshots {
+        lines.push(format!(
+            "[{}] Tespit: {} | Yön: {} | Tavsiye: {} | Güven: {:.1}/10 | Erken: {:.1}/10 | Fiyat: {:.4}",
+            s.timeframe,
+            s.detection,
+            s.direction,
+            s.recommendation,
+            s.confidence_score,
+            s.early_warning_score,
+            s.reference_price,
+        ));
+
+        // Pozisyon metrikleri (tek tablo: analysis_snapshots)
+        let strength = s.tmr_strength_points.unwrap_or(0);
+        let trend_pts = s.tmr_trend_points.unwrap_or(0);
+        let mom_pts = s.tmr_momentum_points.unwrap_or(0);
+        let rr_pts = s.tmr_rr_points.unwrap_or(0);
+        if s.position_state.is_some()
+            || s.market_mode.is_some()
+            || s.local_trend.is_some()
+            || s.global_trend.is_some()
+            || s.volatility_pct.is_some()
+            || s.rr.is_some()
+            || strength > 0
+        {
+            lines.push(format!(
+                "  Metrikler: Poz={} | Rejim={} | Trend L/G={}/{} | Güç {}/10 (T/M/RR={}/{}/{}) | Vol={:.2}% | Mom S/L={:.2}%/{:.2}% | RR={:.2}",
+                s.position_state.as_deref().unwrap_or("—"),
+                s.market_mode.as_deref().unwrap_or("—"),
+                s.local_trend.unwrap_or(0),
+                s.global_trend.unwrap_or(0),
+                strength,
+                trend_pts,
+                mom_pts,
+                rr_pts,
+                s.volatility_pct.unwrap_or(0.0),
+                s.momentum_short.unwrap_or(0.0) * 100.0,
+                s.momentum_long.unwrap_or(0.0) * 100.0,
+                s.rr.unwrap_or(0.0),
+            ));
+            let mut flags = Vec::new();
+            if s.trend_exhaustion.unwrap_or(false) {
+                flags.push("trend_tükenmesi");
+            }
+            if s.structure_shift.unwrap_or(false) {
+                flags.push("structure_shift");
+            }
+            if !flags.is_empty() {
+                lines.push(format!("  Uyarılar: {}", flags.join(", ")));
+            }
+        }
+
+        if let Some(ew) = s.elliott_formation.as_deref().filter(|x| !x.is_empty()) {
+            lines.push(format!("  Elliott: {} ({})", ew, s.elliott_type.as_deref().unwrap_or("—")));
+        }
+        if let Some(cp) = s.classic_pattern.as_deref().filter(|x| !x.is_empty()) {
+            lines.push(format!("  Klasik formasyon: {}", cp));
+        }
+        if let (Some(entry), Some(sl), Some(tp)) = (s.scenario_entry, s.scenario_stop, s.scenario_tp1) {
+            lines.push(format!("  Strateji: Entry {:.2} | SL {:.2} | TP1 {:.2}", entry, sl, tp));
+        }
+        if let Some(po3) = s.po3_phase.as_deref().filter(|x| !x.is_empty()) {
+            lines.push(format!("  PO3: {}", po3));
+        }
+        lines.push(String::new());
+    }
+    lines.join("\n")
+}
+
 async fn api_get_config() -> impl IntoResponse {
     let cfg = iqai_core::AppConfig::load().unwrap_or_default();
     axum::Json(cfg)
@@ -330,6 +487,9 @@ fn tv_default_symbol(exchange: &str) -> &'static str {
         _ => "ETHUSDT27H2026",   // BINANCE / kripto
     }
 }
+
+/// Chart JSON şeması / teşhis alanları değişince artır (curl ile binary doğrulama).
+const CHART_API_REV: u32 = 2;
 
 async fn api_chart(Query(params): Query<ChartParams>) -> impl IntoResponse {
     let market = params.market.as_deref().unwrap_or("futures");
@@ -480,6 +640,19 @@ async fn api_chart(Query(params): Query<ChartParams>) -> impl IntoResponse {
     let elliott_opts = ElliottOptions { invert };
     let annotations = compute_annotations(&chart_candles, &config, Some(&elliott_opts));
     let formations = scan_elliott_formations(&chart_candles, &config);
+    let classic_patterns = detect_classic_patterns(symbol, chart_tf, &chart_candles, &config);
+    let classic_patterns_count = classic_patterns.len();
+    let truthy = |s: &str| s == "1" || s.eq_ignore_ascii_case("true");
+    let chart_debug = params
+        .debug
+        .as_deref()
+        .map(truthy)
+        .unwrap_or(false)
+        || params
+            .chart_debug
+            .as_deref()
+            .map(truthy)
+            .unwrap_or(false);
 
     // Merkezi Q-RADAR fırsat analizi (robot + web aynı modül)
     let q_radar_opportunity = compute_q_radar_opportunity(&buffer, chart_tf, symbol, &config);
@@ -488,8 +661,9 @@ async fn api_chart(Query(params): Query<ChartParams>) -> impl IntoResponse {
     let notifier = Notifier::from_env();
     if let Some(ref setup) = q_setup {
         let setup = setup.clone();
+        let current_price = chart_candles.last().map(|c| c.close);
         tokio::spawn(async move {
-            if let Err(e) = notifier.notify_q_setup(&setup).await {
+            if let Err(e) = notifier.notify_q_setup_with_price(&setup, current_price).await {
                 eprintln!("Q-setup notification error: {:?}", e);
             }
         });
@@ -573,9 +747,14 @@ async fn api_chart(Query(params): Query<ChartParams>) -> impl IntoResponse {
         q_setup.as_ref().map(|q| q.take_profit),
     );
 
-    axum::Json(serde_json::json!({
+    let mut response = serde_json::json!({
         "symbol": symbol,
         "market": market,
+        "server_meta": {
+            "iqai_web_version": env!("CARGO_PKG_VERSION"),
+            "chart_api_rev": CHART_API_REV,
+            "profile": if cfg!(debug_assertions) { "debug" } else { "release" }
+        },
         "exchange": if use_tv { Some(tv_exchange) } else { None::<&str> },
         "timeframe": tf_str,
         "last_price": last_price,
@@ -603,9 +782,86 @@ async fn api_chart(Query(params): Query<ChartParams>) -> impl IntoResponse {
             "support_line": annotations.support_line,
             "resistance_line": annotations.resistance_line,
             "elliott": annotations.elliott,
-            "zigzag": annotations.zigzag
+            "zigzag": annotations.zigzag,
+            "classic_patterns": classic_patterns
         },
         "formations": formations
+    });
+    if chart_debug {
+        if let Some(obj) = response.as_object_mut() {
+            obj.insert(
+                "debug".to_string(),
+                serde_json::json!({
+                    "chart_bars": chart_candles.len(),
+                    "classic_patterns_count": classic_patterns_count,
+                }),
+            );
+        }
+    }
+    axum::Json(response)
+}
+
+/// Metrikleri analysis_snapshots tablosundan döndürür (tek tablo: analiz + pozisyon metrikleri).
+async fn api_metrics(Query(params): Query<MetricsParams>) -> impl IntoResponse {
+    let symbol = params.symbol.as_deref().unwrap_or("ETHUSDT").to_string();
+    let tf_param = params.timeframe.as_deref().unwrap_or("5m");
+    let tf_lower = tf_param.to_lowercase();
+    let path = iqai_core::AppConfig::load()
+        .and_then(|c| c.trading.and_then(|t| t.db_path))
+        .unwrap_or_else(|| "data/trades.db".to_string());
+    let db = match TradeDb::open(Some(path.as_str())) {
+        Ok(d) => d,
+        Err(_) => {
+            return axum::Json(serde_json::json!({
+                "symbol": symbol,
+                "timeframe": tf_param,
+                "position_metrics": serde_json::Value::Null
+            }));
+        }
+    };
+    let snapshots = match db.get_analysis_snapshots(Some(&symbol)) {
+        Ok(s) => s,
+        Err(_) => {
+            return axum::Json(serde_json::json!({
+                "symbol": symbol,
+                "timeframe": tf_param,
+                "position_metrics": serde_json::Value::Null
+            }));
+        }
+    };
+    let record = snapshots
+        .into_iter()
+        .find(|r| r.timeframe.to_lowercase() == tf_lower);
+    let position_metrics = record.map(|r| {
+        serde_json::json!({
+            "symbol": r.symbol,
+            "timeframe": r.timeframe,
+            "side": r.position_side,
+            "position_state": r.position_state.unwrap_or_else(|| "Flat".to_string()),
+            "market_mode": r.market_mode.unwrap_or_else(|| "—".to_string()),
+            "local_trend": r.local_trend.unwrap_or(0),
+            "global_trend": r.global_trend.unwrap_or(0),
+            "volatility_pct": r.volatility_pct.unwrap_or(0.0),
+            "momentum_short": r.momentum_short.unwrap_or(0.0),
+            "momentum_long": r.momentum_long.unwrap_or(0.0),
+            "entry_price": r.scenario_entry,
+            "stop_loss_initial": r.scenario_stop,
+            "take_profit_initial": r.scenario_tp1,
+            "rr": r.rr.unwrap_or(0.0),
+            "tmr_scores": {
+                "trend_points": r.tmr_trend_points.unwrap_or(0),
+                "momentum_points": r.tmr_momentum_points.unwrap_or(0),
+                "rr_points": r.tmr_rr_points.unwrap_or(0),
+                "strength_points": r.tmr_strength_points.unwrap_or(0)
+            },
+            "trend_exhaustion": r.trend_exhaustion.unwrap_or(false),
+            "structure_shift": r.structure_shift.unwrap_or(false)
+        })
+    });
+    axum::Json(serde_json::json!({
+        "symbol": symbol,
+        "timeframe": tf_param,
+        "position_metrics": position_metrics
     }))
 }
 

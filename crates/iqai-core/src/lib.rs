@@ -1,9 +1,11 @@
 //! IQAI Core - Smart Money Structure trading engine
 
+pub mod analysis_snapshot;
 pub mod app_config;
 pub mod auto_trader;
 pub mod backtest;
 pub mod candlestick_patterns;
+pub mod market_context;
 pub mod config;
 pub mod classic_patterns;
 pub mod dip_confluence;
@@ -13,6 +15,7 @@ pub mod elliott;
 pub mod elliott_detector;
 pub mod impulse_detector;
 pub mod exchange;
+pub mod fake_breakout;
 pub mod indicators;
 pub mod q_radar_analysis;
 pub mod reversal;
@@ -36,11 +39,15 @@ pub use impulse_detector::{detect_impulse, ImpulseDetectorState, ImpulseStage};
 pub use q_radar_analysis::{compute_q_radar_opportunity, QRadarOpportunityAnalysis};
 pub use dip_tepe_scoring::{compute_dip_tepe_score, DipTepeScore, SignalScore};
 pub use candlestick_patterns::{detect_candle_patterns, CandlePatternSignals};
+pub use market_context::{
+    FundingRate, LiquidationZone, MarketContext, OnChainSummary, OpenInterest, OrderBookSnapshot,
+};
 pub use reversal::{
     compute_reversal_analysis, get_dip_price_and_index, get_peak_price_and_index,
     DipAnalysis, PeakAnalysis, ReversalAnalysis,
 };
-pub use trade_db::{QAnalizDetectionRecord, SymbolPnlStats, TradeDb};
+pub use analysis_snapshot::{build_analysis_snapshot, AnalysisSnapshot};
+pub use trade_db::{AnalysisOutcomeRecord, AnalysisSnapshotRecord, QAnalizDetectionRecord, SymbolPnlStats, TradeDb};
 pub use auto_trader::TradingMode;
 pub use types::*;
 pub use classic_patterns::{
@@ -71,8 +78,12 @@ pub use smart_money::{
     OrderBlockZone,
     Po3Phase,
     SmartMoneyContext,
+    SmartMoneyRadarScore,
+    SmartMoneyRadarSignal,
     WyckoffTag,
     WyckoffEvent,
     WyckoffState,
     build_smart_money_context_for_series,
+    compute_smart_money_radar_score,
 };
+pub use fake_breakout::{detect_fake_breakout_signal, FakeBreakoutConfig, FakeBreakoutSignal};

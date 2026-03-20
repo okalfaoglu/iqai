@@ -76,6 +76,7 @@ pub enum SignalSource {
     ElliottW5,
     ZigzagC,
     TriangleE,
+    FakeBreakout,
 }
 
 impl std::fmt::Display for SignalSource {
@@ -86,6 +87,7 @@ impl std::fmt::Display for SignalSource {
             Self::ElliottW5 => write!(f, "Elliott W5"),
             Self::ZigzagC => write!(f, "Zigzag C"),
             Self::TriangleE => write!(f, "Triangle E"),
+            Self::FakeBreakout => write!(f, "Fake Breakout"),
         }
     }
 }
@@ -98,6 +100,7 @@ impl SignalSource {
             "Elliott W5" => Self::ElliottW5,
             "Zigzag C" => Self::ZigzagC,
             "Triangle E" => Self::TriangleE,
+            "Fake Breakout" => Self::FakeBreakout,
             _ => Self::QSetup,
         }
     }
@@ -236,6 +239,20 @@ pub struct AutoTraderConfig {
     pub min_rr: f64,
     pub use_radar_filter: bool,
     pub min_radar_confidence: f64,
+    /// Q-Analiz dip/tepe discrete skor filtresi (0–10). 4 = WATCH ve üstü.
+    pub min_qanaliz_discrete_score: u8,
+    /// Smart Money Radar skor filtresi (0–10). 4 = SM WATCH ve üstü.
+    pub min_qanaliz_sm_score: u8,
+    /// Fake breakout: liquidity lookback (bar)
+    pub fake_breakout_lookback: usize,
+    /// Fake breakout: BOS lookback (bar)
+    pub fake_breakout_bos_lookback: usize,
+    /// Fake breakout: min wick ratio (0..1)
+    pub fake_breakout_min_wick_ratio: f64,
+    /// Fake breakout: SL buffer ATR multiple
+    pub fake_breakout_sl_atr_mult: f64,
+    /// Fake breakout: fallback TP RR multiple
+    pub fake_breakout_tp_rr: f64,
     pub db_path: Option<String>,
     /// Komisyon (basis points). Önce borsa API'sinden alınır; yoksa config (varsayılan 4).
     pub commission_bps: u32,
@@ -260,6 +277,13 @@ impl Default for AutoTraderConfig {
             min_rr: 1.5,
             use_radar_filter: false,
             min_radar_confidence: 4.0,
+            min_qanaliz_discrete_score: 4,
+            min_qanaliz_sm_score: 4,
+            fake_breakout_lookback: 40,
+            fake_breakout_bos_lookback: 6,
+            fake_breakout_min_wick_ratio: 0.35,
+            fake_breakout_sl_atr_mult: 0.2,
+            fake_breakout_tp_rr: 2.0,
             db_path: None,
             commission_bps: 4,
             slippage_bps: 0,
@@ -282,6 +306,13 @@ impl AutoTraderConfig {
             min_rr: tc.min_rr.unwrap_or(1.5),
             use_radar_filter: tc.use_radar_filter.unwrap_or(false),
             min_radar_confidence: tc.min_radar_confidence.unwrap_or(4.0),
+            min_qanaliz_discrete_score: tc.min_qanaliz_discrete_score.unwrap_or(4),
+            min_qanaliz_sm_score: tc.min_qanaliz_sm_score.unwrap_or(4),
+            fake_breakout_lookback: tc.fake_breakout_lookback.unwrap_or(40) as usize,
+            fake_breakout_bos_lookback: tc.fake_breakout_bos_lookback.unwrap_or(6) as usize,
+            fake_breakout_min_wick_ratio: tc.fake_breakout_min_wick_ratio.unwrap_or(0.35),
+            fake_breakout_sl_atr_mult: tc.fake_breakout_sl_atr_mult.unwrap_or(0.2),
+            fake_breakout_tp_rr: tc.fake_breakout_tp_rr.unwrap_or(2.0),
             db_path: tc.db_path.clone(),
             commission_bps: tc.commission_bps.unwrap_or(4),
             slippage_bps: tc.slippage_bps.unwrap_or(0),
@@ -619,7 +650,42 @@ impl AutoTrader {
         // DB'ye pozisyon kaydı
         if let Some(ref db) = self.db {
             match db.insert_position(signal_db_id, &managed, mode) {
-                Ok(id) => managed.db_id = Some(id),
+                Ok(id) => {
+                    managed.db_id = Some(id);
+                    // Analiz link'i oluştur – mümkünse en yakın Q-RADAR event'i ve snapshot bilgisiyle.
+                    let tf_str = signal.timeframe.to_binance_interval();
+                    // H4 gibi TF'ler için pencereler TF'e göre ayarlanabilir; şimdilik 1 saat (ms).
+                    let window_ms: i64 = 60 * 60 * 1000;
+                    let q_event_id = db
+                        .find_recent_q_event_for(&signal.symbol, tf_str, signal.timestamp, window_ms)
+                        .ok()
+                        .flatten()
+                        .map(|e| e.id);
+                    // Snapshot header (symbol+tf son state).
+                    let snapshot = db
+                        .get_analysis_snapshots(Some(&signal.symbol))
+                        .ok()
+                        .and_then(|rows| {
+                            rows.into_iter()
+                                .find(|r| r.timeframe == tf_str)
+                                .map(|r| (Some(r.symbol), Some(r.timeframe), Some(r.updated_at)))
+                        })
+                        .unwrap_or((None, None, None));
+                    let (snap_sym, snap_tf, snap_ts) = snapshot;
+                    if let Err(e) = db.insert_trade_analysis_link(
+                        id,
+                        signal_db_id,
+                        &signal.symbol,
+                        tf_str,
+                        q_event_id,
+                        snap_sym.as_deref(),
+                        snap_tf.as_deref(),
+                        snap_ts,
+                        mode.as_str(),
+                    ) {
+                        log::error!("[AutoTrader] trade_analysis_links insert hatası: {}", e);
+                    }
+                }
                 Err(e) => log::error!("[AutoTrader] DB pozisyon yazma hatası: {}", e),
             }
         }
@@ -779,6 +845,47 @@ impl AutoTrader {
         if let Some(ref db) = self.db {
             if let Some(db_id) = managed.db_id {
                 let _ = db.close_position(db_id, current_price, pnl, pnl_r, reason);
+
+                // Basit outcome kaydı: full-trade performansı
+                if let Ok(links) = db.get_trade_analysis_links_by_position(db_id) {
+                    if let Some(link) = links.first() {
+                        let entry = managed.position.entry_price;
+                        let side_long = managed.signal.is_long;
+                        let ret_pct = if entry.abs() > 0.0 {
+                            if side_long {
+                                (current_price - entry) / entry * 100.0
+                            } else {
+                                (entry - current_price) / entry * 100.0
+                            }
+                        } else {
+                            0.0
+                        };
+                        let quality = if pnl_r >= 1.0 {
+                            Some("win")
+                        } else if pnl_r <= -1.0 {
+                            Some("clear_fail")
+                        } else {
+                            Some("noisy")
+                        };
+                        let direction_str = if side_long { "LONG" } else { "SHORT" };
+                        let _ = db.insert_analysis_outcome(
+                            link.q_event_id.unwrap_or(0),
+                            &link.symbol,
+                            &link.timeframe,
+                            direction_str,
+                            "N/A",
+                            entry,
+                            0,           // horizon_bars: full trade
+                            ret_pct,
+                            None,
+                            None,
+                            None,
+                            None,
+                            quality,
+                            self.config.mode.as_str(),
+                        );
+                    }
+                }
             }
             let _ = db.insert_trade_log(&trade_log, self.config.mode);
         }

@@ -6,21 +6,21 @@ Bu doküman, proje incelemesi ve Q-ANALİZ tartışmalarından çıkan planı ö
 
 ## Öncelik 1: Kritik (Hemen)
 
-| # | Yapılacak | Kaynak |
-|---|-----------|--------|
-| 1 | **config.json’da gerçek token/şifre kaldır** – Değerleri değiştir; hassas bilgi sadece env veya config.json.example ile. | EKSIK_HATA_IYILESTIRME_OZETI §Kritik |
-| 2 | **API anahtarlarını env’den oku** – Canlı modda api_key/secret_key ortam değişkeni tercih edilsin. | Aynı |
+| # | Durum | Yapılacak | Kaynak |
+|---|-------|-----------|--------|
+| 1 | **DONE** | **config.json’da gerçek token/şifre kaldır** – Repo’daki config temizlendi (placeholder/null). **Not:** Eski token/şifreler rotate edilmeli. | EKSIK_HATA_IYILESTIRME_OZETI §Kritik |
+| 2 | **DONE** | **API anahtarlarını env’den oku** – Live modda `BINANCE_API_KEY/BINANCE_SECRET_KEY` env fallback eklendi. | Aynı |
 
 ---
 
 ## Öncelik 2: Düzeltmeler ve Netleştirmeler (Kısa vadede)
 
-| # | Yapılacak | Kaynak |
-|---|-----------|--------|
-| 3 | **trade_db opened_count** – Sorguyu `status='open'` ile kısıtla veya alan adını (örn. total_positions) netleştir. | EKSIK_HATA §Olası Hata |
-| 4 | **TradingMode::from_str** – "paper" için açık branch ekle. | Aynı |
-| 5 | **api_q_analysis_all** – Boş symbols davranışını dokümante et. | Aynı |
-| 6 | **Config validasyonu** – Yükleme sonrası min_q_score, min_rr, risk_per_trade_pct vb. aralık kontrolü. | EKSIK_HATA §Eksikler |
+| # | Durum | Yapılacak | Kaynak |
+|---|-------|-----------|--------|
+| 3 | **TODO** | **trade_db opened_count** – Sorguyu `status='open'` ile kısıtla veya alan adını (örn. total_positions) netleştir. | EKSIK_HATA §Olası Hata |
+| 4 | **TODO** | **TradingMode::from_str** – "paper" için açık branch ekle. | Aynı |
+| 5 | **TODO** | **api_q_analysis_all** – Boş symbols davranışını dokümante et. | Aynı |
+| 6 | **TODO** | **Config validasyonu** – Yükleme sonrası min_q_score, min_rr, risk_per_trade_pct vb. aralık kontrolü. | EKSIK_HATA §Eksikler |
 
 ---
 
@@ -35,24 +35,24 @@ Bu doküman, proje incelemesi ve Q-ANALİZ tartışmalarından çıkan planı ö
 
 ## Öncelik 4: Kalite ve Altyapı
 
-| # | Yapılacak | Kaynak |
-|---|-----------|--------|
-| 9 | **Test kapsamı** – Sinyal motoru, Q-Setup, confluence, Elliott birim testleri; exchange mock ile entegrasyon. | EKSIK_HATA §Eksikler |
-| 10 | **Hata cevabı standardı** – API/DB hatalarında tutarlı JSON `error` alanı (ve isteğe bağlı request id). | Aynı |
-| 11 | **Rate limit / retry** – Binance ve TV çağrılarında retry/backoff. | Aynı |
+| # | Durum | Yapılacak | Kaynak |
+|---|-------|-----------|--------|
+| 9 | **TODO** | **Test kapsamı** – Sinyal motoru, Q-Setup, confluence, Elliott birim testleri; exchange mock ile entegrasyon. | EKSIK_HATA §Eksikler |
+| 10 | **TODO** | **Hata cevabı standardı** – API/DB hatalarında tutarlı JSON `error` alanı (ve isteğe bağlı request id). | Aynı |
+| 11 | **TODO** | **Rate limit / retry** – Binance ve TV çağrılarında retry/backoff. | Aynı |
 
 ---
 
 ## Öncelik 5: İyileştirmeler (Orta vadede)
 
-| # | Yapılacak | Kaynak |
-|---|-----------|--------|
-| 12 | **OpenAPI/Swagger** – Web API dokümantasyonu. | EKSIK_HATA §İyileştirmeler |
-| 13 | **CORS** – Web API farklı origin’den kullanılacaksa Axum’da CORS. | Aynı |
-| 14 | **iqai-gui** – README’de “experimental/stub” veya tamamlama. | Aynı |
-| 15 | **Piyasa saatleri** – BIST/NASDAQ config veya dil ayarından. | Aynı |
-| 16 | **Log önceliği** – RUST_LOG vs config “logging.level” dokümante. | Aynı |
-| 17 | **Pozisyon limiti** – Sembol bazlı max notional (exchangeInfo/config). | Aynı |
+| # | Durum | Yapılacak | Kaynak |
+|---|-------|-----------|--------|
+| 12 | **TODO** | **OpenAPI/Swagger** – Web API dokümantasyonu. | EKSIK_HATA §İyileştirmeler |
+| 13 | **TODO** | **CORS** – Web API farklı origin’den kullanılacaksa Axum’da CORS. | Aynı |
+| 14 | **TODO** | **iqai-gui** – README’de “experimental/stub” veya tamamlama. | Aynı |
+| 15 | **TODO** | **Piyasa saatleri** – BIST/NASDAQ config veya dil ayarından. | Aynı |
+| 16 | **TODO** | **Log önceliği** – RUST_LOG vs config “logging.level” dokümante. | Aynı |
+| 17 | **TODO** | **Pozisyon limiti** – Sembol bazlı max notional (exchangeInfo/config). | Aynı |
 
 ---
 

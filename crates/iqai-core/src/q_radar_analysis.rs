@@ -8,7 +8,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::config::Config;
-use crate::dip_confluence::compute_dip_confluence;
+use crate::dip_confluence::{compute_dip_confluence, DipConfluenceResult};
 use crate::dip_tepe_scoring::compute_dip_tepe_score;
 use crate::reversal::{compute_reversal_analysis, DipAnalysis, PeakAnalysis};
 use crate::signal::{CandleBuffer, SignalEngine};
@@ -48,6 +48,10 @@ pub struct QRadarOpportunityAnalysis {
     pub reference_price: f64,
     /// Madde 15: Sinyal bazlı skorlama (RSI +1, Support +2, … toplam 0–10). Tespit varken dolu.
     pub discrete_score: Option<crate::dip_tepe_scoring::DipTepeScore>,
+    /// Smart Money Radar skoru (likidite, OB, FVG, Wyckoff, PO3). Tespit varken dolu olabilir.
+    pub smart_money_score: Option<crate::smart_money::SmartMoneyRadarScore>,
+    /// Confluence katmanları (MTF, divergence, RSI zone vb.). Tespit varken dolu.
+    pub confluence: Option<DipConfluenceResult>,
 }
 
 /// Merkezi Q-RADAR fırsat analizi. CLI ve Web bu fonksiyonu çağırır.
@@ -85,6 +89,8 @@ pub fn compute_q_radar_opportunity(
     let is_long = direction == "LONG";
     let mut final_recommendation = recommendation.clone();
     let mut discrete_score: Option<crate::dip_tepe_scoring::DipTepeScore> = None;
+    let mut smart_money_score: Option<crate::smart_money::SmartMoneyRadarScore> = None;
+    let mut confluence_out: Option<DipConfluenceResult> = None;
     if detection != "—" && (is_long || direction == "SHORT") {
         let confluence = compute_dip_confluence(
             buffer,
@@ -95,6 +101,7 @@ pub fn compute_q_radar_opportunity(
             dip.as_ref(),
             peak.as_ref(),
         );
+        confluence_out = Some(confluence.clone());
         let boost = (confluence.layers_passed as f64 * CONFLUENCE_BOOST_PER_LAYER).min(CONFLUENCE_BOOST_CAP);
         confidence_score = (confidence_score + boost).min(10.0);
         early_warning_score = (early_warning_score + boost).min(10.0);
@@ -114,21 +121,11 @@ pub fn compute_q_radar_opportunity(
                 direction: "—".to_string(),
                 reference_price,
                 discrete_score: None,
+                smart_money_score: None,
+                confluence: Some(confluence),
             };
         }
-        if confidence_score >= 7.0 && early_warning_score >= 7.0 {
-            final_recommendation = if is_long {
-                "GÜÇLÜ DİP – İzle".to_string()
-            } else {
-                "GÜÇLÜ TEPE – İzle".to_string()
-            };
-        } else if confidence_score >= 5.0 || early_warning_score >= 5.0 {
-            final_recommendation = if is_long {
-                "ZAYIF DİP – İzle".to_string()
-            } else {
-                "ZAYIF TEPE – İzle".to_string()
-            };
-        }
+        // Nihai tavsiye aşağıda, tüm skorlar hesaplandıktan sonra belirlenir.
         // Madde 15: Sinyal bazlı skorlama (0–10)
         if let Some(candles_slice) = candles {
             let side = if is_long {
@@ -150,7 +147,28 @@ pub fn compute_q_radar_opportunity(
                 structure_score,
                 confluence.mtf_support_near,
             ));
+            // Smart Money Radar skoru – varsa SmartMoneyContext üzerinden hesaplanır.
+            if let Some(ctx) = crate::smart_money::build_smart_money_context_for_series(
+                symbol,
+                chart_tf,
+                candles_slice,
+                config,
+            ) {
+                smart_money_score =
+                    Some(crate::smart_money::compute_smart_money_radar_score(
+                        candles_slice,
+                        &ctx,
+                        is_long,
+                    ));
+            }
         }
+        final_recommendation = build_final_recommendation(
+            is_long,
+            confidence_score,
+            early_warning_score,
+            discrete_score.as_ref().map(|d| d.total),
+            smart_money_score.as_ref().map(|s| s.total),
+        );
     }
 
     QRadarOpportunityAnalysis {
@@ -167,6 +185,8 @@ pub fn compute_q_radar_opportunity(
         direction,
         reference_price,
         discrete_score,
+        smart_money_score,
+        confluence: confluence_out,
     }
 }
 
@@ -260,4 +280,50 @@ fn build_detection_and_recommendation(
         "—".to_string(),
         None,
     )
+}
+
+fn build_final_recommendation(
+    is_long: bool,
+    confidence_score: f64,
+    early_warning_score: f64,
+    discrete_total: Option<u8>,
+    sm_total: Option<u8>,
+) -> String {
+    let disc = discrete_total.unwrap_or(0);
+    let sm = sm_total.unwrap_or(0);
+
+    let strong_radar = confidence_score >= 7.0 && early_warning_score >= 7.0;
+    let weak_radar = confidence_score >= 5.0 || early_warning_score >= 5.0;
+    let strong_confirm = disc >= 6 && sm >= 4;
+    let moderate_confirm = disc >= 4 || sm >= 4;
+
+    if strong_radar && strong_confirm {
+        if is_long {
+            "GÜÇLÜ DİP – İzle".to_string()
+        } else {
+            "GÜÇLÜ TEPE – İzle".to_string()
+        }
+    } else if weak_radar && moderate_confirm {
+        if is_long {
+            "ZAYIF DİP – İzle".to_string()
+        } else {
+            "ZAYIF TEPE – İzle".to_string()
+        }
+    } else if strong_radar {
+        if is_long {
+            "TEYİTSİZ DİP ADAYI – İzle".to_string()
+        } else {
+            "TEYİTSİZ TEPE ADAYI – İzle".to_string()
+        }
+    } else if weak_radar {
+        if is_long {
+            "ZAYIF DİP – İzle".to_string()
+        } else {
+            "ZAYIF TEPE – İzle".to_string()
+        }
+    } else if is_long {
+        "DİP BÖLGESİ – İzle".to_string()
+    } else {
+        "TEPE BÖLGESİ – İzle".to_string()
+    }
 }

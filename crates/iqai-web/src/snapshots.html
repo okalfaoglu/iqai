@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IQAI | Analiz Snapshot'ları</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #050816;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: radial-gradient(circle at top left, #1f2937, #020617);
+      border-radius: 16px;
+      padding: 20px 24px;
+      max-width: 1600px;
+      margin: 0 auto 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(0, 217, 255, 0.25);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .card-header h1 { font-size: 18px; color: #00f5ff; }
+    .nav-links { display: flex; gap: 12px; font-size: 12px; }
+    .nav-links a { color: #22d3ee; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+    .nav-links a.active { color: #00f5ff; font-weight: 600; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .toolbar input[type="text"] {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background: #0f172a;
+      color: #e0e0e0;
+      font-size: 13px;
+      width: 140px;
+    }
+    .toolbar button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      background: #22d3ee;
+      color: #020617;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .toolbar button:hover { background: #06b6d4; }
+    .toolbar button.secondary { background: #4b5563; color: #e0e0e0; }
+    .toolbar button.secondary:hover { background: #6b7280; }
+    .error { font-size: 12px; color: #fca5a5; margin-bottom: 10px; }
+    .section-title {
+      font-size: 12px;
+      color: #818cf8;
+      margin-top: 18px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .table-wrap { overflow-x: auto; }
+    table.snapshots {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    table.snapshots th, table.snapshots td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #1f2937;
+    }
+    table.snapshots th { color: #9ca3af; font-weight: 600; white-space: nowrap; }
+    table.snapshots .num { text-align: right; }
+    table.snapshots .dir-long { color: #6ee7b7; }
+    table.snapshots .dir-short { color: #fca5a5; }
+    table.snapshots .muted { color: #6b7280; }
+    #loading, #reportLoading { color: #9ca3af; font-size: 13px; }
+    .report-box {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(0, 217, 255, 0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 12px;
+      white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.5;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .report-box .ai-block {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(0, 217, 255, 0.2);
+      color: #a5f3fc;
+    }
+    .report-box .ai-label { font-size: 11px; color: #818cf8; text-transform: uppercase; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>Analiz Snapshot'ları</h1>
+      <div class="nav-links">
+        <a href="/">Grafik</a>
+        <a href="/pnl">Kar / Zarar</a>
+        <a href="/q-analiz">Q-Analiz</a>
+        <a href="/snapshots" class="active">Snapshot'lar</a>
+        <a href="/metrics">Metrikler</a>
+        <a href="/settings">Ayarlar</a>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="symbolFilter" placeholder="Sembol (boş=hepsi)" />
+      <button id="refreshBtn">Yenile</button>
+    </div>
+    <div id="errorBox" class="error"></div>
+    <div id="loading"></div>
+
+    <div class="section-title">Snapshot tablosu (sembol × timeframe — daemon günceller)</div>
+    <div class="table-wrap">
+      <table class="snapshots" id="snapshotsTable" style="display: none;">
+        <thead>
+          <tr>
+            <th>Sembol</th>
+            <th>TF</th>
+            <th>Güncellenme</th>
+            <th>Tespit</th>
+            <th>Yön</th>
+            <th>Güven</th>
+            <th>Erken</th>
+            <th>Tavsiye</th>
+            <th class="num">Fiyat</th>
+            <th>Elliott</th>
+            <th>Strateji</th>
+          </tr>
+        </thead>
+        <tbody id="snapshotsBody"></tbody>
+      </table>
+    </div>
+    <p id="noData" class="muted" style="display: none; margin-top: 10px; font-size: 13px;">Henüz snapshot yok. Q-Analiz daemon çalıştırın: <code>iqai q-analiz-daemon -i 300</code></p>
+
+    <div class="section-title">Büyük resim raporu (AI)</div>
+    <div class="toolbar">
+      <input type="text" id="reportSymbol" placeholder="Sembol (örn. ETHUSDT)" />
+      <button id="reportBtn" class="secondary">Rapor al</button>
+    </div>
+    <div id="reportLoading" style="display: none;">Rapor hazırlanıyor...</div>
+    <div id="reportBox" class="report-box" style="display: none;"></div>
+  </div>
+
+  <script>
+    function fmtTime(ts) {
+      if (ts == null) return '—';
+      var d = new Date(ts);
+      return isNaN(d.getTime()) ? String(ts) : d.toLocaleString('tr-TR');
+    }
+    function renderSnapshots(list) {
+      var tbody = document.getElementById('snapshotsBody');
+      var table = document.getElementById('snapshotsTable');
+      var noData = document.getElementById('noData');
+      if (!list || list.length === 0) {
+        table.style.display = 'none';
+        noData.style.display = 'block';
+        return;
+      }
+      noData.style.display = 'none';
+      tbody.innerHTML = list.map(function(s) {
+        var dir = s.direction || '—';
+        var dirCls = dir === 'LONG' ? 'dir-long' : dir === 'SHORT' ? 'dir-short' : '';
+        var conf = s.confidence_score != null ? Number(s.confidence_score).toFixed(1) : '—';
+        var early = s.early_warning_score != null ? Number(s.early_warning_score).toFixed(0) : '—';
+        var price = s.reference_price != null ? Number(s.reference_price).toFixed(2) : '—';
+        var elliott = (s.elliott_formation || '') ? (s.elliott_formation + (s.elliott_type ? ' (' + s.elliott_type + ')' : '')) : '—';
+        var strat = '';
+        if (s.scenario_entry != null && s.scenario_stop != null)
+          strat = 'E:' + Number(s.scenario_entry).toFixed(2) + ' SL:' + Number(s.scenario_stop).toFixed(2);
+        else if (s.classic_pattern) strat = s.classic_pattern;
+        else strat = '—';
+        return '<tr>' +
+          '<td>' + (s.symbol || '—') + '</td>' +
+          '<td>' + (s.timeframe || '—') + '</td>' +
+          '<td class="muted">' + fmtTime(s.updated_at) + '</td>' +
+          '<td><strong>' + (s.detection || '—') + '</strong></td>' +
+          '<td class="' + dirCls + '">' + dir + '</td>' +
+          '<td class="num">' + conf + '</td>' +
+          '<td class="num">' + early + '</td>' +
+          '<td>' + (s.recommendation || '—') + '</td>' +
+          '<td class="num">' + price + '</td>' +
+          '<td class="muted">' + elliott + '</td>' +
+          '<td class="muted">' + strat + '</td>' +
+          '</tr>';
+      }).join('');
+      table.style.display = 'table';
+    }
+    async function loadSnapshots() {
+      var loadingEl = document.getElementById('loading');
+      var errorEl = document.getElementById('errorBox');
+      errorEl.textContent = '';
+      loadingEl.textContent = 'Yükleniyor...';
+      var symbol = document.getElementById('symbolFilter').value.trim() || null;
+      var url = '/api/analysis-snapshots' + (symbol ? '?symbol=' + encodeURIComponent(symbol) : '');
+      try {
+        var res = await fetch(url);
+        var data = await res.json();
+        loadingEl.textContent = '';
+        if (data.error) {
+          errorEl.textContent = data.error;
+          renderSnapshots([]);
+          return;
+        }
+        renderSnapshots(data.snapshots || []);
+      } catch (e) {
+        loadingEl.textContent = '';
+        errorEl.textContent = 'Yükleme hatası: ' + e.message;
+        renderSnapshots([]);
+      }
+    }
+    async function loadReport() {
+      var symbol = document.getElementById('reportSymbol').value.trim() || 'ETHUSDT';
+      var box = document.getElementById('reportBox');
+      var loadingEl = document.getElementById('reportLoading');
+      box.style.display = 'none';
+      loadingEl.style.display = 'block';
+      try {
+        var res = await fetch('/api/analysis-snapshots/report?symbol=' + encodeURIComponent(symbol));
+        var data = await res.json();
+        loadingEl.style.display = 'none';
+        if (data.error) {
+          box.textContent = 'Hata: ' + data.error;
+          box.style.display = 'block';
+          return;
+        }
+        var text = data.report || '(Rapor yok)';
+        if (data.ai) text += '\n\n' + data.ai;
+        box.innerHTML = '';
+        if (data.report) {
+          var pre = document.createElement('pre');
+          pre.style.margin = '0';
+          pre.style.whiteSpace = 'pre-wrap';
+          pre.textContent = data.report;
+          box.appendChild(pre);
+        }
+        if (data.ai) {
+          var div = document.createElement('div');
+          div.className = 'ai-block';
+          div.innerHTML = '<div class="ai-label">AI özeti</div><pre style="margin:0; white-space:pre-wrap;">' + data.ai + '</pre>';
+          box.appendChild(div);
+        }
+        if (!data.report && !data.ai) box.textContent = 'Bu sembol için veri yok veya AI yanıt vermedi.';
+        box.style.display = 'block';
+      } catch (e) {
+        loadingEl.style.display = 'none';
+        box.textContent = 'Hata: ' + e.message;
+        box.style.display = 'block';
+      }
+    }
+    document.getElementById('refreshBtn').addEventListener('click', loadSnapshots);
+    document.getElementById('reportBtn').addEventListener('click', loadReport);
+    loadSnapshots();
+  </script>
+</body>
+</html>
