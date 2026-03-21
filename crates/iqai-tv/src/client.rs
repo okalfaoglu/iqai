@@ -32,6 +32,35 @@ struct TvCandle {
     volume: f64,
 }
 
+/// HTTP history çağrıları için basit retry (429 / 502 / 503).
+async fn http_get_retry_tv(client: &Client, url: &str) -> Result<reqwest::Response, ExchangeError> {
+    use std::time::Duration;
+    const MAX: usize = 4;
+    let mut wait = Duration::from_millis(150);
+    for attempt in 0..MAX {
+        match client.get(url).send().await {
+            Ok(resp) => {
+                let code = resp.status().as_u16();
+                if (code == 429 || code == 503 || code == 502) && attempt + 1 < MAX {
+                    tokio::time::sleep(wait).await;
+                    wait = wait.saturating_mul(2).min(Duration::from_secs(5));
+                    continue;
+                }
+                return Ok(resp);
+            }
+            Err(e) => {
+                if attempt + 1 < MAX {
+                    tokio::time::sleep(wait).await;
+                    wait = wait.saturating_mul(2).min(Duration::from_secs(5));
+                    continue;
+                }
+                return Err(ExchangeError::Http(e.to_string()));
+            }
+        }
+    }
+    Err(ExchangeError::Http("http_get_retry_tv: exhausted".into()))
+}
+
 fn timeframe_to_tv_interval(tf: Timeframe) -> &'static str {
     match tf {
         Timeframe::M1 => "1",
@@ -176,11 +205,7 @@ impl TvConnectorClient {
             "{}/history?symbol={}&exchange={}&interval={}&n_bars={}",
             base, symbol, exchange, interval_str, limit.min(5000)
         );
-        let resp = client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+        let resp = http_get_retry_tv(client, &url).await?;
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();

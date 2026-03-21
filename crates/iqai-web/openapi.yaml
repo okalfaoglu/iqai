@@ -1,0 +1,60 @@
+openapi: 3.0.3
+info:
+  title: IQAI Web API
+  description: |
+    Smart Money / Q-Analiz web arayüzü JSON uçları. Tam liste için kaynak kodda `iqai-web` route tanımlarına bakın.
+  version: "0.1.0"
+servers:
+  - url: http://localhost:8080
+    description: Yerel geliştirme
+
+paths:
+  /api/chart:
+    get:
+      summary: Mum + sinyal + trend özeti (chart sayfası)
+      parameters:
+        - name: symbol
+          in: query
+          schema: { type: string }
+        - name: tf
+          in: query
+          description: Zaman dilimi (örn. 5M, 1H)
+          schema: { type: string }
+        - name: market
+          in: query
+          schema: { type: string, enum: [futures, tv] }
+  /api/config:
+    get:
+      summary: config.json içeriği
+    post:
+      summary: config.json güncelle
+  /api/analysis-snapshots:
+    get:
+      summary: SQLite analysis_snapshots listesi
+      parameters:
+        - name: symbol
+          in: query
+          schema: { type: string }
+  /api/analysis-snapshots/report:
+    get:
+      summary: Çoklu TF özet metni + isteğe bağlı Ollama AI
+      parameters:
+        - name: symbol
+          in: query
+          schema: { type: string }
+  /api/ai-explanations:
+    get:
+      summary: AI denetim kayıtları (TFAI-O08)
+      parameters:
+        - name: symbol
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 30 }
+  /api/metrics/prometheus:
+    get:
+      summary: Prometheus SLI metin çıktısı (O-06)
+  /api/q-analysis:
+    get:
+      summary: Tüm semboller için Q-RADAR özeti

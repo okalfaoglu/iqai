@@ -10,14 +10,10 @@ use serde::{Deserialize, Serialize};
 use crate::config::Config;
 use crate::dip_confluence::{compute_dip_confluence, DipConfluenceResult};
 use crate::dip_tepe_scoring::compute_dip_tepe_score;
+use crate::elliott_detector::compute_elliott;
 use crate::reversal::{compute_reversal_analysis, DipAnalysis, PeakAnalysis};
 use crate::signal::{CandleBuffer, SignalEngine};
-use crate::types::{QRadarSignal, SignalType, Timeframe};
-
-/// Confluence ile güven/erken uyarı artışı (katman başına)
-const CONFLUENCE_BOOST_PER_LAYER: f64 = 0.6;
-/// Maksimum confluence artışı (0–10 skorları taşmasın)
-const CONFLUENCE_BOOST_CAP: f64 = 2.5;
+use crate::types::{QRadarSignal, QSetup, SignalType, Timeframe};
 
 /// Q-RADAR fırsat analizi çıktısı – robot ve web aynı yapıyı kullanır.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,6 +48,21 @@ pub struct QRadarOpportunityAnalysis {
     pub smart_money_score: Option<crate::smart_money::SmartMoneyRadarScore>,
     /// Confluence katmanları (MTF, divergence, RSI zone vb.). Tespit varken dolu.
     pub confluence: Option<DipConfluenceResult>,
+    /// Aynı TF için Q-Setup (G05: RADAR ile hizalama).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub q_setup: Option<QSetup>,
+    /// RADAR/opp yönü ile Q-Setup: `1.0` uyum, `0.0` çelişki, `0.5` setup yok, `None` yön yok.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub radar_setup_alignment: Option<f64>,
+    /// Elliott W5 veya düzeltme hedefi (ikinci TP fiyatı).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub elliott_secondary_tp: Option<f64>,
+    /// Kısa Elliott özeti (`formation` / `formation_type`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub elliott_summary: Option<String>,
+    /// ABC / Zigzag düzeltme ipucu (LONG bias POC metni).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub abc_correction_hint: Option<String>,
 }
 
 /// Merkezi Q-RADAR fırsat analizi. CLI ve Web bu fonksiyonu çağırır.
@@ -67,7 +78,7 @@ pub fn compute_q_radar_opportunity(
     let candles = buffer.get(chart_tf);
     let (dip, peak) = match candles {
         Some(c) => {
-            let rev = compute_reversal_analysis(c, Some(config.pivot_length as usize));
+            let rev = compute_reversal_analysis(c, Some(config.pivot_length as usize), config);
             (rev.dip, rev.peak)
         }
         None => (None, None),
@@ -102,7 +113,8 @@ pub fn compute_q_radar_opportunity(
             peak.as_ref(),
         );
         confluence_out = Some(confluence.clone());
-        let boost = (confluence.layers_passed as f64 * CONFLUENCE_BOOST_PER_LAYER).min(CONFLUENCE_BOOST_CAP);
+        let boost = (confluence.layers_passed as f64 * config.q_confluence_boost_per_layer)
+            .min(config.q_confluence_boost_cap);
         confidence_score = (confidence_score + boost).min(10.0);
         early_warning_score = (early_warning_score + boost).min(10.0);
         confirmation_layers = Some(format!("{}/8 katman", confluence.layers_passed));
@@ -123,6 +135,11 @@ pub fn compute_q_radar_opportunity(
                 discrete_score: None,
                 smart_money_score: None,
                 confluence: Some(confluence),
+                q_setup: None,
+                radar_setup_alignment: None,
+                elliott_secondary_tp: None,
+                elliott_summary: None,
+                abc_correction_hint: None,
             };
         }
         // Nihai tavsiye aşağıda, tüm skorlar hesaplandıktan sonra belirlenir.
@@ -171,7 +188,7 @@ pub fn compute_q_radar_opportunity(
         );
     }
 
-    QRadarOpportunityAnalysis {
+    let mut analysis = QRadarOpportunityAnalysis {
         symbol: symbol.to_string(),
         timeframe: chart_tf,
         radar,
@@ -187,6 +204,85 @@ pub fn compute_q_radar_opportunity(
         discrete_score,
         smart_money_score,
         confluence: confluence_out,
+        q_setup: None,
+        radar_setup_alignment: None,
+        elliott_secondary_tp: None,
+        elliott_summary: None,
+        abc_correction_hint: None,
+    };
+    enrich_opportunity_with_setup_elliott(
+        &mut analysis,
+        buffer,
+        chart_tf,
+        symbol,
+        config,
+        &engine,
+    );
+    analysis
+}
+
+/// RADAR/opp yönü (`LONG`/`SHORT`) ile Q-Setup yönü uyumu: `1.0` / `0.0` / `0.5` / `None`.
+pub fn radar_setup_alignment_score(opp_dir: &str, setup: Option<&QSetup>) -> Option<f64> {
+    if opp_dir == "—" {
+        return None;
+    }
+    let Some(qs) = setup else {
+        return Some(0.5);
+    };
+    let setup_long = matches!(qs.side, SignalType::Buy);
+    let opp_long = opp_dir == "LONG";
+    if (opp_long && setup_long) || (!opp_long && !setup_long) {
+        Some(1.0)
+    } else {
+        Some(0.0)
+    }
+}
+
+fn enrich_opportunity_with_setup_elliott(
+    analysis: &mut QRadarOpportunityAnalysis,
+    buffer: &CandleBuffer,
+    chart_tf: Timeframe,
+    symbol: &str,
+    config: &Config,
+    engine: &SignalEngine,
+) {
+    if !config.q_enrich_opportunity_with_setup_elliott {
+        return;
+    }
+    let Some(candles) = buffer.get(chart_tf) else {
+        return;
+    };
+    if candles.len() < (config.pivot_length as usize) * 4 + 50 {
+        return;
+    }
+    let q_setup = engine.compute_q_setup(buffer, chart_tf, symbol, analysis.radar.as_ref());
+    analysis.radar_setup_alignment = radar_setup_alignment_score(&analysis.direction, q_setup.as_ref());
+    analysis.q_setup = q_setup;
+
+    let elliott = compute_elliott(candles, config, false);
+    if !elliott.formation.is_empty() && elliott.formation != "—" {
+        analysis.elliott_summary = Some(format!("{} / {}", elliott.formation, elliott.formation_type));
+    }
+    if let Some((t1, _, _)) = elliott.w5_targets {
+        analysis.elliott_secondary_tp = Some(t1);
+    } else if let Some(ref cs) = elliott.corr_setup {
+        analysis.elliott_secondary_tp = Some(cs.tp);
+    }
+
+    if analysis.direction == "LONG" {
+        let ft = elliott.formation_type.to_lowercase();
+        let fm = elliott.formation.to_lowercase();
+        let zigzag = ft.contains("zigzag") || fm.contains("zigzag");
+        if zigzag && elliott.corr_setup.is_some() {
+            analysis.abc_correction_hint = Some("Zigzag ABC (LONG bias POC)".to_string());
+        } else if ft.contains("flat") {
+            analysis.abc_correction_hint = Some("Flat ABC düzeltme".to_string());
+        }
+    }
+
+    if analysis.radar_setup_alignment == Some(0.0) && analysis.direction != "—" {
+        analysis.confidence_score = (analysis.confidence_score - 2.0).max(0.0);
+        analysis.recommendation = format!("ÇELİŞKİ (Q-Setup) – {}", analysis.recommendation);
     }
 }
 
@@ -325,5 +421,53 @@ fn build_final_recommendation(
         "DİP BÖLGESİ – İzle".to_string()
     } else {
         "TEPE BÖLGESİ – İzle".to_string()
+    }
+}
+
+#[cfg(test)]
+mod radar_alignment_tests {
+    use super::radar_setup_alignment_score;
+    use crate::types::{QSetup, SignalType, Timeframe};
+
+    fn dummy_setup(side: SignalType) -> QSetup {
+        QSetup {
+            symbol: "X".into(),
+            timeframe: Timeframe::M5,
+            side,
+            entry: 1.0,
+            entry_zone: (0.9, 1.1),
+            stop_loss: 0.8,
+            take_profit: 1.2,
+            q_score: 50.0,
+            time_window_bars: (5, 20),
+            expected_bars: 10,
+            radar_early: false,
+        }
+    }
+
+    #[test]
+    fn alignment_none_for_neutral_direction() {
+        assert_eq!(radar_setup_alignment_score("—", None), None);
+    }
+
+    #[test]
+    fn alignment_half_without_setup() {
+        assert_eq!(radar_setup_alignment_score("LONG", None), Some(0.5));
+    }
+
+    #[test]
+    fn alignment_match_long_buy() {
+        assert_eq!(
+            radar_setup_alignment_score("LONG", Some(&dummy_setup(SignalType::Buy))),
+            Some(1.0)
+        );
+    }
+
+    #[test]
+    fn alignment_mismatch_long_sell() {
+        assert_eq!(
+            radar_setup_alignment_score("LONG", Some(&dummy_setup(SignalType::Sell))),
+            Some(0.0)
+        );
     }
 }

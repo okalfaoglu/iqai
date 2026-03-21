@@ -114,6 +114,13 @@ impl TradeManager {
             return TradeAction::None;
         }
 
+        // Defensive: if qty is already exhausted, treat as full close trigger.
+        if !position.remaining_pct.is_finite() || position.remaining_pct <= 0.0 {
+            return TradeAction::FullClose {
+                reason: "Position remaining_pct<=0".to_string(),
+            };
+        }
+
         let cfg = &self.config;
         let r = position.risk_r;
 
@@ -246,7 +253,17 @@ impl TradeManager {
                 position.breakeven_done = true;
             }
             TradeAction::PartialClose { pct, reason: _ } => {
-                position.remaining_pct -= pct;
+                // `action` bir reference olduğu için `pct` burada `&f64` olarak gelir.
+                let pct_val = if pct.is_finite() { *pct } else { 0.0 };
+                let pct_val = pct_val.clamp(0.0, 1.0);
+                let remaining_before = if position.remaining_pct.is_finite() {
+                    position.remaining_pct
+                } else {
+                    0.0
+                };
+                // pct, remaining_pct'yi negatif yapmayacak şekilde efektif düşüm olarak clamp edilir.
+                let applied_pct = pct_val.min(remaining_before.max(0.0));
+                position.remaining_pct = (remaining_before - applied_pct).clamp(0.0, 1.0);
                 if !position.tp1_done {
                     position.tp1_done = true;
                 } else {

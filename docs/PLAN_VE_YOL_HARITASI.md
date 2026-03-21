@@ -17,10 +17,23 @@ Bu doküman, proje incelemesi ve Q-ANALİZ tartışmalarından çıkan planı ö
 
 | # | Durum | Yapılacak | Kaynak |
 |---|-------|-----------|--------|
-| 3 | **TODO** | **trade_db opened_count** – Sorguyu `status='open'` ile kısıtla veya alan adını (örn. total_positions) netleştir. | EKSIK_HATA §Olası Hata |
-| 4 | **TODO** | **TradingMode::from_str** – "paper" için açık branch ekle. | Aynı |
-| 5 | **TODO** | **api_q_analysis_all** – Boş symbols davranışını dokümante et. | Aynı |
-| 6 | **TODO** | **Config validasyonu** – Yükleme sonrası min_q_score, min_rr, risk_per_trade_pct vb. aralık kontrolü. | EKSIK_HATA §Eksikler |
+| 3 | **DONE** | **`SymbolPnlStats` / `get_symbol_pnl_stats`** – `total_positions` + `open_count` (`status='open'` ile); `pnl.html` geriye dönük `opened_count` fallback. | `trade_db.rs`, `pnl.html` |
+| 4 | **DONE** | **`TradingMode::from_str`** – `live` / `dry` / `paper` açık dallar; bilinmeyen → `paper`. | `auto_trader.rs` |
+| 5 | **DONE** | **`GET /api/q-analysis`** – Boş `symbols` → varsayılan ETHUSDT/BTCUSDT; `docs/API_Q_ANALYSIS.md`. | `http_app.rs` |
+| 6 | **DONE** | **`TradingConfig::validate`** – `risk_per_trade_pct`, `min_q_score`, `min_rr`, `max_leverage`, … aralıkları. | `app_config.rs` |
+
+---
+
+## Öncelik 2A: Tutarlılık / Spam / Modelleme
+
+| # | Durum | Yapılacak | Kaynak |
+|---|-------|-----------|--------|
+| 18 | **DONE** | `trade_manager.rs` içinde `remaining_pct` clamp + `pct` guard | EKSIK_HATA §Kritik (Fonksiyonel / Analitik Tutarlılık) |
+| 19 | **DONE** | `/api/chart` poll başına `notify` dedup/throttle (spam engeli) | Aynı (crates/iqai-web/src/notify.rs throttling). |
+| 20 | **TODO** | Backtest vs live/daemon trade yönetimi uyumu (partial TP/breakeven/trailing + komisyon/slippage + `entry_zone`) | Bu turda `run_backtest` fee (commission) + `slippage_bps` ile effective_exit benzeri PnL hesaplamaya güncellendi. Kalan uyumsuzluk: intrabar sıralama + TP2/TP3 state eşleşmesi. |
+| 21 | **DONE** | `auto_trader.rs` PnL/`TradeLog.exit` tutarlılığı (effective_exit vs current_price) | `TradeLog.exit` ve `TradeEvent` fiyatları `effective_exit` ile tutarlı hale getirildi. |
+| 22 | **DONE** | Partial close’lar için outcome/raporlama kapsamı netleştirildi: `analysis_outcomes` yalnızca `AutoTrader::close_position()` (tam kapanış) sırasında yazılır; `partial_close()` yazmaz. | Aynı |
+| 23 | **DONE** | `candlestick_patterns.rs` için ATR tabanlı noise filter eklendi | EKSIK_HATA §Yüksek (Sinyal Kalitesi / False Positive Riski) |
 
 ---
 
@@ -28,7 +41,7 @@ Bu doküman, proje incelemesi ve Q-ANALİZ tartışmalarından çıkan planı ö
 
 | # | Yapılacak | Açıklama |
 |---|-----------|-----------|
-| 7 | **Q-RADAR tespitine Q-Setup + Elliott hedefleri ekle** | Q-RADAR tespiti olduğunda: (a) Aynı buffer/TF ile `compute_q_setup` çağrılsın; (b) `compute_elliott` ile w5_targets ve corr_setup (Zigzag C / Triangle E) alınsın; (c) TP, Elliott hedefleriyle birleştirilsin veya “ikinci hedef” olarak sunulsun; (d) Çıktıya q_setup + elliott_targets alanları eklenebilir. Detay: Q_ANALIZ_WYCKOFF_POZ_KORUMA_CEVAP.md §3. |
+| 7 | **DONE** | **Q-RADAR + Q-Setup + Elliott (G05):** `compute_q_radar_opportunity` → `q_setup`, `radar_setup_alignment`, `elliott_secondary_tp`, `elliott_summary`, `abc_correction_hint`; `config.q_enrich_opportunity_with_setup_elliott`. Kalan: TP birleştirme kuralları / çoklu TF — `docs/API_Q_ANALYSIS.md`, `Q_ANALIZ_WYCKOFF_POZ_KORUMA_CEVAP.md` §3. |
 | 8 | **Wyckoff faz etiketleri (opsiyonel)** | Pivot + RSI at pivot ile SC, AR, ST, BC, DAR, DST etiketlemesi; referans doküman ve Pine Script ile uyum. DIP_TEPE_VE_WYCKOFF_REFERANS.md, Q_ANALIZ_WYCKOFF_POZ_KORUMA_CEVAP.md §4. |
 
 ---
@@ -47,8 +60,8 @@ Bu doküman, proje incelemesi ve Q-ANALİZ tartışmalarından çıkan planı ö
 
 | # | Durum | Yapılacak | Kaynak |
 |---|-------|-----------|--------|
-| 12 | **TODO** | **OpenAPI/Swagger** – Web API dokümantasyonu. | EKSIK_HATA §İyileştirmeler |
-| 13 | **TODO** | **CORS** – Web API farklı origin’den kullanılacaksa Axum’da CORS. | Aynı |
+| 12 | **DONE** | **OpenAPI/Swagger** – `openapi.yaml`, `GET /api/openapi.yaml`, `GET /api/docs`. | `docs/OPENAPI.md`, `TODO_PLAN` G-02 |
+| 13 | **DONE** | **CORS** – `tower-http` + `config.web.cors_allow_origins`. | `TODO_PLAN` G-03 |
 | 14 | **TODO** | **iqai-gui** – README’de “experimental/stub” veya tamamlama. | Aynı |
 | 15 | **TODO** | **Piyasa saatleri** – BIST/NASDAQ config veya dil ayarından. | Aynı |
 | 16 | **TODO** | **Log önceliği** – RUST_LOG vs config “logging.level” dokümante. | Aynı |

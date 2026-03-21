@@ -3,6 +3,7 @@
 //! Dip: Hammer, Bullish Engulfing, Morning Star, Piercing.
 //! Tepe: Shooting Star, Bearish Engulfing, Evening Star, Dark Cloud Cover.
 
+use crate::indicators::atr;
 use crate::types::Candle;
 
 /// Son 1–3 mumda tespit edilen pattern (dip için bullish, tepe için bearish).
@@ -18,12 +19,41 @@ pub struct CandlePatternSignals {
     pub dark_cloud_cover: bool,
 }
 
+/// Varsayılan gürültü filtresi parametreleri (config’ten gelmezse).
+pub const DEFAULT_CANDLESTICK_NOISE_ATR_PERIOD: usize = 14;
+pub const DEFAULT_CANDLESTICK_MIN_RANGE_ATR_RATIO: f64 = 0.15;
+
 /// Son barlarda dip (bullish) veya tepe (bearish) pattern var mı; skorlama için tek sinyal.
-pub fn detect_candle_patterns(candles: &[Candle], is_dip: bool) -> CandlePatternSignals {
+///
+/// `atr_period` ve `min_range_atr_ratio` için `Config` alanları veya
+/// [`DEFAULT_CANDLESTICK_NOISE_ATR_PERIOD`] / [`DEFAULT_CANDLESTICK_MIN_RANGE_ATR_RATIO`] kullanılabilir.
+pub fn detect_candle_patterns(
+    candles: &[Candle],
+    is_dip: bool,
+    atr_period: usize,
+    min_range_atr_ratio: f64,
+) -> CandlePatternSignals {
     let mut out = CandlePatternSignals::default();
     if candles.len() < 3 {
         return out;
     }
+
+    // Noise filter (global):
+    // ATR küçükken/volatilite düşükken mum body/wick oranlarıyle oluşan pattern'ler
+    // çok kolay false-positive üretebilir. Bu nedenle son mumun range'i ATR'e göre
+    // yeterince büyük değilse tüm pattern'leri kapatıyoruz.
+    let atr_period = atr_period.max(1);
+    if let Some(atr_val) = atr(candles, atr_period) {
+        if atr_val.is_finite() && atr_val > 1e-12 {
+            let c = &candles[candles.len() - 1];
+            let range = (c.high - c.low).abs();
+            let ratio = range / atr_val;
+            if ratio < min_range_atr_ratio {
+                return out;
+            }
+        }
+    }
+
     let last = candles.len() - 1;
     let c = &candles[last];
     let prev = &candles[last - 1];

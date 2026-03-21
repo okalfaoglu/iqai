@@ -7,8 +7,86 @@ use crate::q_setup_card;
 use crate::trade_open_card;
 use crate::trade_close_card;
 
+use std::collections::HashMap;
+use std::sync::{Mutex, OnceLock};
+use std::time::{SystemTime, UNIX_EPOCH};
+
 fn html_escape(s: &str) -> String {
     s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+}
+
+fn now_ms() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis()
+}
+
+/// Bildirim dedup anahtarında kullanılacak fiyat: anlık fiyat her tick değiştiği için
+/// throttle sürekli sıfırlanmasın diye ~0.5% bant içinde yuvarlanır.
+fn dedup_price_bucket(p: f64) -> f64 {
+    if !p.is_finite() || p <= 0.0 {
+        return 0.0;
+    }
+    let band = (p * 0.005).max(p * 1e-6).max(0.01);
+    (p / band).round() * band
+}
+
+/// In-memory throttle/dedup cache.
+///
+/// `/api/chart` canlı modda sık poll yaptığı için (örn. 2sn),
+/// aynı tespit sürekli tekrar tekrar bildirim üretebilir.
+/// Bu cache aynı event-key için kısa aralıkta tekrar gönderimi engeller.
+
+fn throttle_cache() -> &'static Mutex<HashMap<String, u128>> {
+    static CACHE: OnceLock<Mutex<HashMap<String, u128>>> = OnceLock::new();
+    CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+/// `true` = pencere içinde, gönderimi **atla** (zaman damgası değişmez).
+pub fn throttle_should_skip(key: &str, min_interval_ms: u128) -> bool {
+    let now = now_ms();
+    let map = throttle_cache().lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(&last) = map.get(key) {
+        if now.saturating_sub(last) < min_interval_ms {
+            return true;
+        }
+    }
+    false
+}
+
+fn throttle_mark(key: &str) {
+    let mut map = throttle_cache().lock().unwrap_or_else(|e| e.into_inner());
+    map.insert(key.to_string(), now_ms());
+}
+
+/// Q-Analiz paneli için dedup anahtarı: **güven/erken uyarı** hariç (2/10 ↔ 3/10 titreşimi
+/// throttle’ı delmesin). Sembol + TF + tespit + yön + tavsiye özeti + dip/tepe & SM skor toplamları.
+pub fn q_analysis_throttle_key(opp: &QRadarOpportunityAnalysis) -> String {
+    let tf = format!("{:?}", opp.timeframe);
+    let rec_short = opp.recommendation.chars().take(48).collect::<String>();
+    let ds = opp
+        .discrete_score
+        .as_ref()
+        .map(|d| i32::from(d.total))
+        .unwrap_or(-1);
+    let sm = opp
+        .smart_money_score
+        .as_ref()
+        .map(|s| i32::from(s.total))
+        .unwrap_or(-1);
+    format!(
+        "QANALIZ:{}:{}:{}:{}:{}:{}:{}",
+        opp.symbol, tf, opp.direction, opp.detection, rec_short, ds, sm
+    )
+}
+
+fn throttled(key: &str, min_interval_ms: u128) -> bool {
+    if throttle_should_skip(key, min_interval_ms) {
+        return true;
+    }
+    throttle_mark(key);
+    false
 }
 
 /// Bildirim olay tipi; routing_rules ile hangi kanallara gideceği belirlenir.
@@ -50,6 +128,42 @@ pub fn routing_rules(event_type: NotificationEventType) -> Vec<Channel> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn q_analysis_throttle_key_ignores_confidence_jitter() {
+        use iqai_core::QRadarOpportunityAnalysis;
+        use iqai_core::Timeframe;
+        let a = QRadarOpportunityAnalysis {
+            symbol: "BTCUSDT".into(),
+            timeframe: Timeframe::H1,
+            radar: None,
+            dip: None,
+            peak: None,
+            detection: "DİP".into(),
+            confidence_score: 0.2,
+            early_warning_score: 0.6,
+            recommendation: "ZAYIF DİP – İzle".into(),
+            confirmation_layers: None,
+            direction: "LONG".into(),
+            reference_price: 70_000.0,
+            discrete_score: None,
+            smart_money_score: None,
+            confluence: None,
+            q_setup: None,
+            radar_setup_alignment: None,
+            elliott_secondary_tp: None,
+            elliott_summary: None,
+            abc_correction_hint: None,
+        };
+        let mut b = a.clone();
+        b.confidence_score = 0.3;
+        b.early_warning_score = 0.7;
+        assert_eq!(
+            q_analysis_throttle_key(&a),
+            q_analysis_throttle_key(&b),
+            "güven/erken uyarı titreşimi anahtarı değiştirmemeli"
+        );
+    }
 
     #[test]
     fn routing_q_setup_includes_all_channels() {
@@ -144,7 +258,7 @@ struct TelegramConfig {
 /// - Diğer kanallar (WhatsApp, Instagram, Facebook, X, Email) için
 ///   ortam değişkenleri ile yapılandırılabilen webhook endpoint'leri kullanılır.
 ///   Örn. kendi backend'iniz bu webhook'u alıp ilgili platforma iletebilir.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Notifier {
     telegram: Option<TelegramConfig>,
     whatsapp: Option<WebhookConfig>,
@@ -152,12 +266,39 @@ pub struct Notifier {
     facebook: Option<WebhookConfig>,
     x: Option<WebhookConfig>,
     email: Option<WebhookConfig>,
+    throttle_q_setup_ms: u128,
+    throttle_q_analysis_ms: u128,
+    throttle_q_radar_ms: u128,
+    throttle_protect_ms: u128,
+}
+
+impl Default for Notifier {
+    fn default() -> Self {
+        Self {
+            telegram: None,
+            whatsapp: None,
+            instagram: None,
+            facebook: None,
+            x: None,
+            email: None,
+            throttle_q_setup_ms: 30_000,
+            // Q-Analiz: varsayılan 5 dk (Telegram tekrarları)
+            throttle_q_analysis_ms: 300_000,
+            throttle_q_radar_ms: 10_000,
+            throttle_protect_ms: 30_000,
+        }
+    }
 }
 
 impl Notifier {
     /// Telegram yapılandırıldı mı? (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID veya config.json)
     pub fn has_telegram(&self) -> bool {
         self.telegram.is_some()
+    }
+
+    /// Q-Analiz bildirimi throttle penceresinde mi? (`true` = Telegram/Ollama için atla; AI çağrısını da atlamak için kullanın.)
+    pub fn q_analysis_would_skip(&self, opp: &QRadarOpportunityAnalysis) -> bool {
+        throttle_should_skip(&q_analysis_throttle_key(opp), self.throttle_q_analysis_ms)
     }
 
     /// Bildirim ayarlarını config.json + ortam değişkenlerinden oku.
@@ -211,6 +352,18 @@ impl Notifier {
         };
 
         let n = cfg.as_ref();
+        let throttle_q_setup_ms = n
+            .and_then(|x| x.throttle_q_setup_ms)
+            .unwrap_or(30_000) as u128;
+        let throttle_q_analysis_ms = n
+            .and_then(|x| x.throttle_q_analysis_ms)
+            .unwrap_or(300_000) as u128;
+        let throttle_q_radar_ms = n
+            .and_then(|x| x.throttle_q_radar_ms)
+            .unwrap_or(10_000) as u128;
+        let throttle_protect_ms = n
+            .and_then(|x| x.throttle_protect_ms)
+            .unwrap_or(30_000) as u128;
         let whatsapp = mk_webhook(
             "WhatsApp",
             "WHATSAPP_WEBHOOK_URL",
@@ -254,6 +407,10 @@ impl Notifier {
             facebook,
             x,
             email,
+            throttle_q_setup_ms,
+            throttle_q_analysis_ms,
+            throttle_q_radar_ms,
+            throttle_protect_ms,
         }
     }
 
@@ -264,6 +421,24 @@ impl Notifier {
 
     /// Q-Setup bildirimini Telegram’da kart olarak gönder (opsiyonel current_price ile).
     pub async fn notify_q_setup_with_price(&self, setup: &QSetup, current_price: Option<f64>) -> Result<()> {
+        // Q-Setup: aynı signal birkaç refresh boyunca tekrar gelebilir.
+        let cp = current_price.unwrap_or(setup.entry);
+        let tf = format!("{:?}", setup.timeframe);
+        let side = format!("{:?}", setup.side);
+        // Fiyatı anahtara ham koyma: her poll'da throttle bypass olur.
+        let key = format!(
+            "QSETUP:{}:{}:{}:{:.4}:{:.4}:{:.4}",
+            setup.symbol,
+            tf,
+            side,
+            dedup_price_bucket(cp),
+            setup.stop_loss,
+            setup.take_profit
+        );
+        if throttled(&key, self.throttle_q_setup_ms) {
+            return Ok(());
+        }
+
         let text = self.format_q_setup(setup);
         let channels = routing_rules(NotificationEventType::QSetup);
         let caption = format!("{} (Q) · Q-SETUP · {:.0}/100", setup.symbol, setup.q_score);
@@ -299,6 +474,12 @@ impl Notifier {
         opp: &QRadarOpportunityAnalysis,
         elliott_summary: Option<&str>,
     ) -> Result<()> {
+        let key = q_analysis_throttle_key(opp);
+        if throttle_should_skip(&key, self.throttle_q_analysis_ms) {
+            return Ok(());
+        }
+        throttle_mark(&key);
+
         let text = Self::format_q_analysis_panel(opp, elliott_summary);
         let channels = routing_rules(NotificationEventType::QAnalysis);
         let caption = format!("{} (Q) · {}", opp.symbol, opp.recommendation.as_str());
@@ -403,6 +584,21 @@ impl Notifier {
 
     /// Q-RADAR erken uyarısını bildirim kanallarına gönder (routing: Telegram + X).
     pub async fn notify_q_radar(&self, radar: &QRadarSignal) -> Result<()> {
+        let tf = format!("{:?}", radar.timeframe);
+        let side = format!("{:?}", radar.side);
+        let key = format!(
+            "QRADAR:{}:{}:{}:{:.1}:{:.4}:{:?}",
+            radar.symbol,
+            tf,
+            side,
+            radar.confidence,
+            dedup_price_bucket(radar.reference_price),
+            radar.expected_window_bars
+        );
+        if throttled(&key, self.throttle_q_radar_ms) {
+            return Ok(());
+        }
+
         let side = match radar.side {
             iqai_core::SignalType::Buy => "LONG",
             iqai_core::SignalType::Sell => "SHORT",
@@ -434,6 +630,17 @@ Referans (izlenecek) fiyat: {:.4}\n\
 
     /// Poz Koruma uyarısını bildirim kanallarına gönder.
     pub async fn notify_protect(&self, protect: &ProtectSignal) -> Result<()> {
+        let key = format!(
+            "PROTECT:{}:{:.4}:{:.4}:{:.2}",
+            protect.symbol,
+            protect.entry_price,
+            protect.trigger_price,
+            protect.locked_r
+        );
+        if throttled(&key, self.throttle_protect_ms) {
+            return Ok(());
+        }
+
         let text = format!(
             "Q-ANALİZ POZ KORUMA\n\
 Sembol: {}\n\
@@ -553,6 +760,7 @@ Kural: Poz Koruma geldiğinde çıkış zorunlu.",
                         *avg_price,
                         signal.stop_loss,
                         signal.take_profit,
+                        signal.stop_loss,
                         signal.score,
                         signal.rr,
                     ) {
@@ -628,6 +836,7 @@ Kural: Poz Koruma geldiğinde çıkış zorunlu.",
         current_price: f64,
         stop_loss: f64,
         take_profit: f64,
+        protection_sl: f64,
         score: f64,
         rr: f64,
     ) -> Result<()> {
@@ -640,20 +849,28 @@ Kural: Poz Koruma geldiğinde çıkış zorunlu.",
                 current_price,
                 stop_loss,
                 take_profit,
+                protection_sl,
                 score,
                 rr,
             ) {
                 Ok(png_bytes) => {
-                    let caption = format!("🕐 CANLI POZİSYON · {} · {} @ {:.4}", symbol, side, current_price);
+                    let caption = format!("CANLI POZİSYON · {} · {}", symbol, side);
                     self.notify_telegram_photo(tg, &png_bytes, &caption).await
                 }
-                Err(e) => {
-                    let text = format!(
-                        "🕐 CANLI POZİSYON\n{} · {} | Giriş: {:.4} → Güncel: {:.4} | SL: {:.4} | TP: {:.4}",
-                        symbol, side, entry, current_price, stop_loss, take_profit,
+                Err(_font_err) => {
+                    // Font yok / PNG üretilemedi: Telegram HTML ile aynı içerik (kart benzeri).
+                    let text = trade_open_card::format_live_position_html(
+                        symbol,
+                        side,
+                        entry,
+                        current_price,
+                        stop_loss,
+                        take_profit,
+                        protection_sl,
+                        score,
+                        rr,
                     );
-                    let _ = self.notify_telegram(tg, &text).await;
-                    Err(e.into())
+                    self.notify_telegram(tg, &text).await
                 }
             }
         } else {

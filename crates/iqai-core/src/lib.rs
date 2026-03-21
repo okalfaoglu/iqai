@@ -14,31 +14,48 @@ pub mod logging;
 pub mod elliott;
 pub mod elliott_detector;
 pub mod impulse_detector;
+pub mod binance_error;
 pub mod exchange;
 pub mod fake_breakout;
+pub mod hash_util;
 pub mod indicators;
 pub mod q_radar_analysis;
 pub mod reversal;
 pub mod signal;
+pub mod position_rca;
 pub mod trade_db;
 pub mod trade_manager;
 pub mod types;
 pub mod strategy;
 pub mod strategy_engine;
 pub mod smart_money;
+pub mod sli;
+pub mod trace_context;
 
-pub use app_config::{AppConfig, LoggingConfig, LogTarget, NotificationConfig};
+pub use app_config::{
+    AppConfig, LoggingConfig, LogTarget, NotificationConfig, SmartMoneyConfig, TradingConfig,
+    WebConfig,
+};
 pub use backtest::{run_backtest, scan_historical_q_setups, BacktestResult, BacktestTrade};
 pub use config::Config;
 pub use logging::{debug, error, info, init_from_config, trace, warn};
 pub use trade_manager::{Position, PositionSide, TradeAction, TradeManager};
-pub use exchange::{ExchangeConnector, ExchangeError, OrderSide, OrderResponse};
+pub use exchange::{
+    classify_binance_json, prometheus_exchange_normalized_errors, AlertTier, ExchangeConnector,
+    ExchangeError, ExchangeErrorCategory, ExchangeTraceScopeGuard, NormalizedExchangeError,
+    OrderSide, OrderResponse, RcaOpenMarketSnapshot,
+};
 pub use signal::{CandleBuffer, SignalEngine};
 pub use elliott_detector::{collect_swings, compute_elliott, ElliottDetectorResult};
 pub use impulse_detector::{detect_impulse, ImpulseDetectorState, ImpulseStage};
-pub use q_radar_analysis::{compute_q_radar_opportunity, QRadarOpportunityAnalysis};
+pub use q_radar_analysis::{
+    compute_q_radar_opportunity, radar_setup_alignment_score, QRadarOpportunityAnalysis,
+};
 pub use dip_tepe_scoring::{compute_dip_tepe_score, DipTepeScore, SignalScore};
-pub use candlestick_patterns::{detect_candle_patterns, CandlePatternSignals};
+pub use candlestick_patterns::{
+    detect_candle_patterns, CandlePatternSignals, DEFAULT_CANDLESTICK_MIN_RANGE_ATR_RATIO,
+    DEFAULT_CANDLESTICK_NOISE_ATR_PERIOD,
+};
 pub use market_context::{
     FundingRate, LiquidationZone, MarketContext, OnChainSummary, OpenInterest, OrderBookSnapshot,
 };
@@ -47,8 +64,15 @@ pub use reversal::{
     DipAnalysis, PeakAnalysis, ReversalAnalysis,
 };
 pub use analysis_snapshot::{build_analysis_snapshot, AnalysisSnapshot};
-pub use trade_db::{AnalysisOutcomeRecord, AnalysisSnapshotRecord, QAnalizDetectionRecord, SymbolPnlStats, TradeDb};
-pub use auto_trader::TradingMode;
+pub use hash_util::sha256_hex;
+pub use trace_context::traceparent_from_uuid;
+pub use position_rca::{ClosePositionRca, PositionOpenRca, close_reason_to_canonical};
+pub use sli::{render_prometheus_sli, render_prometheus_sli_minimal};
+pub use trade_db::{
+    fingerprint_analysis_snapshots_for_audit, AiExplanationRecord, AnalysisOutcomeRecord,
+    AnalysisSnapshotRecord, QAnalizDetectionRecord, SymbolPnlStats, TradeDb,
+};
+pub use auto_trader::{format_trade_correlation, TradingMode};
 pub use types::*;
 pub use classic_patterns::{
     ClassicPatternDetection,

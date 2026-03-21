@@ -360,18 +360,18 @@ fn build_draw_data_from_swings(
         }
     };
 
-    let lineA_p_left = y_on(p0.time, p0.price, p4.time, p4.price, t_left);
-    let lineB_p_left = y_on(p1.time, p1.price, p3.time, p3.price, t_left);
+    let line_a_p_left = y_on(p0.time, p0.price, p4.time, p4.price, t_left);
+    let line_b_p_left = y_on(p1.time, p1.price, p3.time, p3.price, t_left);
 
-    let (upper_line, lower_line) = if lineA_p_left >= lineB_p_left {
+    let (upper_line, lower_line) = if line_a_p_left >= line_b_p_left {
         (
-            Some(ClassicDrawLine { t1: t_left, p1: lineA_p_left, t2: t_right, p2: y_on(p0.time, p0.price, p4.time, p4.price, t_right) }),
-            Some(ClassicDrawLine { t1: t_left, p1: lineB_p_left, t2: t_right, p2: y_on(p1.time, p1.price, p3.time, p3.price, t_right) }),
+            Some(ClassicDrawLine { t1: t_left, p1: line_a_p_left, t2: t_right, p2: y_on(p0.time, p0.price, p4.time, p4.price, t_right) }),
+            Some(ClassicDrawLine { t1: t_left, p1: line_b_p_left, t2: t_right, p2: y_on(p1.time, p1.price, p3.time, p3.price, t_right) }),
         )
     } else {
         (
-            Some(ClassicDrawLine { t1: t_left, p1: lineB_p_left, t2: t_right, p2: y_on(p1.time, p1.price, p3.time, p3.price, t_right) }),
-            Some(ClassicDrawLine { t1: t_left, p1: lineA_p_left, t2: t_right, p2: y_on(p0.time, p0.price, p4.time, p4.price, t_right) }),
+            Some(ClassicDrawLine { t1: t_left, p1: line_b_p_left, t2: t_right, p2: y_on(p1.time, p1.price, p3.time, p3.price, t_right) }),
+            Some(ClassicDrawLine { t1: t_left, p1: line_a_p_left, t2: t_right, p2: y_on(p0.time, p0.price, p4.time, p4.price, t_right) }),
         )
     };
 

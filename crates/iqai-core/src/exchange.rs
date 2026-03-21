@@ -2,7 +2,24 @@
 
 use async_trait::async_trait;
 
+pub use crate::binance_error::{
+    classify_binance_json, prometheus_exchange_normalized_errors, AlertTier,
+    ExchangeErrorCategory, NormalizedExchangeError,
+};
+
 use crate::types::{Candle, Exchange, MarketType, Timeframe};
+
+/// Açılış anı RCA için opsiyonel piyasa göstergeleri (TFAI-Q01 feed).
+/// Borsa bağlayıcısı yoksa veya hata olursa alanlar `None` kalır.
+#[derive(Debug, Clone, Default)]
+pub struct RcaOpenMarketSnapshot {
+    /// ATR(14) / son kapanış — boyutsuz (ör. 0.02 ≈ %2).
+    pub volatility_at_open: Option<f64>,
+    /// (ask − bid) / mid × 10_000 (basis points).
+    pub spread_at_open_bps: Option<f64>,
+    /// Perpetual funding oranı (yoksa `None`, spot için genelde `None`).
+    pub funding_rate_at_open: Option<f64>,
+}
 
 /// Result type for exchange operations (error type provided by connector)
 pub type ExchangeResult<T, E = ExchangeError> = Result<T, E>;
@@ -13,6 +30,9 @@ pub enum ExchangeError {
     Http(String),
     #[error("API error: {0}")]
     Api(String),
+    /// Binance (ve benzeri) normalize edilmiş API hatası — TFAI-Q04.
+    #[error(transparent)]
+    Normalized(#[from] NormalizedExchangeError),
     #[error("Invalid symbol: {0}")]
     InvalidSymbol(String),
 }
@@ -58,6 +78,36 @@ pub trait ExchangeConnector: Send + Sync {
 
     /// Get account balance (optional)
     async fn get_balance(&self, asset: &str) -> ExchangeResult<f64>;
+
+    /// `process_signal` içinde [`ExchangeTraceScopeGuard`] ile set edilir; Binance istemcisi W3C `traceparent` üretir.
+    fn set_trace_id_for_request(&self, _trace_id: Option<&str>) {}
+
+    /// Açılış RCA için spread / funding / ATR tabanlı volatilite (best-effort; hata → `None` alanları).
+    async fn fetch_rca_open_market_snapshot(
+        &self,
+        _symbol: &str,
+        _timeframe: Timeframe,
+    ) -> RcaOpenMarketSnapshot {
+        RcaOpenMarketSnapshot::default()
+    }
+}
+
+/// RAII: Binance GET/POST isteklerine W3C `traceparent` (`trace_id` → [`crate::traceparent_from_uuid`]).
+pub struct ExchangeTraceScopeGuard<'a> {
+    exchange: &'a dyn ExchangeConnector,
+}
+
+impl<'a> ExchangeTraceScopeGuard<'a> {
+    pub fn new(exchange: &'a dyn ExchangeConnector, trace_id: &str) -> Self {
+        exchange.set_trace_id_for_request(Some(trace_id));
+        Self { exchange }
+    }
+}
+
+impl Drop for ExchangeTraceScopeGuard<'_> {
+    fn drop(&mut self) {
+        self.exchange.set_trace_id_for_request(None);
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -1,5 +1,4 @@
 [workspace]
 members = ["crates/iqai-core", "crates/iqai-binance", "crates/iqai-tv", "crates/iqai-cli", "crates/iqai-web"]
-# iqai-gui requires desktop (X11/Wayland). Enable when building on a system with display:
-# members = ["crates/iqai-core", "crates/iqai-binance", "crates/iqai-cli", "crates/iqai-gui"]
+# iqai-gui masaüstü stub — workspace’e eklemek için: "crates/iqai-gui" (bkz. crates/iqai-gui/README.md)
 resolver = "2"

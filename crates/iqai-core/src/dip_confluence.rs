@@ -49,15 +49,8 @@ pub struct DipConfluenceResult {
     /// Absorption: destek/tepe bandında hacim artışı ve band tutunması
     pub absorption_ok: bool,
     /// Kaç katman geçti (0–8)
-    pub layers_passed: u8,
+    pub     layers_passed: u8,
 }
-
-const MTF_ATR_BAND: f64 = 0.5;
-const FIB_PRICE_BAND_PCT: f64 = 0.003;
-const STRUCTURE_SCORE_MIN: f64 = 0.55;
-const ABSORPTION_ATR_MARGIN: f64 = 0.3;
-const ABSORPTION_BARS: usize = 5;
-const ABSORPTION_VOLUME_RATIO: f64 = 1.5;
 
 /// Çoklu doğrulama katmanlarını hesapla. LONG için dip, SHORT için tepe.
 pub fn compute_dip_confluence(
@@ -74,7 +67,7 @@ pub fn compute_dip_confluence(
         _ => return DipConfluenceResult::default(),
     };
     let pivot_len = config.pivot_length as usize;
-    let atr_val = atr(candles, 14).unwrap_or_else(|| {
+    let atr_val = atr(candles, config.dip_confluence_atr_period as usize).unwrap_or_else(|| {
         candles
             .last()
             .map(|c| (c.high - c.low).max(1e-6))
@@ -93,7 +86,7 @@ pub fn compute_dip_confluence(
                 pivot_high(htf_candles, pivot_len)
             };
             if let Some(sup) = support {
-                let band = atr_val * MTF_ATR_BAND;
+                let band = atr_val * config.dip_confluence_mtf_atr_band;
                 let in_zone = if is_long {
                     reference_price >= sup - band && reference_price <= sup + band
                 } else {
@@ -114,7 +107,7 @@ pub fn compute_dip_confluence(
         SignalType::Sell
     };
     let structure_score = engine.structure_score(candles, side, pivot_len);
-    let ltf_structure_ok = structure_score >= STRUCTURE_SCORE_MIN;
+    let ltf_structure_ok = structure_score >= config.dip_confluence_structure_score_min;
 
     let mut fib_elliott_zone = false;
     let elliott = compute_elliott(candles, config, false);
@@ -142,7 +135,7 @@ pub fn compute_dip_confluence(
         for level in elliott.fibo_levels.iter() {
             ref_levels.push(level.price);
         }
-        let band_pct = FIB_PRICE_BAND_PCT;
+        let band_pct = config.dip_confluence_fib_price_band_pct;
         for lvl in ref_levels {
             if (reference_price - lvl).abs() / lvl.max(1e-10) <= band_pct {
                 fib_elliott_zone = true;
@@ -151,10 +144,11 @@ pub fn compute_dip_confluence(
         }
     }
 
+    let rsi_p = config.dip_tepe_rsi_period as usize;
     let divergence_ok = if is_long {
-        bullish_divergence(candles, pivot_len)
+        bullish_divergence(candles, pivot_len, rsi_p)
     } else {
-        bearish_divergence(candles, pivot_len)
+        bearish_divergence(candles, pivot_len, rsi_p)
     };
 
     let spring_ok = if is_long {
@@ -164,7 +158,7 @@ pub fn compute_dip_confluence(
     };
 
     let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
-    let last_rsi = rsi(&closes, 14);
+    let last_rsi = rsi(&closes, rsi_p);
     let rsi_zone_ok = match last_rsi {
         Some(r) => {
             if is_long {
@@ -194,19 +188,22 @@ pub fn compute_dip_confluence(
     } else {
         peak.map(|p| p.peak_price)
     };
+    let abs_bars = config.dip_confluence_absorption_bars as usize;
+    let vol_avg_nbars = config.dip_confluence_absorption_vol_avg_bars as usize;
     let absorption_ok = band_center.map_or(false, |center| {
-        let band = atr_val * ABSORPTION_ATR_MARGIN;
+        let band = atr_val * config.dip_confluence_absorption_atr_margin;
         let band_low = center - band;
         let band_high = center + band;
-        if candles.len() < ABSORPTION_BARS + 20 {
+        if candles.len() < abs_bars + vol_avg_nbars {
             return false;
         }
-        let start = candles.len().saturating_sub(20);
-        let vol_avg_20: f64 = candles[start..].iter().map(|c| c.volume).sum::<f64>() / 20.0_f64;
-        let last_n = candles.len().saturating_sub(ABSORPTION_BARS);
+        let start = candles.len().saturating_sub(vol_avg_nbars);
+        let vol_avg_ref: f64 = candles[start..].iter().map(|c| c.volume).sum::<f64>()
+            / vol_avg_nbars as f64;
+        let last_n = candles.len().saturating_sub(abs_bars);
         let vol_sum_n: f64 = candles[last_n..].iter().map(|c| c.volume).sum();
-        let vol_avg_n = vol_sum_n / ABSORPTION_BARS as f64;
-        if vol_avg_20 <= 0.0 || vol_avg_n < vol_avg_20 * ABSORPTION_VOLUME_RATIO {
+        let vol_avg_n = vol_sum_n / abs_bars as f64;
+        if vol_avg_ref <= 0.0 || vol_avg_n < vol_avg_ref * config.dip_confluence_absorption_volume_ratio {
             return false;
         }
         if is_long {
@@ -294,7 +291,7 @@ fn last_two_pivot_highs(candles: &[Candle], pivot_len: usize) -> Vec<(usize, f64
 }
 
 /// Bullish divergence: fiyat LL (lower low), RSI HL (higher low).
-fn bullish_divergence(candles: &[Candle], pivot_len: usize) -> bool {
+fn bullish_divergence(candles: &[Candle], pivot_len: usize, rsi_period: usize) -> bool {
     let pivots = last_two_pivot_lows(candles, pivot_len);
     if pivots.len() < 2 {
         return false;
@@ -305,8 +302,8 @@ fn bullish_divergence(candles: &[Candle], pivot_len: usize) -> bool {
         return false;
     }
     let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
-    let rsi1 = rsi(&closes[..=idx1], 14);
-    let rsi2 = rsi(&closes[..=idx2], 14);
+    let rsi1 = rsi(&closes[..=idx1], rsi_period);
+    let rsi2 = rsi(&closes[..=idx2], rsi_period);
     match (rsi1, rsi2) {
         (Some(r1), Some(r2)) => r2 > r1,
         _ => false,
@@ -314,7 +311,7 @@ fn bullish_divergence(candles: &[Candle], pivot_len: usize) -> bool {
 }
 
 /// Bearish divergence: fiyat HH (higher high), RSI LH (lower high).
-fn bearish_divergence(candles: &[Candle], pivot_len: usize) -> bool {
+fn bearish_divergence(candles: &[Candle], pivot_len: usize, rsi_period: usize) -> bool {
     let pivots = last_two_pivot_highs(candles, pivot_len);
     if pivots.len() < 2 {
         return false;
@@ -325,8 +322,8 @@ fn bearish_divergence(candles: &[Candle], pivot_len: usize) -> bool {
         return false;
     }
     let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
-    let rsi1 = rsi(&closes[..=idx1], 14);
-    let rsi2 = rsi(&closes[..=idx2], 14);
+    let rsi1 = rsi(&closes[..=idx1], rsi_period);
+    let rsi2 = rsi(&closes[..=idx2], rsi_period);
     match (rsi1, rsi2) {
         (Some(r1), Some(r2)) => r2 < r1,
         _ => false,

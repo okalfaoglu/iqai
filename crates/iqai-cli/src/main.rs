@@ -16,6 +16,7 @@ use iqai_core::{
     build_scenarios_for_series,
     build_smart_money_context_for_series,
     detect_fake_breakout_signal, FakeBreakoutConfig,
+    sha256_hex,
     Config, CandleBuffer, SignalEngine, SignalType, Timeframe,
     PositionSide, TradeAction, TradeManager,
 };
@@ -1072,29 +1073,49 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
 
     let market = trading_cfg.market.as_deref().unwrap_or("futures");
 
-    let exchange: Box<dyn ExchangeConnector> = if at_cfg.mode == TradingMode::Live {
-        let api_key = trading_cfg
-            .api_key
-            .clone()
-            .filter(|s| !s.trim().is_empty())
-            .or_else(|| std::env::var("BINANCE_API_KEY").ok().filter(|s| !s.trim().is_empty()))
-            .ok_or_else(|| anyhow::anyhow!("Live mod için api_key gerekli (config.json trading.api_key veya BINANCE_API_KEY env)"))?;
-        let secret = trading_cfg
-            .secret_key
-            .clone()
-            .filter(|s| !s.trim().is_empty())
-            .or_else(|| std::env::var("BINANCE_SECRET_KEY").ok().filter(|s| !s.trim().is_empty()))
-            .ok_or_else(|| anyhow::anyhow!("Live mod için secret_key gerekli (config.json trading.secret_key veya BINANCE_SECRET_KEY env)"))?;
-        if market.eq_ignore_ascii_case("spot") {
+    let commission_cache_ttl_ms = trading_cfg
+        .commission_bps_cache_ttl_ms
+        .unwrap_or(600_000);
+
+    let api_key_opt = trading_cfg
+        .api_key
+        .clone()
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| std::env::var("BINANCE_API_KEY").ok().filter(|s| !s.trim().is_empty()));
+
+    let secret_opt = trading_cfg
+        .secret_key
+        .clone()
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| std::env::var("BINANCE_SECRET_KEY").ok().filter(|s| !s.trim().is_empty()));
+
+    let has_futures_creds = api_key_opt.is_some() && secret_opt.is_some();
+
+    let exchange: Box<dyn ExchangeConnector> = if market.eq_ignore_ascii_case("spot") {
+        if at_cfg.mode == TradingMode::Live {
+            let api_key = api_key_opt.ok_or_else(|| {
+                anyhow::anyhow!("Live mod için api_key gerekli (config.json trading.api_key veya BINANCE_API_KEY env)")
+            })?;
+            let secret = secret_opt.ok_or_else(|| {
+                anyhow::anyhow!("Live mod için secret_key gerekli (config.json trading.secret_key veya BINANCE_SECRET_KEY env)")
+            })?;
             Box::new(BinanceSpotClient::with_credentials(api_key, secret))
         } else {
-            Box::new(BinanceFuturesClient::with_credentials(api_key, secret))
+            Box::new(BinanceSpotClient::new())
         }
     } else {
-        if market.eq_ignore_ascii_case("spot") {
-            Box::new(BinanceSpotClient::new())
-        } else {
-            Box::new(BinanceFuturesClient::new())
+        // Futures: komisyon oranını Binance'dan fetch etmek için (dry/paper dahil) krediler varsa kullan.
+        if at_cfg.mode == TradingMode::Live && !has_futures_creds {
+            anyhow::bail!(
+                "Live mod için futures secret_key+api_key gerekli (config.json trading.api_key/secret_key veya BINANCE_* env)"
+            );
+        }
+        match (api_key_opt, secret_opt) {
+            (Some(api_key), Some(secret)) => Box::new(
+                BinanceFuturesClient::with_credentials(api_key, secret)
+                    .with_commission_cache_ttl_ms(commission_cache_ttl_ms),
+            ),
+            _ => Box::new(BinanceFuturesClient::new().with_commission_cache_ttl_ms(commission_cache_ttl_ms)),
         }
     };
 
@@ -1120,8 +1141,23 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
     if at_cfg.mode.writes_db() {
         let path_str = at_cfg.db_path.as_deref();
         if let Ok(db) = TradeDb::open(path_str) {
-            let rows: Vec<(i64, i64, String, String, String, String, f64, f64, f64, f64, f64, String)> =
-                match db.load_open_positions(at_cfg.mode) {
+            let rows: Vec<(
+                i64,
+                i64,
+                String,
+                String,
+                String,
+                String,
+                f64,
+                f64,
+                f64,
+                f64,
+                f64,
+                String,
+                String,
+                String,
+                i64,
+            )> = match db.load_open_positions(at_cfg.mode) {
                     Ok(r) => r,
                     Err(_) => vec![],
                 };
@@ -1410,6 +1446,7 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
                         price,
                         mp.position.current_sl,
                         mp.position.initial_tp,
+                        mp.position.initial_sl,
                         mp.signal.score,
                         mp.signal.rr,
                     )
@@ -1442,7 +1479,7 @@ async fn run_q_analiz_daemon(interval_secs: u64, verbose: bool) -> Result<()> {
     let client = BinanceFuturesClient::new();
     let sm_config = Config::from_smart_money(app_cfg.smart_money.as_ref());
     let notifier = Notifier::from_env();
-    let max_bars = app_cfg.data.and_then(|d| d.max_bars).unwrap_or(500);
+    let max_bars = app_cfg.data.as_ref().and_then(|d| d.max_bars).unwrap_or(500);
 
     println!("📌 Q-Analiz Daemon başlatıldı");
     println!("   Aralık: {}s | Semboller: {:?} | TF: {:?}", interval_secs, symbols, timeframes);
@@ -1709,8 +1746,9 @@ async fn run_q_analiz_daemon(interval_secs: u64, verbose: bool) -> Result<()> {
                             }
                         }
                         let mut extra = elliott_summary.clone().unwrap_or_default();
+                        // Ollama: throttle ile aynı anahtar — pencere içindeyse gereksiz çağrı ve çelişkili 🤖 üretme.
                         if let Some(ref ai_cfg) = app_cfg.ai {
-                            if ai_cfg.enabled == Some(true) {
+                            if ai_cfg.enabled == Some(true) && !notifier.q_analysis_would_skip(&opp) {
                                 let base = ai_cfg.ollama_base_url.as_deref().unwrap_or("http://localhost:11434");
                                 let model = ai_cfg.model.as_deref().unwrap_or("llama2");
 
@@ -1818,6 +1856,30 @@ async fn run_q_analiz_daemon(interval_secs: u64, verbose: bool) -> Result<()> {
 
                                 if let Some(ai_text) = ai::interpret_q_analysis(base, model, &context).await {
                                     println!("   🤖 AI: {}", ai_text.trim());
+                                    if app_cfg.ai_persist_explanations() {
+                                        let prompt = ai::build_q_analysis_prompt(&context);
+                                        let prompt_hash = sha256_hex(prompt.as_bytes());
+                                        let context_hash = sha256_hex(context.as_bytes());
+                                        let tf_str = tf.to_binance_interval();
+                                        let refs =
+                                            serde_json::json!([format!("{}|{}", opp.symbol, tf_str)])
+                                                .to_string();
+                                        if let Err(e) = db.insert_ai_explanation(
+                                            "q_analysis_interpret",
+                                            model,
+                                            ai::PROMPT_TEMPLATE_VERSION_Q_ANALYSIS,
+                                            &prompt_hash,
+                                            &context_hash,
+                                            Some(&context_hash),
+                                            Some(opp.symbol.as_str()),
+                                            Some(tf_str),
+                                            Some(&refs),
+                                            Some("[]"),
+                                            &ai_text,
+                                        ) {
+                                            eprintln!("   AI audit DB kayıt hatası: {:?}", e);
+                                        }
+                                    }
                                     if !extra.is_empty() {
                                         extra.push_str("\n\n");
                                     }
@@ -1925,6 +1987,40 @@ async fn run_backtest_cmd(
     let app_cfg = iqai_core::AppConfig::load();
     let mut config = Config::from_smart_money(app_cfg.as_ref().and_then(|c| c.smart_money.as_ref()));
     config.q_score_threshold = q_score_min;
+
+    let trading_cfg = app_cfg.as_ref().and_then(|c| c.trading.as_ref());
+    let commission_cache_ttl_ms = trading_cfg
+        .and_then(|t| t.commission_bps_cache_ttl_ms)
+        .unwrap_or(600_000);
+    let commission_bps_opt = trading_cfg.and_then(|t| t.commission_bps);
+    let mut commission_bps = commission_bps_opt.unwrap_or(4);
+    let slippage_bps = trading_cfg.and_then(|t| t.slippage_bps).unwrap_or(0);
+
+    // commission_bps config'te yoksa (None) Binance'den fetch et.
+    if commission_bps_opt.is_none() && !market.eq_ignore_ascii_case("spot") {
+        let api_key_opt = trading_cfg
+            .and_then(|t| t.api_key.clone())
+            .filter(|s| !s.trim().is_empty())
+            .or_else(|| std::env::var("BINANCE_API_KEY").ok().filter(|s| !s.trim().is_empty()));
+        let secret_opt = trading_cfg
+            .and_then(|t| t.secret_key.clone())
+            .filter(|s| !s.trim().is_empty())
+            .or_else(|| {
+                std::env::var("BINANCE_SECRET_KEY")
+                    .ok()
+                    .filter(|s| !s.trim().is_empty())
+            });
+
+        if let (Some(api_key), Some(secret)) = (api_key_opt, secret_opt) {
+            let client: Box<dyn ExchangeConnector> = Box::new(
+                BinanceFuturesClient::with_credentials(api_key, secret)
+                    .with_commission_cache_ttl_ms(commission_cache_ttl_ms),
+            );
+            if let Some(bps) = client.get_commission_bps(symbol).await {
+                commission_bps = bps;
+            }
+        }
+    }
     println!("🔄 Q-Analiz backtest çalıştırılıyor (sermaye: {:.0}, risk: %{}, kaldıraç: {}, Q-score ≥ {:.0})...", capital, risk_pct, leverage, q_score_min);
     let result = run_backtest(
         &candles,
@@ -1934,6 +2030,8 @@ async fn run_backtest_cmd(
         capital,
         risk_pct,
         leverage,
+        commission_bps,
+        slippage_bps,
     );
     println!();
     println!("═══════════════════════════════════════════════════════════");

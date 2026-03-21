@@ -7,6 +7,7 @@ use serde::Serialize;
 
 use crate::analysis_snapshot::AnalysisSnapshot;
 use crate::auto_trader::{ManagedPosition, TradeLog, TradeSignal, TradingMode};
+use crate::position_rca::{close_reason_to_canonical, ClosePositionRca, PositionOpenRca};
 use crate::q_radar_analysis::QRadarOpportunityAnalysis;
 
 /// Q-Analiz tespit kaydı (DB'den okuma / web listesi).
@@ -154,6 +155,53 @@ pub struct AnalysisSnapshotRecord {
     pub extra_json: Option<String>,
 }
 
+/// TFAI-O08: Ollama / AI çıktısı denetim satırı (`ai_explanations`).
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct AiExplanationRecord {
+    pub explanation_id: String,
+    pub generated_at: i64,
+    pub kind: String,
+    pub model_id: String,
+    pub prompt_template_version: String,
+    pub prompt_hash: String,
+    pub context_hash: String,
+    pub query_fingerprint: Option<String>,
+    pub symbol: Option<String>,
+    pub timeframe: Option<String>,
+    pub source_refs_json: Option<String>,
+    pub event_ids_json: Option<String>,
+    pub explanation_text: String,
+}
+
+/// Snapshot listesi için parmak izi (hangi satırların modele girdiği).
+pub fn fingerprint_analysis_snapshots_for_audit(snapshots: &[AnalysisSnapshotRecord]) -> String {
+    use crate::hash_util::sha256_hex;
+    let mut parts: Vec<String> = snapshots
+        .iter()
+        .map(|s| format!("{}|{}|{}", s.symbol, s.timeframe, s.updated_at))
+        .collect();
+    parts.sort();
+    sha256_hex(parts.join("\n").as_bytes())
+}
+
+fn map_ai_explanation_row(row: &rusqlite::Row<'_>) -> SqlResult<AiExplanationRecord> {
+    Ok(AiExplanationRecord {
+        explanation_id: row.get(0)?,
+        generated_at: row.get(1)?,
+        kind: row.get(2)?,
+        model_id: row.get(3)?,
+        prompt_template_version: row.get(4)?,
+        prompt_hash: row.get(5)?,
+        context_hash: row.get(6)?,
+        query_fingerprint: row.get(7)?,
+        symbol: row.get(8)?,
+        timeframe: row.get(9)?,
+        source_refs_json: row.get(10)?,
+        event_ids_json: row.get(11)?,
+        explanation_text: row.get(12)?,
+    })
+}
+
 /// Integer (0/1) -> Option<bool>
 fn opt_bool(row: &rusqlite::Row<'_>, idx: usize) -> SqlResult<Option<bool>> {
     let v: Option<i32> = row.get(idx)?;
@@ -256,7 +304,10 @@ fn map_analysis_snapshot_row(row: &rusqlite::Row<'_>) -> SqlResult<AnalysisSnaps
 #[derive(Debug, Clone, Serialize)]
 pub struct SymbolPnlStats {
     pub symbol: String,
-    pub opened_count: u32,
+    /// `positions` tablosunda bu sembol+mod için toplam kayıt (açık + kapalı).
+    pub total_positions: u32,
+    /// `status='open'` olan pozisyon sayısı.
+    pub open_count: u32,
     pub closed_count: u32,
     pub winners: u32,
     pub losers: u32,
@@ -328,6 +379,25 @@ pub struct TradeDb {
 }
 
 impl TradeDb {
+    /// `app_kv` tablosundaki tüm satırlar: (dot-path anahtar, JSON veya düz metin değer).
+    pub fn load_app_kv(&self) -> SqlResult<Vec<(String, String)>> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT key, value FROM app_kv ORDER BY key")?;
+        let rows = stmt.query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)))?;
+        rows.collect()
+    }
+
+    /// Runtime override kaydet / güncelle (ms timestamp önerilir).
+    pub fn upsert_app_kv(&self, key: &str, value: &str, updated_at_ms: i64) -> SqlResult<()> {
+        self.conn.execute(
+            "INSERT INTO app_kv (key, value, updated_at) VALUES (?1, ?2, ?3)
+             ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+            params![key, value, updated_at_ms],
+        )?;
+        Ok(())
+    }
+
     pub fn open(path: Option<&str>) -> SqlResult<Self> {
         let db_path = path.unwrap_or(DEFAULT_DB_PATH);
         if let Some(parent) = std::path::Path::new(db_path).parent() {
@@ -554,6 +624,14 @@ impl TradeDb {
                 PRIMARY KEY (symbol, timeframe)
             );
             DROP TABLE IF EXISTS metrics_snapshots;
+
+            -- Runtime config overrides (JSON değerler; AppConfig ile dot-path birleştirilir).
+            -- Örnek: key = \"notification.throttle_q_setup_ms\", value = \"45000\"
+            CREATE TABLE IF NOT EXISTS app_kv (
+                key         TEXT PRIMARY KEY NOT NULL,
+                value       TEXT NOT NULL,
+                updated_at  INTEGER NOT NULL
+            );
             "
         )?;
         // Migration: analysis_snapshots'a pozisyon metrik kolonları (eski DB'ler için)
@@ -578,20 +656,402 @@ impl TradeDb {
             let sql = format!("ALTER TABLE analysis_snapshots ADD COLUMN {}", col);
             let _ = self.conn.execute(&sql, ());
         }
+        self.migrate_positions_observer()?;
+        self.migrate_sli_counters()?;
+        self.migrate_ai_explanations()?;
         Ok(())
     }
 
-    /// Gelen sinyali kaydet, dönen id signal_id olarak kullanılır.
+    /// TFAI-O08: AI çıktı izlenebilirliği.
+    fn migrate_ai_explanations(&self) -> SqlResult<()> {
+        self.conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS ai_explanations (
+                explanation_id TEXT PRIMARY KEY NOT NULL,
+                generated_at INTEGER NOT NULL,
+                kind TEXT NOT NULL,
+                model_id TEXT NOT NULL,
+                prompt_template_version TEXT NOT NULL,
+                prompt_hash TEXT NOT NULL,
+                context_hash TEXT NOT NULL,
+                query_fingerprint TEXT,
+                symbol TEXT,
+                timeframe TEXT,
+                source_refs_json TEXT,
+                event_ids_json TEXT,
+                explanation_text TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_ai_explanations_symbol_time
+                ON ai_explanations(symbol, generated_at DESC);
+            ",
+        )?;
+        Ok(())
+    }
+
+    /// AI açıklamasını kaydet (Ollama yanıtı; prompt/context hash ile).
+    #[allow(clippy::too_many_arguments)]
+    pub fn insert_ai_explanation(
+        &self,
+        kind: &str,
+        model_id: &str,
+        prompt_template_version: &str,
+        prompt_hash: &str,
+        context_hash: &str,
+        query_fingerprint: Option<&str>,
+        symbol: Option<&str>,
+        timeframe: Option<&str>,
+        source_refs_json: Option<&str>,
+        event_ids_json: Option<&str>,
+        explanation_text: &str,
+    ) -> SqlResult<String> {
+        let id = uuid::Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().timestamp_millis();
+        self.conn.execute(
+            "INSERT INTO ai_explanations (
+                explanation_id, generated_at, kind, model_id, prompt_template_version,
+                prompt_hash, context_hash, query_fingerprint, symbol, timeframe,
+                source_refs_json, event_ids_json, explanation_text
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+            params![
+                id,
+                now,
+                kind,
+                model_id,
+                prompt_template_version,
+                prompt_hash,
+                context_hash,
+                query_fingerprint,
+                symbol,
+                timeframe,
+                source_refs_json,
+                event_ids_json,
+                explanation_text,
+            ],
+        )?;
+        Ok(id)
+    }
+
+    /// Son AI kayıtları (sembol filtreli veya tümü).
+    pub fn list_ai_explanations(
+        &self,
+        symbol_filter: Option<&str>,
+        limit: usize,
+    ) -> SqlResult<Vec<AiExplanationRecord>> {
+        let lim = limit.min(500).max(1);
+        let mut out = Vec::new();
+        if let Some(sym) = symbol_filter {
+            let mut stmt = self.conn.prepare(
+                "SELECT explanation_id, generated_at, kind, model_id, prompt_template_version,
+                        prompt_hash, context_hash, query_fingerprint, symbol, timeframe,
+                        source_refs_json, event_ids_json, explanation_text
+                 FROM ai_explanations WHERE symbol = ?1 ORDER BY generated_at DESC LIMIT ?2",
+            )?;
+            let rows = stmt.query_map(params![sym, lim as i64], map_ai_explanation_row)?;
+            for r in rows {
+                out.push(r?);
+            }
+        } else {
+            let mut stmt = self.conn.prepare(
+                "SELECT explanation_id, generated_at, kind, model_id, prompt_template_version,
+                        prompt_hash, context_hash, query_fingerprint, symbol, timeframe,
+                        source_refs_json, event_ids_json, explanation_text
+                 FROM ai_explanations ORDER BY generated_at DESC LIMIT ?1",
+            )?;
+            let rows = stmt.query_map(params![lim as i64], map_ai_explanation_row)?;
+            for r in rows {
+                out.push(r?);
+            }
+        }
+        Ok(out)
+    }
+
+    /// TFAI-O-06: Prometheus / SLI için sayaç tablosu.
+    fn migrate_sli_counters(&self) -> SqlResult<()> {
+        self.conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS sli_counters (
+                key TEXT PRIMARY KEY NOT NULL,
+                value REAL NOT NULL DEFAULT 0,
+                updated_at INTEGER NOT NULL
+            );",
+        )?;
+        Ok(())
+    }
+
+    /// SLI sayacını artırır (canlı emir yollarında `auto_trader` yazar).
+    pub fn sli_incr(&self, key: &str, delta: f64) -> SqlResult<()> {
+        let now = chrono::Utc::now().timestamp_millis();
+        self.conn.execute(
+            "INSERT INTO sli_counters (key, value, updated_at) VALUES (?1, ?2, ?3)
+             ON CONFLICT(key) DO UPDATE SET
+                value = sli_counters.value + excluded.value,
+                updated_at = excluded.updated_at",
+            params![key, delta, now],
+        )?;
+        Ok(())
+    }
+
+    /// Tüm SLI sayaçları (sıralı anahtar).
+    pub fn sli_counters_snapshot(&self) -> SqlResult<std::collections::BTreeMap<String, f64>> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT key, value FROM sli_counters ORDER BY key")?;
+        let rows = stmt.query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, f64>(1)?)))?;
+        let mut m = std::collections::BTreeMap::new();
+        for r in rows {
+            let (k, v) = r?;
+            m.insert(k, v);
+        }
+        Ok(m)
+    }
+
+    /// TFAI-Q04: Bellekteki normalize hata sayaçlarını `sli_counters` içine yazar (`q04_norm:v1:*` anahtarları; kalıcı).
+    ///
+    /// Tek işlemde commit (`BEGIN IMMEDIATE` … `COMMIT`); `Connection::transaction()` `&mut self` istediği için
+    /// açık SQL kullanılır — `TradeDb` API’si `&self` ile kalır.
+    ///
+    /// Bellek `drain_q04_memory_to_vec` içinde sıfırlanır (commit başarısız olursa o scrape için sayaç kaybı olabilir).
+    pub fn persist_q04_normalized_errors_from_memory(&self) -> SqlResult<()> {
+        let rows = crate::binance_error::drain_q04_memory_to_vec();
+        if rows.is_empty() {
+            return Ok(());
+        }
+        let now = chrono::Utc::now().timestamp_millis();
+        self.conn.execute("BEGIN IMMEDIATE", [])?;
+        let mut result = Ok(());
+        for (key, v) in &rows {
+            if let Err(e) = self.conn.execute(
+                "INSERT INTO sli_counters (key, value, updated_at) VALUES (?1, ?2, ?3)
+                 ON CONFLICT(key) DO UPDATE SET
+                    value = sli_counters.value + excluded.value,
+                    updated_at = excluded.updated_at",
+                params![key, *v as f64, now],
+            ) {
+                result = Err(e);
+                break;
+            }
+        }
+        match result {
+            Ok(()) => self.conn.execute("COMMIT", []).map(|_| ()),
+            Err(e) => {
+                let _ = self.conn.execute("ROLLBACK", []);
+                Err(e)
+            }
+        }
+    }
+
+    /// Açık pozisyon sayısı mod bazında.
+    pub fn count_open_positions_by_mode(&self) -> SqlResult<Vec<(String, i64)>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT mode, COUNT(*) FROM positions WHERE status = 'open' GROUP BY mode ORDER BY mode",
+        )?;
+        let rows = stmt.query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)))?;
+        rows.collect()
+    }
+
+    /// `analysis_snapshots` için MIN/MAX `updated_at` (ms).
+    pub fn analysis_snapshots_updated_at_bounds(&self) -> SqlResult<(Option<i64>, Option<i64>)> {
+        self.conn.query_row(
+            "SELECT MIN(updated_at), MAX(updated_at) FROM analysis_snapshots",
+            [],
+            |r| {
+                let a: Option<i64> = r.get(0)?;
+                let b: Option<i64> = r.get(1)?;
+                Ok((a, b))
+            },
+        )
+    }
+
+    /// TFAI O-01/O-02/O-03: `positions` RCA kolonları, `position_events`, `close_reason_registry`, `v_positions_canonical`.
+    fn migrate_positions_observer(&self) -> SqlResult<()> {
+        let pos_cols = [
+            "position_uuid TEXT",
+            "strategy_id TEXT DEFAULT 'iqai_default'",
+            "exchange TEXT DEFAULT 'binance_futures'",
+            "trace_id TEXT",
+            "opened_at_us INTEGER",
+            "closed_at_us INTEGER",
+            "entry_slippage_bps REAL",
+            "exit_slippage_bps REAL",
+            "mae_usd REAL",
+            "mfe_usd REAL",
+            "fees_total_usd REAL",
+            "signal_mid_price REAL",
+            "close_reason_v INTEGER DEFAULT 1",
+        ];
+        for col in pos_cols {
+            let sql = format!("ALTER TABLE positions ADD COLUMN {col}");
+            let _ = self.conn.execute(&sql, ());
+        }
+
+        // TFAI-Q01 enterprise: VWAP, notional, R:R, süre, PnL ayrıştırma, emir JSON.
+        let q01_enterprise = [
+            "entry_price_avg REAL",
+            "exit_price_avg REAL",
+            "position_notional_usd REAL",
+            "leverage INTEGER",
+            "rr_at_open REAL",
+            "signal_to_entry_ms INTEGER",
+            "volatility_at_open REAL",
+            "spread_at_open_bps REAL",
+            "funding_rate_at_open REAL",
+            "pnl_gross_usd REAL",
+            "pnl_net_usd REAL",
+            "pnl_bps REAL",
+            "lifecycle_duration_ms INTEGER",
+            "close_order_id TEXT",
+            "exit_orders_json TEXT",
+        ];
+        for col in q01_enterprise {
+            let sql = format!("ALTER TABLE positions ADD COLUMN {col}");
+            let _ = self.conn.execute(&sql, ());
+        }
+
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id FROM positions WHERE position_uuid IS NULL")?;
+        let ids: Vec<i64> = stmt
+            .query_map([], |row| row.get(0))?
+            .collect::<Result<Vec<_>, _>>()?;
+        for id in ids {
+            let u = uuid::Uuid::new_v4().to_string();
+            self.conn.execute(
+                "UPDATE positions SET position_uuid = ?1 WHERE id = ?2",
+                params![u, id],
+            )?;
+        }
+        self.conn.execute(
+            "UPDATE positions SET opened_at_us = opened_at * 1000 WHERE opened_at IS NOT NULL AND opened_at_us IS NULL",
+            [],
+        )?;
+
+        self.conn.execute_batch(
+            "
+            CREATE TABLE IF NOT EXISTS close_reason_registry (
+                code TEXT PRIMARY KEY,
+                introduced_version INTEGER NOT NULL,
+                deprecated_version INTEGER,
+                successor_code TEXT,
+                description TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS position_events (
+                event_id TEXT PRIMARY KEY NOT NULL,
+                position_id TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                sequence_no INTEGER NOT NULL,
+                occurred_at INTEGER NOT NULL,
+                exchange_order_id TEXT,
+                qty_delta REAL,
+                qty_remaining REAL,
+                price REAL,
+                fee_usd REAL,
+                payload TEXT
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_position_events_seq ON position_events(position_id, sequence_no);
+            CREATE INDEX IF NOT EXISTS idx_position_events_pos ON position_events(position_id);
+
+            DROP VIEW IF EXISTS v_positions_canonical;
+            CREATE VIEW v_positions_canonical AS
+            SELECT
+              p.*,
+              CASE
+                WHEN p.close_reason_v = 1 AND p.close_reason IN ('Stop Loss', 'stop_loss', 'SL') THEN 'exit.sl.initial'
+                WHEN p.close_reason_v = 1 AND p.close_reason IN ('Take Profit', 'take_profit', 'TP') THEN 'exit.tp.full'
+                WHEN p.close_reason_v = 1 AND p.close_reason IN ('Trailing Stop', 'trailing_stop') THEN 'exit.sl.trailing'
+                WHEN p.close_reason_v = 1 AND (
+                  p.close_reason LIKE '%TP1%' OR p.close_reason LIKE '%TP2%' OR p.close_reason LIKE '%kısmi%' OR p.close_reason LIKE '%partial%'
+                ) THEN 'exit.tp.partial'
+                WHEN p.close_reason_v = 1 AND p.close_reason LIKE '%Zıt%' THEN 'exit.strategy.signal_reversal'
+                WHEN p.close_reason_v = 1 AND p.close_reason LIKE '%Breakeven%' THEN 'exit.sl.initial'
+                WHEN p.close_reason LIKE 'exit.%' THEN p.close_reason
+                ELSE COALESCE(p.close_reason, 'exit.manual.operator')
+              END AS close_reason_canonical
+            FROM positions p;
+            ",
+        )?;
+
+        Self::seed_close_reason_registry(&self.conn)?;
+        // O-05: sinyal satırında kök trace (positions.trace_id ile aynı zincir)
+        let _ = self
+            .conn
+            .execute("ALTER TABLE signals ADD COLUMN trace_id TEXT", []);
+        Ok(())
+    }
+
+    fn seed_close_reason_registry(conn: &rusqlite::Connection) -> SqlResult<()> {
+        let seeds: &[(&str, i32, &str)] = &[
+            ("exit.tp.full", 1, "Tüm TP hedefleri"),
+            ("exit.tp.partial", 1, "Kısmi TP"),
+            ("exit.sl.initial", 1, "İlk SL"),
+            ("exit.sl.trailing", 1, "Trailing SL"),
+            ("exit.sl.time", 1, "Zaman bazlı çıkış"),
+            ("exit.strategy.signal_reversal", 1, "Strateji / zıt sinyal"),
+            ("exit.system.error.exchange", 1, "Borsa hatası"),
+            ("exit.system.connectivity", 1, "Bağlantı"),
+            ("exit.manual.operator", 1, "Manuel / bilinmeyen"),
+        ];
+        for (code, ver, desc) in seeds {
+            let _ = conn.execute(
+                "INSERT OR IGNORE INTO close_reason_registry (code, introduced_version, description) VALUES (?1, ?2, ?3)",
+                params![code, ver, desc],
+            );
+        }
+        Ok(())
+    }
+
+    /// O-03: pozisyon yaşam döngüsü olayı (audit / replay).
+    pub fn insert_position_event(
+        &self,
+        position_uuid: &str,
+        event_type: &str,
+        exchange_order_id: Option<&str>,
+        qty_delta: Option<f64>,
+        qty_remaining: Option<f64>,
+        price: Option<f64>,
+        fee_usd: Option<f64>,
+        payload_json: Option<&str>,
+    ) -> SqlResult<()> {
+        if position_uuid.is_empty() {
+            return Ok(());
+        }
+        let seq: i64 = self.conn.query_row(
+            "SELECT COALESCE(MAX(sequence_no), 0) + 1 FROM position_events WHERE position_id = ?1",
+            params![position_uuid],
+            |r| r.get(0),
+        )?;
+        let event_id = uuid::Uuid::new_v4().to_string();
+        let occurred_at = chrono::Utc::now().timestamp_micros();
+        self.conn.execute(
+            "INSERT INTO position_events (event_id, position_id, event_type, sequence_no, occurred_at, exchange_order_id, qty_delta, qty_remaining, price, fee_usd, payload)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            params![
+                event_id,
+                position_uuid,
+                event_type,
+                seq,
+                occurred_at,
+                exchange_order_id,
+                qty_delta,
+                qty_remaining,
+                price,
+                fee_usd,
+                payload_json,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// Gelen sinyali kaydet, dönen id signal_id olarak kullanılır. `trace_id` TFAI-O-05 kök korelasyon.
     pub fn insert_signal(
         &self,
         signal: &TradeSignal,
         accepted: bool,
         reject_reason: Option<&str>,
         mode: TradingMode,
+        trace_id: Option<&str>,
     ) -> SqlResult<i64> {
         self.conn.execute(
-            "INSERT INTO signals (timestamp, symbol, timeframe, source, side, entry, stop_loss, take_profit, score, rr, accepted, reject_reason, mode)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+            "INSERT INTO signals (timestamp, symbol, timeframe, source, side, entry, stop_loss, take_profit, score, rr, accepted, reject_reason, mode, trace_id)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
             params![
                 signal.timestamp,
                 signal.symbol,
@@ -606,24 +1066,27 @@ impl TradeDb {
                 accepted as i32,
                 reject_reason,
                 mode.as_str(),
+                trace_id,
             ],
         )?;
         Ok(self.conn.last_insert_rowid())
     }
 
-    /// Açık pozisyon kaydet.
+    /// Açık pozisyon kaydet (RCA alanları `rca` ile).
     pub fn insert_position(
         &self,
         signal_id: i64,
         managed: &ManagedPosition,
         mode: TradingMode,
+        rca: &PositionOpenRca,
     ) -> SqlResult<i64> {
         self.conn.execute(
-            "INSERT INTO positions (signal_id, opened_at, symbol, timeframe, source, side, entry_price, quantity, stop_loss, take_profit, current_sl, order_id, status, mode)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, 'open', ?13)",
+            "INSERT INTO positions (signal_id, opened_at, opened_at_us, symbol, timeframe, source, side, entry_price, quantity, stop_loss, take_profit, current_sl, order_id, status, mode, position_uuid, strategy_id, exchange, trace_id, entry_slippage_bps, signal_mid_price)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, 'open', ?14, ?15, ?16, ?17, ?18, ?19, ?20)",
             params![
                 signal_id,
                 managed.opened_at,
+                rca.opened_at_us,
                 managed.signal.symbol,
                 managed.signal.timeframe.to_binance_interval(),
                 managed.signal.source.to_string(),
@@ -635,12 +1098,42 @@ impl TradeDb {
                 managed.position.current_sl,
                 managed.order_id,
                 mode.as_str(),
+                rca.position_uuid,
+                rca.strategy_id,
+                rca.exchange,
+                rca.trace_id,
+                rca.entry_slippage_bps,
+                rca.signal_mid_price,
             ],
         )?;
-        Ok(self.conn.last_insert_rowid())
+        let pid = self.conn.last_insert_rowid();
+        self.conn.execute(
+            "UPDATE positions SET
+                entry_price_avg = ?1,
+                position_notional_usd = ?2,
+                leverage = ?3,
+                rr_at_open = ?4,
+                signal_to_entry_ms = ?5,
+                volatility_at_open = ?6,
+                spread_at_open_bps = ?7,
+                funding_rate_at_open = ?8
+             WHERE id = ?9",
+            params![
+                rca.entry_price_avg,
+                rca.position_notional_usd,
+                rca.leverage as i64,
+                rca.rr_at_open,
+                rca.signal_to_entry_ms,
+                rca.volatility_at_open,
+                rca.spread_at_open_bps,
+                rca.funding_rate_at_open,
+                pid,
+            ],
+        )?;
+        Ok(pid)
     }
 
-    /// Pozisyonu kapat (status=closed, exit bilgileri yaz).
+    /// Pozisyonu kapat (status=closed, exit bilgileri + RCA yaz).
     pub fn close_position(
         &self,
         position_db_id: i64,
@@ -648,11 +1141,36 @@ impl TradeDb {
         pnl: f64,
         pnl_r: f64,
         reason: &str,
+        rca: &ClosePositionRca,
     ) -> SqlResult<()> {
-        let now = chrono::Utc::now().timestamp_millis();
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        let now_us = chrono::Utc::now().timestamp_micros();
+        let canonical = close_reason_to_canonical(reason);
         self.conn.execute(
-            "UPDATE positions SET status='closed', closed_at=?1, exit_price=?2, pnl=?3, pnl_r=?4, close_reason=?5 WHERE id=?6",
-            params![now, exit_price, pnl, pnl_r, reason, position_db_id],
+            "UPDATE positions SET status='closed', closed_at=?1, closed_at_us=?2, exit_price=?3, pnl=?4, pnl_r=?5, close_reason=?6, close_reason_v=1, exit_slippage_bps=?7, mae_usd=?8, mfe_usd=?9, fees_total_usd=?10, trace_id=COALESCE(?11, trace_id),
+             exit_price_avg=?12, pnl_gross_usd=?13, pnl_net_usd=?14, pnl_bps=?15, lifecycle_duration_ms=?16, close_order_id=?17, exit_orders_json=?18
+             WHERE id=?19",
+            params![
+                now_ms,
+                now_us,
+                exit_price,
+                pnl,
+                pnl_r,
+                canonical,
+                rca.exit_slippage_bps,
+                rca.mae_usd,
+                rca.mfe_usd,
+                rca.fees_total_usd,
+                rca.trace_id,
+                rca.exit_price_avg,
+                rca.pnl_gross_usd,
+                rca.pnl_net_usd,
+                rca.pnl_bps,
+                rca.lifecycle_duration_ms,
+                rca.close_order_id,
+                rca.exit_orders_json,
+                position_db_id
+            ],
         )?;
         Ok(())
     }
@@ -709,10 +1227,34 @@ impl TradeDb {
     }
 
     /// Bugünkü açık pozisyonları getir (restart sonrası recovery).
-    /// Dönen tuple: (id, opened_at, symbol, timeframe, source, side, entry_price, quantity, stop_loss, take_profit, current_sl, order_id).
-    pub fn load_open_positions(&self, mode: TradingMode) -> SqlResult<Vec<(i64, i64, String, String, String, String, f64, f64, f64, f64, f64, String)>> {
+    /// Dönen tuple: (..., order_id, position_uuid, trace_id, signal_id).
+    pub fn load_open_positions(
+        &self,
+        mode: TradingMode,
+    ) -> SqlResult<
+        Vec<(
+            i64,
+            i64,
+            String,
+            String,
+            String,
+            String,
+            f64,
+            f64,
+            f64,
+            f64,
+            f64,
+            String,
+            String,
+            String,
+            i64,
+        )>,
+    > {
         let mut stmt = self.conn.prepare(
-            "SELECT id, opened_at, symbol, timeframe, source, side, entry_price, quantity, stop_loss, take_profit, current_sl, order_id
+            "SELECT id, opened_at, symbol, timeframe, source, side, entry_price, quantity, stop_loss, take_profit, current_sl, order_id,
+                    COALESCE(position_uuid, '') AS position_uuid,
+                    COALESCE(trace_id, '') AS trace_id,
+                    COALESCE(signal_id, 0) AS signal_id
              FROM positions WHERE status='open' AND mode=?1"
         )?;
         let rows = stmt.query_map(params![mode.as_str()], |row| {
@@ -729,6 +1271,9 @@ impl TradeDb {
                 row.get(9)?,
                 row.get(10)?,
                 row.get::<_, String>(11)?,
+                row.get::<_, String>(12)?,
+                row.get::<_, String>(13)?,
+                row.get::<_, i64>(14)?,
             ))
         })?;
         rows.collect()
@@ -1071,13 +1616,22 @@ impl TradeDb {
             .and_utc()
             .timestamp_millis();
 
-        let mut opened: std::collections::HashMap<String, u32> = std::collections::HashMap::new();
+        let mut opened: std::collections::HashMap<String, (u32, u32)> =
+            std::collections::HashMap::new();
         let mut stmt = self.conn.prepare(
-            "SELECT symbol, COUNT(*) FROM positions WHERE mode=?1 GROUP BY symbol",
+            "SELECT symbol, COUNT(*) AS total,
+                    COALESCE(SUM(CASE WHEN status='open' THEN 1 ELSE 0 END), 0) AS open_n
+             FROM positions WHERE mode=?1 GROUP BY symbol",
         )?;
-        for row in stmt.query_map(params![mode_str], |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as u32)))? {
-            let (sym, cnt) = row?;
-            opened.insert(sym, cnt);
+        for row in stmt.query_map(params![mode_str], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, i64>(1)? as u32,
+                row.get::<_, i64>(2)? as u32,
+            ))
+        })? {
+            let (sym, total, open_n) = row?;
+            opened.insert(sym, (total, open_n));
         }
 
         let mut closed_list: Vec<(String, i64, f64)> = Vec::new();
@@ -1119,7 +1673,7 @@ impl TradeDb {
         symbols.sort_unstable();
         let mut out = Vec::with_capacity(symbols.len());
         for symbol in symbols {
-            let op = opened.get(&symbol).copied().unwrap_or(0);
+            let (total_pos, open_n) = opened.get(&symbol).copied().unwrap_or((0, 0));
             let (closed_count, winners, total_pnl, daily_pnl, weekly_pnl, monthly_pnl, yearly_pnl) =
                 by_symbol.get(&symbol).copied().unwrap_or((0, 0, 0.0, 0.0, 0.0, 0.0, 0.0));
             let losers = closed_count.saturating_sub(winners);
@@ -1130,7 +1684,8 @@ impl TradeDb {
             };
             out.push(SymbolPnlStats {
                 symbol: symbol.clone(),
-                opened_count: op,
+                total_positions: total_pos,
+                open_count: open_n,
                 closed_count: closed_count,
                 winners,
                 losers,
@@ -1144,5 +1699,147 @@ impl TradeDb {
         }
         out.sort_by(|a, b| a.symbol.cmp(&b.symbol));
         Ok(out)
+    }
+}
+
+#[cfg(test)]
+mod trade_db_observer_tests {
+    use super::TradeDb;
+    use std::fs;
+
+    fn tmp_db_path() -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("iqai_trade_observer_{}.db", uuid::Uuid::new_v4()))
+    }
+
+    fn pragma_columns(conn: &rusqlite::Connection, table: &str) -> Vec<String> {
+        let sql = format!("SELECT name FROM pragma_table_info('{table}')");
+        let mut stmt = conn.prepare(&sql).expect("pragma_table_info");
+        stmt
+            .query_map([], |row| row.get(0))
+            .expect("query")
+            .collect::<Result<Vec<String>, _>>()
+            .expect("rows")
+    }
+
+    #[test]
+    fn migrate_creates_rca_columns_and_observer_tables() {
+        let p = tmp_db_path();
+        let path_str = p.to_str().expect("utf8 path");
+        {
+            let _db = TradeDb::open(Some(path_str)).expect("open");
+        }
+        let conn = rusqlite::Connection::open(path_str).expect("conn");
+
+        let cols = pragma_columns(&conn, "positions");
+        let sig_cols = pragma_columns(&conn, "signals");
+        assert!(
+            sig_cols.iter().any(|c| c == "trace_id"),
+            "signals.trace_id missing: {sig_cols:?}"
+        );
+
+        for need in [
+            "position_uuid",
+            "strategy_id",
+            "exchange",
+            "opened_at_us",
+            "closed_at_us",
+            "close_reason_v",
+            "entry_slippage_bps",
+            "exit_slippage_bps",
+            "mae_usd",
+            "mfe_usd",
+            "fees_total_usd",
+            "signal_mid_price",
+            "trace_id",
+        ] {
+            assert!(
+                cols.iter().any(|c| c == need),
+                "positions missing column {need}; have {cols:?}"
+            );
+        }
+
+        let n: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('position_events','close_reason_registry')",
+                [],
+                |r| r.get(0),
+            )
+            .expect("count tables");
+        assert_eq!(n, 2, "position_events + close_reason_registry");
+
+        let v: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='view' AND name='v_positions_canonical'",
+                [],
+                |r| r.get(0),
+            )
+            .expect("count view");
+        assert_eq!(v, 1);
+
+        drop(conn);
+        let _ = fs::remove_file(&p);
+    }
+
+    #[test]
+    fn insert_position_event_persists() {
+        let p = tmp_db_path();
+        let path_str = p.to_str().expect("utf8 path");
+        let db = TradeDb::open(Some(path_str)).expect("open");
+        let pid = "00000000-0000-4000-8000-000000000001";
+        db.insert_position_event(
+            pid,
+            "position.opened",
+            Some("ord-1"),
+            Some(1.25),
+            Some(1.25),
+            Some(42.0),
+            None,
+            None,
+        )
+        .expect("insert event");
+
+        let conn = rusqlite::Connection::open(path_str).expect("conn");
+        let (typ, seq): (String, i64) = conn
+            .query_row(
+                "SELECT event_type, sequence_no FROM position_events WHERE position_id = ?1",
+                rusqlite::params![pid],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .expect("row");
+        assert_eq!(typ, "position.opened");
+        assert_eq!(seq, 1);
+        drop(conn);
+        let _ = fs::remove_file(&p);
+    }
+
+    #[test]
+    fn ai_explanations_migrates_and_inserts() {
+        let p = tmp_db_path();
+        let path_str = p.to_str().expect("utf8 path");
+        let db = TradeDb::open(Some(path_str)).expect("open");
+        let id = db
+            .insert_ai_explanation(
+                "q_analysis_interpret",
+                "test-model",
+                "q_analysis_interpret_v1",
+                "deadbeef",
+                "cafebabe",
+                Some("cafebabe"),
+                Some("ETHUSDT"),
+                Some("5m"),
+                Some(r#"["ETHUSDT|5m"]"#),
+                Some("[]"),
+                "Kısa AI metin.",
+            )
+            .expect("insert");
+        assert!(!id.is_empty());
+        let rows = db
+            .list_ai_explanations(Some("ETHUSDT"), 10)
+            .expect("list");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].explanation_text, "Kısa AI metin.");
+        assert_eq!(rows[0].prompt_hash, "deadbeef");
+        drop(db);
+        let _ = fs::remove_file(&p);
     }
 }

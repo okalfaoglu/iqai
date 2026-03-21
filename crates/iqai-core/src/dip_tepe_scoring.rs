@@ -33,23 +33,6 @@ pub struct DipTepeScore {
     pub early_warning_momentum: bool,
 }
 
-// Puanlar (Madde 15 tablosu + ek sinyaller)
-const PTS_RSI: u8 = 1;
-const PTS_RSI_DIVERGENCE: u8 = 2;
-const PTS_MACD_DIV: u8 = 2;
-const PTS_SUPPORT_ZONE: u8 = 2;
-const PTS_VOLUME_SPIKE: u8 = 1;
-const PTS_LIQUIDITY_SWEEP: u8 = 1;
-const PTS_ATR_FILTER: u8 = 1;
-const PTS_VWAP_MEAN_REVERSION: u8 = 1;
-const PTS_BULLISH_CANDLE: u8 = 1;
-const PTS_FIB_LEVEL: u8 = 1;
-const PTS_EMA200_NEAR: u8 = 1;
-const PTS_MARKET_STRUCTURE: u8 = 1;
-const PTS_BOLLINGER: u8 = 1;
-const PTS_MEAN_REVERSION: u8 = 1;
-const SCORE_CAP: u8 = 10;
-
 /// Basit Fibonacci retracement: swing_high - (swing_high - swing_low) * ratio (Madde 7).
 fn fib_retracement(high: f64, low: f64, ratio: f64) -> f64 {
     high - (high - low) * ratio
@@ -99,6 +82,8 @@ fn bullish_macd_divergence(
     candles: &[Candle],
     _pivot_len: usize,
     pivot_low_indices: &[(usize, f64)],
+    macd_fast: usize,
+    macd_slow: usize,
 ) -> bool {
     if pivot_low_indices.len() < 2 {
         return false;
@@ -109,8 +94,8 @@ fn bullish_macd_divergence(
     if idx2 <= idx1 || price2 >= price1 {
         return false;
     }
-    let macd1 = macd_line_at(&closes, idx1, 12, 26);
-    let macd2 = macd_line_at(&closes, idx2, 12, 26);
+    let macd1 = macd_line_at(&closes, idx1, macd_fast, macd_slow);
+    let macd2 = macd_line_at(&closes, idx2, macd_fast, macd_slow);
     match (macd1, macd2) {
         (Some(m1), Some(m2)) => m2 > m1,
         _ => false,
@@ -122,6 +107,8 @@ fn bearish_macd_divergence(
     candles: &[Candle],
     _pivot_len: usize,
     pivot_high_indices: &[(usize, f64)],
+    macd_fast: usize,
+    macd_slow: usize,
 ) -> bool {
     if pivot_high_indices.len() < 2 {
         return false;
@@ -132,8 +119,8 @@ fn bearish_macd_divergence(
     if idx2 <= idx1 || price2 <= price1 {
         return false;
     }
-    let macd1 = macd_line_at(&closes, idx1, 12, 26);
-    let macd2 = macd_line_at(&closes, idx2, 12, 26);
+    let macd1 = macd_line_at(&closes, idx1, macd_fast, macd_slow);
+    let macd2 = macd_line_at(&closes, idx2, macd_fast, macd_slow);
     match (macd1, macd2) {
         (Some(m1), Some(m2)) => m2 < m1,
         _ => false,
@@ -168,6 +155,8 @@ fn last_two_pivot_lows(candles: &[Candle], pivot_len: usize) -> Vec<(usize, f64)
 fn bullish_rsi_divergence(
     candles: &[Candle],
     pivot_low_indices: &[(usize, f64)],
+    min_bars: usize,
+    rsi_period: usize,
 ) -> bool {
     if pivot_low_indices.len() < 2 {
         return false;
@@ -178,11 +167,11 @@ fn bullish_rsi_divergence(
         return false;
     }
     let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
-    if closes.len() < 30 {
+    if closes.len() < min_bars {
         return false;
     }
-    let r1 = rsi(&closes[..=idx1], 14);
-    let r2 = rsi(&closes[..=idx2], 14);
+    let r1 = rsi(&closes[..=idx1], rsi_period);
+    let r2 = rsi(&closes[..=idx2], rsi_period);
     match (r1, r2) {
         (Some(a), Some(b)) => b > a,
         _ => false,
@@ -193,6 +182,8 @@ fn bullish_rsi_divergence(
 fn bearish_rsi_divergence(
     candles: &[Candle],
     pivot_high_indices: &[(usize, f64)],
+    min_bars: usize,
+    rsi_period: usize,
 ) -> bool {
     if pivot_high_indices.len() < 2 {
         return false;
@@ -203,11 +194,11 @@ fn bearish_rsi_divergence(
         return false;
     }
     let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
-    if closes.len() < 30 {
+    if closes.len() < min_bars {
         return false;
     }
-    let r1 = rsi(&closes[..=idx1], 14);
-    let r2 = rsi(&closes[..=idx2], 14);
+    let r1 = rsi(&closes[..=idx1], rsi_period);
+    let r2 = rsi(&closes[..=idx2], rsi_period);
     match (r1, r2) {
         (Some(a), Some(b)) => b < a,
         _ => false,
@@ -244,13 +235,12 @@ fn liquidity_sweep(candles: &[Candle], is_long: bool, lookback: usize) -> bool {
 }
 
 /// ATR volatilite filtresi – volatilite çok düşük/çok yüksekse filtrele.
-fn atr_volatility_ok(atr_val: f64, last_price: f64) -> bool {
+fn atr_volatility_ok(atr_val: f64, last_price: f64, norm_min: f64, norm_max: f64) -> bool {
     if last_price <= 0.0 {
         return false;
     }
     let norm = atr_val / last_price;
-    // Çok sıkışık piyasa (< %0.3) ve aşırı patlamış (> %8) durumları ele.
-    norm >= 0.003 && norm <= 0.08
+    norm >= norm_min && norm <= norm_max
 }
 
 fn last_two_pivot_highs(candles: &[Candle], pivot_len: usize) -> Vec<(usize, f64)> {
@@ -292,12 +282,18 @@ fn rsi_slope_up(closes: &[f64], period: usize) -> bool {
 }
 
 /// MACD histogram önceki bara göre yukarı (momentum dönüşü).
-fn macd_histogram_turning_up(closes: &[f64]) -> bool {
-    if closes.len() < 30 {
+fn macd_histogram_turning_up(
+    closes: &[f64],
+    macd_fast: usize,
+    macd_slow: usize,
+    macd_signal: usize,
+    min_bars: usize,
+) -> bool {
+    if closes.len() < min_bars {
         return false;
     }
-    let cur = macd(closes, 12, 26, 9);
-    let prev = macd(&closes[..closes.len() - 1], 12, 26, 9);
+    let cur = macd(closes, macd_fast, macd_slow, macd_signal);
+    let prev = macd(&closes[..closes.len() - 1], macd_fast, macd_slow, macd_signal);
     match (cur, prev) {
         (Some(c), Some(p)) => c.histogram > p.histogram,
         _ => false,
@@ -324,10 +320,20 @@ pub fn compute_dip_tepe_score(
     mtf_support_near: bool,
 ) -> DipTepeScore {
     let pivot_len = config.pivot_length as usize;
+    let rsi_p = config.dip_tepe_rsi_period as usize;
+    let macd_f = config.dip_tepe_macd_fast as usize;
+    let macd_s = config.dip_tepe_macd_slow as usize;
+    let macd_sig = config.dip_tepe_macd_signal as usize;
+    let div_min = config.dip_tepe_rsi_div_min_bars as usize;
+    let ma_p = config.dip_tepe_ma_period as usize;
+    let liq_lb = config.dip_tepe_liquidity_lookback as usize;
+    let swing_lb = config.dip_tepe_swing_lookback as usize;
+    let ema_n = config.dip_tepe_ema_period as usize;
+
     let mut signals = Vec::new();
     let mut total: i32 = 0;
 
-    let atr_val = atr(candles, 14).unwrap_or_else(|| {
+    let atr_val = atr(candles, rsi_p).unwrap_or_else(|| {
         candles
             .last()
             .map(|c| (c.high - c.low).max(1e-6))
@@ -337,7 +343,7 @@ pub fn compute_dip_tepe_score(
     let closes: Vec<f64> = candles.iter().map(|c| c.close).collect();
 
     // 1. RSI oversold (dip) / overbought (tepe) – Madde 4
-    let rsi_val = rsi(&closes, 14);
+    let rsi_val = rsi(&closes, rsi_p);
     let rsi_ok = match rsi_val {
         Some(r) => {
             if is_long {
@@ -349,7 +355,7 @@ pub fn compute_dip_tepe_score(
         None => false,
     };
     if rsi_ok {
-        total += PTS_RSI as i32;
+        total += config.dip_tepe_pts_rsi as i32;
     }
     signals.push(SignalScore {
         name: if is_long {
@@ -357,7 +363,7 @@ pub fn compute_dip_tepe_score(
         } else {
             "RSI aşırı alım".to_string()
         },
-        points: PTS_RSI,
+        points: config.dip_tepe_pts_rsi,
         active: rsi_ok,
     });
 
@@ -365,31 +371,31 @@ pub fn compute_dip_tepe_score(
     let plows = last_two_pivot_lows(candles, pivot_len);
     let phighs = last_two_pivot_highs(candles, pivot_len);
     let macd_div = if is_long {
-        bullish_macd_divergence(candles, pivot_len, &plows)
+        bullish_macd_divergence(candles, pivot_len, &plows, macd_f, macd_s)
     } else {
-        bearish_macd_divergence(candles, pivot_len, &phighs)
+        bearish_macd_divergence(candles, pivot_len, &phighs, macd_f, macd_s)
     };
     if macd_div {
-        total += PTS_MACD_DIV as i32;
+        total += config.dip_tepe_pts_macd_div as i32;
     }
     signals.push(SignalScore {
         name: "MACD divergence".to_string(),
-        points: PTS_MACD_DIV,
+        points: config.dip_tepe_pts_macd_div,
         active: macd_div,
     });
 
     // 3. RSI divergence – fiyat LL/HH, RSI HL/LH
     let rsi_div = if is_long {
-        bullish_rsi_divergence(candles, &plows)
+        bullish_rsi_divergence(candles, &plows, div_min, rsi_p)
     } else {
-        bearish_rsi_divergence(candles, &phighs)
+        bearish_rsi_divergence(candles, &phighs, div_min, rsi_p)
     };
     if rsi_div {
-        total += PTS_RSI_DIVERGENCE as i32;
+        total += config.dip_tepe_pts_rsi_divergence as i32;
     }
     signals.push(SignalScore {
         name: "RSI divergence".to_string(),
-        points: PTS_RSI_DIVERGENCE,
+        points: config.dip_tepe_pts_rsi_divergence,
         active: rsi_div,
     });
 
@@ -398,35 +404,36 @@ pub fn compute_dip_tepe_score(
         .map_or(false, |(lo, hi)| last >= lo && last <= hi);
     let support_ok = support_local || mtf_support_near;
     if support_ok {
-        total += PTS_SUPPORT_ZONE as i32;
+        total += config.dip_tepe_pts_support_zone as i32;
     }
     signals.push(SignalScore {
         name: "Destek/direnç bölgesi (MTF dahil)".to_string(),
-        points: PTS_SUPPORT_ZONE,
+        points: config.dip_tepe_pts_support_zone,
         active: support_ok,
     });
 
     // 5. Volume spike – Madde 8: volume > volume_MA * 1.5
     let vols: Vec<f64> = candles.iter().map(|c| c.volume).collect();
-    let vol_ma = sma(&vols, 20.min(vols.len())).unwrap_or(0.0);
-    let vol_spike = vol_ma > 0.0 && *vols.last().unwrap_or(&0.0) >= vol_ma * 1.5;
+    let vol_ma = sma(&vols, ma_p.min(vols.len())).unwrap_or(0.0);
+    let vol_spike = vol_ma > 0.0
+        && *vols.last().unwrap_or(&0.0) >= vol_ma * config.dip_tepe_vol_spike_mult;
     if vol_spike {
-        total += PTS_VOLUME_SPIKE as i32;
+        total += config.dip_tepe_pts_volume_spike as i32;
     }
     signals.push(SignalScore {
         name: "Hacim spike".to_string(),
-        points: PTS_VOLUME_SPIKE,
+        points: config.dip_tepe_pts_volume_spike,
         active: vol_spike,
     });
 
     // 6. Liquidity sweep – son iğne ile likidite temizliği
-    let liq_sweep = liquidity_sweep(candles, is_long, 20);
+    let liq_sweep = liquidity_sweep(candles, is_long, liq_lb);
     if liq_sweep {
-        total += PTS_LIQUIDITY_SWEEP as i32;
+        total += config.dip_tepe_pts_liquidity_sweep as i32;
     }
     signals.push(SignalScore {
         name: "Liquidity sweep".to_string(),
-        points: PTS_LIQUIDITY_SWEEP,
+        points: config.dip_tepe_pts_liquidity_sweep,
         active: liq_sweep,
     });
 
@@ -440,7 +447,12 @@ pub fn compute_dip_tepe_score(
     } else {
         false
     };
-    let patterns = detect_candle_patterns(candles, is_long);
+    let patterns = detect_candle_patterns(
+        candles,
+        is_long,
+        config.candlestick_noise_atr_period.max(1) as usize,
+        config.candlestick_noise_min_range_atr_ratio,
+    );
     let pattern_ok = if is_long {
         any_bullish_pattern(&patterns)
     } else {
@@ -448,7 +460,7 @@ pub fn compute_dip_tepe_score(
     };
     let candle_or_pattern = candle_ok || pattern_ok;
     if candle_or_pattern {
-        total += PTS_BULLISH_CANDLE as i32;
+        total += config.dip_tepe_pts_bullish_candle as i32;
     }
     signals.push(SignalScore {
         name: if is_long {
@@ -456,50 +468,54 @@ pub fn compute_dip_tepe_score(
         } else {
             "Düşüş mumu / pattern".to_string()
         },
-        points: PTS_BULLISH_CANDLE,
+        points: config.dip_tepe_pts_bullish_candle,
         active: candle_or_pattern,
     });
 
     // 8. Fibonacci level – Madde 7
-    let (swing_h, swing_l) = recent_swing_high_low(candles, 50);
-    let fib_ok = price_near_fib_level(last, swing_h, swing_l, 0.005);
+    let (swing_h, swing_l) = recent_swing_high_low(candles, swing_lb);
+    let fib_ok = price_near_fib_level(last, swing_h, swing_l, config.dip_tepe_fib_band_pct);
     if fib_ok {
-        total += PTS_FIB_LEVEL as i32;
+        total += config.dip_tepe_pts_fib_level as i32;
     }
     signals.push(SignalScore {
         name: "Fibonacci seviyesi (0.382–0.786)".to_string(),
-        points: PTS_FIB_LEVEL,
+        points: config.dip_tepe_pts_fib_level,
         active: fib_ok,
     });
 
     // 9. EMA200 yakın – Madde 10
-    let ema200 = ema(&closes, 200.min(closes.len()));
+    let ema200 = ema(&closes, ema_n.min(closes.len()));
     let near_ema200 = ema200.map_or(false, |e| {
         let dist = ((last - e) / e.max(1e-9)).abs();
-        dist <= 0.01
+        dist <= config.dip_tepe_ema_near_dist_pct
     });
     if near_ema200 {
-        total += PTS_EMA200_NEAR as i32;
+        total += config.dip_tepe_pts_ema200_near as i32;
     }
     signals.push(SignalScore {
         name: "Fiyat EMA200 yakın".to_string(),
-        points: PTS_EMA200_NEAR,
+        points: config.dip_tepe_pts_ema200_near,
         active: near_ema200,
     });
 
     // 10. Market structure (HL / LH) – Madde 11
-    let structure_ok = structure_score_01 >= 0.55;
+    let structure_ok = structure_score_01 >= config.dip_tepe_structure_score_min;
     if structure_ok {
-        total += PTS_MARKET_STRUCTURE as i32;
+        total += config.dip_tepe_pts_market_structure as i32;
     }
     signals.push(SignalScore {
         name: "Piyasa yapısı (HL/LH)".to_string(),
-        points: PTS_MARKET_STRUCTURE,
+        points: config.dip_tepe_pts_market_structure,
         active: structure_ok,
     });
 
     // 11. Bollinger reversion – Madde 6: dip Close < lower_band, tepe Close > upper_band
-    let bb = bollinger(&closes, 20, 2.0);
+    let bb = bollinger(
+        &closes,
+        config.dip_tepe_bollinger_period as usize,
+        config.dip_tepe_bollinger_std,
+    );
     let bollinger_ok = bb.map_or(false, |(lower, _mid, upper)| {
         if is_long {
             last <= lower
@@ -508,80 +524,91 @@ pub fn compute_dip_tepe_score(
         }
     });
     if bollinger_ok {
-        total += PTS_BOLLINGER as i32;
+        total += config.dip_tepe_pts_bollinger as i32;
     }
     signals.push(SignalScore {
         name: "Bollinger reversion".to_string(),
-        points: PTS_BOLLINGER,
+        points: config.dip_tepe_pts_bollinger,
         active: bollinger_ok,
     });
 
     // 12. Mean reversion distance – Madde 12: (price - MA) / MA, dip < -0.1
-    let ma = sma(&closes, 20.min(closes.len())).unwrap_or(last);
+    let ma = sma(&closes, ma_p.min(closes.len())).unwrap_or(last);
     let dist = if ma > 0.0 { (last - ma) / ma } else { 0.0 };
+    let thr = config.dip_tepe_mean_rev_dist;
     let mean_rev_ok = if is_long {
-        dist < -0.1
+        dist < -thr
     } else {
-        dist > 0.1
+        dist > thr
     };
     if mean_rev_ok {
-        total += PTS_MEAN_REVERSION as i32;
+        total += config.dip_tepe_pts_mean_reversion as i32;
     }
     signals.push(SignalScore {
         name: "Ortalamadan sapma (mean reversion)".to_string(),
-        points: PTS_MEAN_REVERSION,
+        points: config.dip_tepe_pts_mean_reversion,
         active: mean_rev_ok,
     });
 
     // 13. VWAP mean reversion – fiyat VWAP'ten yeterince uzak mı
     let vwap_val = vwap(candles);
+    let vw_thr = config.dip_tepe_vwap_mean_rev_dist;
     let vwap_ok = vwap_val.map_or(false, |vw| {
         if vw <= 0.0 {
             return false;
         }
         let d = (last - vw) / vw;
         if is_long {
-            d < -0.03
+            d < -vw_thr
         } else {
-            d > 0.03
+            d > vw_thr
         }
     });
     if vwap_ok {
-        total += PTS_VWAP_MEAN_REVERSION as i32;
+        total += config.dip_tepe_pts_vwap_mean_reversion as i32;
     }
     signals.push(SignalScore {
         name: "VWAP mean reversion".to_string(),
-        points: PTS_VWAP_MEAN_REVERSION,
+        points: config.dip_tepe_pts_vwap_mean_reversion,
         active: vwap_ok,
     });
 
     // 14. ATR volatility filter – volatilite bandı içinde mi
-    let atr_ok = atr_volatility_ok(atr_val, last);
+    let atr_ok = atr_volatility_ok(
+        atr_val,
+        last,
+        config.dip_tepe_atr_vol_norm_min,
+        config.dip_tepe_atr_vol_norm_max,
+    );
     if atr_ok {
-        total += PTS_ATR_FILTER as i32;
+        total += config.dip_tepe_pts_atr_filter as i32;
     }
     signals.push(SignalScore {
         name: "ATR volatilite filtresi".to_string(),
-        points: PTS_ATR_FILTER,
+        points: config.dip_tepe_pts_atr_filter,
         active: atr_ok,
     });
 
-    let total_u8 = total.max(0).min(SCORE_CAP as i32) as u8;
+    let cap = config.dip_tepe_score_cap as i32;
+    let total_u8 = total.max(0).min(cap) as u8;
 
     // Madde 17: Tavsiye motoru
-    let recommendation = if total_u8 >= 8 {
+    let rec_s = config.dip_tepe_rec_strong_min;
+    let rec_b = config.dip_tepe_rec_buy_zone_min;
+    let rec_w = config.dip_tepe_rec_watch_min;
+    let recommendation = if total_u8 >= rec_s {
         if is_long {
             "STRONG BUY DIP".to_string()
         } else {
             "STRONG SELL TEPE".to_string()
         }
-    } else if total_u8 >= 6 {
+    } else if total_u8 >= rec_b {
         if is_long {
             "BUY ZONE".to_string()
         } else {
             "SELL ZONE".to_string()
         }
-    } else if total_u8 >= 4 {
+    } else if total_u8 >= rec_w {
         if is_long {
             "WATCH DIP".to_string()
         } else {
@@ -593,9 +620,10 @@ pub fn compute_dip_tepe_score(
 
     // Madde 16: Erken uyarı – momentum dönüşü
     let early_warning = if is_long {
-        rsi_slope_up(&closes, 14) || macd_histogram_turning_up(&closes)
+        rsi_slope_up(&closes, rsi_p)
+            || macd_histogram_turning_up(&closes, macd_f, macd_s, macd_sig, div_min)
     } else {
-        macd_histogram_turning_up(&closes)
+        macd_histogram_turning_up(&closes, macd_f, macd_s, macd_sig, div_min)
     };
 
     DipTepeScore {

@@ -463,6 +463,12 @@
         <label><input type="checkbox" id="showEwComplex" checked> Double/Triple</label>
       </div>
       <label><input type="checkbox" id="showProjections" checked> Projeksiyonlar</label>
+
+      <strong class="drawer-sub" title="Çok sayıda çizgi serisi = sağda çok fiyat etiketi.">Yatay / ölçek</strong>
+      <label title="Fibo + W5 kısa yatay segmentleri (grafik sağında)"><input type="checkbox" id="showEwFiboYatay" checked> Elliott Fibo + W5 yatayları</label>
+      <label title="Elliott üst/alt kanal çizgileri"><input type="checkbox" id="showEwChannelLines" checked> Elliott kanal (üst/alt)</label>
+      <label title="Klasik formasyon TP ve invalidation yatay çizgileri"><input type="checkbox" id="showClassicTpInvYatay" checked> Klasik TP / invalidation yatayları</label>
+      <label title="Her çizgi serisi için sağdaki renkli fiyat kutusu"><input type="checkbox" id="overlayLineLabels"> Sağda çizgi fiyat etiketleri</label>
     </div>
   </div>
 
@@ -570,7 +576,7 @@
       return 'ETHUSDT27H2026';
     }
 
-    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showZigzag','showElliott','showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showClassic','showClassicTriangle','showClassicDouble','showClassicCup','showClassicHs','showClassicFlag','showClassicRange','showClassicChannel','invertPattern'];
+    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showZigzag','showElliott','showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showClassic','showClassicTriangle','showClassicDouble','showClassicCup','showClassicHs','showClassicFlag','showClassicRange','showClassicChannel','invertPattern','showEwFiboYatay','showEwChannelLines','showClassicTpInvYatay','overlayLineLabels'];
 
     function isEwFormationEnabled(formation, formationType) {
       const f = (formation || '').toLowerCase();
@@ -594,7 +600,7 @@
           el.addEventListener('change', () => {
             // Elliott master tiki – alt formların tiklerini de kontrol eder
             if (id === 'showElliott') {
-              const subs = ['showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections'];
+              const subs = ['showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showEwFiboYatay','showEwChannelLines'];
               subs.forEach(sid => {
                 const sEl = document.getElementById(sid);
                 if (sEl) sEl.checked = el.checked;
@@ -1050,6 +1056,11 @@
 
     function applyOverlays(data) {
       if (!chart || !candleSeries || !data) return;
+      /** Çizgi serilerinde sağ fiyat etiketi: varsayılan kapalı (kalabalığı azaltır). */
+      function overlayLineSeriesOptions(extra) {
+        const labelsOn = document.getElementById('overlayLineLabels')?.checked ?? false;
+        return Object.assign({ lastValueVisible: labelsOn, priceLineVisible: false }, extra || {});
+      }
       const ann = data.annotations || {};
         const showChoch = document.getElementById('showChoch')?.checked ?? true;
         const showBos = document.getElementById('showBos')?.checked ?? true;
@@ -1061,6 +1072,9 @@
         const showZigzag = document.getElementById('showZigzag')?.checked ?? false;
         const showElliott = document.getElementById('showElliott')?.checked ?? true;
         const showProjections = document.getElementById('showProjections')?.checked ?? true;
+        const showEwFiboYatay = document.getElementById('showEwFiboYatay')?.checked ?? true;
+        const showEwChannelLines = document.getElementById('showEwChannelLines')?.checked ?? true;
+        const showClassicTpInvYatay = document.getElementById('showClassicTpInvYatay')?.checked ?? true;
         const showClassic = document.getElementById('showClassic')?.checked ?? false;
         const showClassicTriangle = document.getElementById('showClassicTriangle')?.checked ?? false;
         const showClassicDouble = document.getElementById('showClassicDouble')?.checked ?? false;
@@ -1134,7 +1148,7 @@
 
         if (showSupport && ann.support_line) {
           const l = ann.support_line;
-          const line = chart.addLineSeries({ color: l.color, lineWidth: 2 });
+          const line = chart.addLineSeries(overlayLineSeriesOptions({ color: l.color, lineWidth: 2 }));
           line.setData([
             { time: l.time1, value: l.price1 },
             { time: l.time2, value: l.price2 },
@@ -1144,7 +1158,7 @@
         }
         if (showResistance && ann.resistance_line) {
           const l = ann.resistance_line;
-          const line = chart.addLineSeries({ color: l.color, lineWidth: 2 });
+          const line = chart.addLineSeries(overlayLineSeriesOptions({ color: l.color, lineWidth: 2 }));
           line.setData([
             { time: l.time1, value: l.price1 },
             { time: l.time2, value: l.price2 },
@@ -1154,7 +1168,7 @@
         }
         if (showZigzag && ann.zigzag && ann.zigzag.length >= 2) {
           const zzData = ann.zigzag.map(p => ({ time: p.time, value: p.price }));
-          const line = chart.addLineSeries({ color: '#FF9800', lineWidth: 2, lineStyle: 0 });
+          const line = chart.addLineSeries(overlayLineSeriesOptions({ color: '#FF9800', lineWidth: 2, lineStyle: 0 }));
           line.setData(zzData);
           chart._lineSeries.push(line);
         }
@@ -1171,7 +1185,7 @@
             return '#888';
           };
           const addSeg = (time1, value1, time2, value2, color, width = 1, lineStyle = 0) => {
-            const s = chart.addLineSeries({ color, lineWidth: width, lineStyle });
+            const s = chart.addLineSeries(overlayLineSeriesOptions({ color, lineWidth: width, lineStyle }));
             s.setData([{ time: time1, value: value1 }, { time: time2, value: value2 }]);
             chart._lineSeries.push(s);
           };
@@ -1358,15 +1372,17 @@
               }
             }
 
-            // 7-madde engine çıktıları: invalidation + TP seviyeleri.
-            if (p.invalidation_level != null) {
-              addSeg(t1, Number(p.invalidation_level), t2, Number(p.invalidation_level), '#FF1744', 1, 1);
-            }
-            if (Array.isArray(p.targets)) {
-              p.targets.forEach(tp => {
-                if (tp?.price == null) return;
-                addSeg(t1, Number(tp.price), t2, Number(tp.price), '#FFB627', 1, 2);
-              });
+            // 7-madde engine çıktıları: invalidation + TP seviyeleri (menüden kapatılabilir).
+            if (showClassicTpInvYatay) {
+              if (p.invalidation_level != null) {
+                addSeg(t1, Number(p.invalidation_level), t2, Number(p.invalidation_level), '#FF1744', 1, 1);
+              }
+              if (Array.isArray(p.targets)) {
+                p.targets.forEach(tp => {
+                  if (tp?.price == null) return;
+                  addSeg(t1, Number(tp.price), t2, Number(tp.price), '#FFB627', 1, 2);
+                });
+              }
             }
 
             const qs = p.quality_score != null ? Number(p.quality_score).toFixed(1) : '—';
@@ -1402,7 +1418,7 @@
           const ew = ann.elliott;
           (ew.wave_legs || []).forEach(leg => {
             const lineStyle = leg.dotted ? 2 : 0;
-            const line = chart.addLineSeries({ color: leg.color, lineWidth: 2, lineStyle });
+            const line = chart.addLineSeries(overlayLineSeriesOptions({ color: leg.color, lineWidth: 2, lineStyle }));
             line.setData([
               { time: leg.time1, value: leg.price1 },
               { time: leg.time2, value: leg.price2 }
@@ -1422,21 +1438,23 @@
           const anchorTime = lastCandleTime;
           const fiboStart = anchorTime + fiboGapBars * barSec;
           const fiboEnd = fiboStart + fiboLengthBars * barSec;
-          (ew.fibo_levels || []).forEach(f => {
-            const line = chart.addLineSeries({ color: f.color, lineWidth: 1, lineStyle: 2 });
-            line.setData([
-              { time: fiboStart, value: f.price },
-              { time: fiboEnd, value: f.price }
-            ]);
-            chart._lineSeries.push(line);
-          });
+          if (showEwFiboYatay) {
+            (ew.fibo_levels || []).forEach(f => {
+              const line = chart.addLineSeries(overlayLineSeriesOptions({ color: f.color, lineWidth: 1, lineStyle: 2 }));
+              line.setData([
+                { time: fiboStart, value: f.price },
+                { time: fiboEnd, value: f.price }
+              ]);
+              chart._lineSeries.push(line);
+            });
+          }
           // Projeksiyon ve W5 hedeflerini de aynı kısa yatay segment üzerinde göster
           const projStart = fiboStart;
           const projEnd = fiboEnd;
           if (showProjections && ew.projections && ew.projections.length > 0) {
             ew.projections.forEach(pr => {
               if (pr.price == null) return;
-              const line = chart.addLineSeries({ color: '#FFB627', lineWidth: 1, lineStyle: 2 });
+              const line = chart.addLineSeries(overlayLineSeriesOptions({ color: '#FFB627', lineWidth: 1, lineStyle: 2 }));
               line.setData([
                 { time: projStart, value: pr.price },
                 { time: projEnd, value: pr.price }
@@ -1444,9 +1462,9 @@
               chart._lineSeries.push(line);
             });
           }
-          if (ew.channel_upper) {
+          if (showEwChannelLines && ew.channel_upper) {
             const l = ew.channel_upper;
-            const line = chart.addLineSeries({ color: l.color, lineWidth: 1.5, lineStyle: 2 });
+            const line = chart.addLineSeries(overlayLineSeriesOptions({ color: l.color, lineWidth: 1.5, lineStyle: 2 }));
             line.setData([
               { time: l.time1, value: l.price1 },
               { time: l.time2, value: l.price2 },
@@ -1454,9 +1472,9 @@
             ]);
             chart._lineSeries.push(line);
           }
-          if (ew.channel_lower) {
+          if (showEwChannelLines && ew.channel_lower) {
             const l = ew.channel_lower;
-            const line = chart.addLineSeries({ color: l.color, lineWidth: 1.5, lineStyle: 2 });
+            const line = chart.addLineSeries(overlayLineSeriesOptions({ color: l.color, lineWidth: 1.5, lineStyle: 2 }));
             line.setData([
               { time: l.time1, value: l.price1 },
               { time: l.time2, value: l.price2 },
@@ -1464,10 +1482,10 @@
             ]);
             chart._lineSeries.push(line);
           }
-          if (ew.w5_targets && (ew.formation === 'Impulse' || ew.formation_type === 'Motif (İtki)')) {
+          if (showEwFiboYatay && ew.w5_targets && (ew.formation === 'Impulse' || ew.formation_type === 'Motif (İtki)')) {
             (Array.isArray(ew.w5_targets) ? ew.w5_targets : [ew.w5_targets[0], ew.w5_targets[1]]).forEach((price) => {
               if (price == null) return;
-              const line = chart.addLineSeries({ color: '#FFB627', lineWidth: 2, lineStyle: 1 });
+              const line = chart.addLineSeries(overlayLineSeriesOptions({ color: '#FFB627', lineWidth: 2, lineStyle: 1 }));
               line.setData([
                 { time: fiboStart, value: price },
                 { time: fiboEnd, value: price }
@@ -1498,7 +1516,7 @@
             const col = formColors[fi % formColors.length];
             (f.wave_legs || []).forEach(leg => {
               const lineStyle = leg.dotted ? 2 : 0;
-              const line = chart.addLineSeries({ color: col, lineWidth: 1.5, lineStyle });
+              const line = chart.addLineSeries(overlayLineSeriesOptions({ color: col, lineWidth: 1.5, lineStyle }));
               line.setData([
                 { time: leg.time1, value: leg.price1 },
                 { time: leg.time2, value: leg.price2 }

@@ -173,16 +173,16 @@ Aşağıda, inceleme sırasında tespit edilen noktalar listelenmiştir.
 
 ### 10.2 Olası Hatalar / Tutarsızlıklar
 
-3. **api_q_analysis_all (iqai-web):** `app_cfg.trading.as_ref().and_then(|t| t.symbols.clone()).filter(|s| !s.is_empty())` ifadesinde `filter` Option üzerinde; `Option<Vec<String>>` için doğru kullanım. Ancak `unwrap_or_else(|| vec!["ETHUSDT".into(), ...])` ile varsayılan kullanılıyor – config’te `symbols: []` boş array ise filtreden sonra None kalıp varsayılan gelir; davranış dokümante edilmeli.  
-4. **trade_db get_symbol_pnl_stats:** “opened_count” için yapılan sorgu `SELECT symbol, COUNT(*) FROM positions WHERE mode=?1 GROUP BY symbol` ile **tüm pozisyonları** (açık + kapalı) sayar. Alan adı “açık pozisyon sayısı” gibi anlaşılabilir; gerçekte “toplam pozisyon sayısı”. Ya sorgu `status='open'` ile kısıtlanmalı ya da alan adı (ve dokümantasyon) “total_positions” vb. olacak şekilde güncellenmeli.  
-5. **TradingMode::from_str:** "paper" için `_ => Self::Paper` kullanılıyor; "paper" açıkça eşleştirilmediği için şu an doğru çalışıyor ama ileride başka mod eklenirse karışabilir; "paper" için açık branch eklenmesi okunabilirlik için iyi olur.
+3. **api_q_analysis_all (iqai-web):** `symbols: []` iken varsayılan semboller kullanılır — **`docs/API_Q_ANALYSIS.md`** ile dokümante edildi.  
+4. **trade_db get_symbol_pnl_stats:** Yanıtta **`total_positions`** (tüm kayıtlar) ve **`open_count`** (`status='open'`) alanları kullanılır; PnL sayfası buna göre güncellendi.  
+5. **TradingMode::from_str:** `"paper"` için açık branch eklendi (`auto_trader.rs`).
 
 ### 10.3 Eksikler
 
 6. **Birim/integrasyon test kapsamı:** Sadece backtest stub ve notify routing testleri var. Sinyal motoru, Q-Setup, confluence, Elliott detektörü için birim testleri; exchange mock ile kısa entegrasyon testleri eklenebilir.  
 7. **Hata mesajları ve loglama:** Bazı API/DB hataları sadece eprintln veya log ile veriliyor; istemciye dönen JSON’da tutarlı bir `error` alanı ve (geliştirme modunda) request id ile ilişkilendirme iyileştirilebilir.  
 8. **Rate limit / retry:** Binance ve TV çağrılarında rate limit veya geçici hata için retry/backoff politikası yok; eklenmesi production için faydalı olur.  
-9. **Config validasyonu:** config.json yüklendikten sonra (min_q_score, min_rr, risk_per_trade_pct vb.) anlamlı aralık kontrolü yok; başlangıçta bir validasyon katmanı eklenebilir.
+9. **Config validasyonu:** `TradingConfig::validate` ve `AppConfig::validate_trading` ile risk/eşik alanları kontrol edilir; `AutoTraderConfig::from_trading_config` uyarı log üretir.
 
 ### 10.4 İyileştirmeler
 

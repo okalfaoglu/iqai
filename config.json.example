@@ -1,4 +1,20 @@
 {
+  "web": {
+    "_comment_cors": "Boş veya yok: CORS permissive. Dolu liste: yalnızca bu Origin değerleri (örn. Vite dev sunucusu).",
+    "cors_allow_origins": []
+  },
+  "logging": {
+    "level": "info",
+    "target": "console",
+    "_comment_verbose_chart_poll": "true ise /api/chart TF uyarıları info'da (çok satır). false: sadece debug — docs/LOG_SAMPLING.md",
+    "verbose_chart_poll": false
+  },
+  "ai": {
+    "enabled": false,
+    "model": "llama2",
+    "ollama_base_url": "http://localhost:11434",
+    "persist_explanations": true
+  },
   "notification": {
     "telegram_bot_token": "BOT_TOKEN_BURAYA",
     "telegram_chat_id": "CHAT_ID_BURAYA",
@@ -11,7 +27,19 @@
     "x_webhook_url": null,
     "x_webhook_token": null,
     "email_webhook_url": null,
-    "email_webhook_token": null
+    "email_webhook_token": null,
+    "throttle_q_setup_ms": 30000,
+    "throttle_q_analysis_ms": 300000,
+    "throttle_q_radar_ms": 10000,
+    "throttle_protect_ms": 30000
+  },
+  "smart_money": {
+    "candlestick_noise_atr_period": 14,
+    "candlestick_noise_min_range_atr_ratio": 0.15,
+    "q_confluence_boost_per_layer": 0.6,
+    "q_confluence_boost_cap": 2.5,
+    "_comment_q_enrich": "true: QRadarOpportunityAnalysis içine Q-Setup + Elliott (hizalama, ikinci TP, ABC ipucu). false: sadece çekirdek alanlar.",
+    "q_enrich_opportunity_with_setup_elliott": true
   },
   "trading": {
     "enabled": false,
@@ -35,6 +63,9 @@
     "fake_breakout_min_wick_ratio": 0.35,
     "fake_breakout_sl_atr_mult": 0.2,
     "fake_breakout_tp_rr": 2.0,
+    "commission_bps": null,
+    "commission_bps_cache_ttl_ms": 600000,
+    "_comment_symbols": "Boş dizi [] ise web /api/q-analysis varsayılan ETHUSDT+BTCUSDT kullanır — docs/API_Q_ANALYSIS.md",
     "symbols": ["ETHUSDT", "BTCUSDT"],
     "timeframes": ["5m", "15m", "1h", "4h"]
   }

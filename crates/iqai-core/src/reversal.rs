@@ -10,39 +10,9 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::config::Config;
 use crate::indicators::{atr, pivot_high, pivot_low, sma};
 use crate::types::Candle;
-
-// -----------------------------------------------------------------------------
-// Sabitler (Doc §2, §10, §14)
-// -----------------------------------------------------------------------------
-
-/// Pivot penceresi: sol bar sayısı = sağ bar sayısı (varsayılan 5 → 5+1+5 = 11 bar).
-/// Doc §2: config.pivot_length ile override edilir.
-const DEFAULT_PIVOT_LEN: usize = 5;
-
-/// ATR periyodu (dönüş margin ve güç hesabında).
-const ATR_PERIOD: usize = 14;
-
-/// Dipten dönüş: fiyat en az bu kadar ATR dip üzerinde olmalı. Doc §2.
-const REVERSAL_MARGIN_ATR: f64 = 0.2;
-
-/// Tepeden dönüş: fiyat en az bu kadar ATR tepe altında olmalı.
-const REVERSAL_MARGIN_ATR_DOWN: f64 = 0.2;
-
-/// Doc §14: Bu kadar ATR hareket = tam güç (1.0). Bounce/decline bu değere bölünür, cap 1.0.
-const STRENGTH_ATR_FULL: f64 = 2.0;
-
-/// Doc §10: Spring/Upthrust – dip altına (tepe üstüne) gittikten sonra en fazla bu bar içinde geri dönmeli.
-const SPRING_RECOVERY_BARS: usize = 4;
-
-/// Doc §14: Dönüş gücü ağırlıkları – strength_atr, vol_ratio, body_ratio.
-const WEIGHT_STRENGTH_ATR: f64 = 0.5;
-const WEIGHT_VOL_RATIO: f64 = 0.3;
-const WEIGHT_BODY_RATIO: f64 = 0.2;
-
-/// Hacim oranı için kullanılan SMA periyodu (son N bar ortalama hacim).
-const VOLUME_MA_PERIOD: usize = 20;
 
 // -----------------------------------------------------------------------------
 // Çıktı yapıları
@@ -133,12 +103,13 @@ fn is_reversal_from_dip(
     dip_price: f64,
     dip_bar_index: usize,
     atr_val: f64,
+    cfg: &Config,
 ) -> bool {
     if candles.is_empty() || dip_bar_index >= candles.len() {
         return false;
     }
     let last = candles.last().unwrap();
-    let margin = atr_val * REVERSAL_MARGIN_ATR;
+    let margin = atr_val * cfg.reversal_margin_atr_up;
     if last.close <= dip_price + margin {
         return false;
     }
@@ -155,12 +126,13 @@ fn is_reversal_from_peak(
     peak_price: f64,
     peak_bar_index: usize,
     atr_val: f64,
+    cfg: &Config,
 ) -> bool {
     if candles.is_empty() || peak_bar_index >= candles.len() {
         return false;
     }
     let last = candles.last().unwrap();
-    let margin = atr_val * REVERSAL_MARGIN_ATR_DOWN;
+    let margin = atr_val * cfg.reversal_margin_atr_down;
     if last.close >= peak_price - margin {
         return false;
     }
@@ -182,6 +154,7 @@ fn reversal_strength_from_dip(
     candles: &[Candle],
     dip_price: f64,
     atr_val: f64,
+    cfg: &Config,
 ) -> (f64, f64, f64) {
     if candles.is_empty() || atr_val <= 0.0 {
         return (0.0, 0.0, 0.0);
@@ -189,10 +162,11 @@ fn reversal_strength_from_dip(
     let last = candles.last().unwrap();
     let bounce = (last.close - dip_price).max(0.0);
     let bounce_r = bounce / atr_val;
-    let strength_atr = (bounce_r / STRENGTH_ATR_FULL).min(1.0);
+    let strength_atr = (bounce_r / cfg.reversal_strength_atr_full).min(1.0);
 
+    let vol_ma = cfg.reversal_volume_ma_period as usize;
     let vols: Vec<f64> = candles.iter().map(|c| c.volume).collect();
-    let vol_avg = sma(&vols, VOLUME_MA_PERIOD.min(vols.len())).unwrap_or(last.volume);
+    let vol_avg = sma(&vols, vol_ma.min(vols.len())).unwrap_or(last.volume);
     let vol_ratio = if vol_avg > 0.0 {
         (last.volume / vol_avg).min(2.0) / 2.0
     } else {
@@ -206,9 +180,9 @@ fn reversal_strength_from_dip(
         0.0
     };
 
-    let combined = WEIGHT_STRENGTH_ATR * strength_atr
-        + WEIGHT_VOL_RATIO * vol_ratio
-        + WEIGHT_BODY_RATIO * body_ratio;
+    let combined = cfg.reversal_weight_strength_atr * strength_atr
+        + cfg.reversal_weight_vol_ratio * vol_ratio
+        + cfg.reversal_weight_body_ratio * body_ratio;
     (combined.min(1.0), bounce, bounce_r)
 }
 
@@ -217,6 +191,7 @@ fn decline_strength_from_peak(
     candles: &[Candle],
     peak_price: f64,
     atr_val: f64,
+    cfg: &Config,
 ) -> (f64, f64, f64) {
     if candles.is_empty() || atr_val <= 0.0 {
         return (0.0, 0.0, 0.0);
@@ -224,10 +199,11 @@ fn decline_strength_from_peak(
     let last = candles.last().unwrap();
     let decline = (peak_price - last.close).max(0.0);
     let decline_r = decline / atr_val;
-    let strength_atr = (decline_r / STRENGTH_ATR_FULL).min(1.0);
+    let strength_atr = (decline_r / cfg.reversal_strength_atr_full).min(1.0);
 
+    let vol_ma = cfg.reversal_volume_ma_period as usize;
     let vols: Vec<f64> = candles.iter().map(|c| c.volume).collect();
-    let vol_avg = sma(&vols, VOLUME_MA_PERIOD.min(vols.len())).unwrap_or(last.volume);
+    let vol_avg = sma(&vols, vol_ma.min(vols.len())).unwrap_or(last.volume);
     let vol_ratio = if vol_avg > 0.0 {
         (last.volume / vol_avg).min(2.0) / 2.0
     } else {
@@ -241,9 +217,9 @@ fn decline_strength_from_peak(
         0.0
     };
 
-    let combined = WEIGHT_STRENGTH_ATR * strength_atr
-        + WEIGHT_VOL_RATIO * vol_ratio
-        + WEIGHT_BODY_RATIO * body_ratio;
+    let combined = cfg.reversal_weight_strength_atr * strength_atr
+        + cfg.reversal_weight_vol_ratio * vol_ratio
+        + cfg.reversal_weight_body_ratio * body_ratio;
     (combined.min(1.0), decline, decline_r)
 }
 
@@ -253,13 +229,13 @@ fn decline_strength_from_peak(
 
 /// Doc §10: Dip barından sonra fiyat dip altına inmiş, en fazla SPRING_RECOVERY_BARS içinde
 /// close tekrar dip üstüne dönmüş mü (likidite avı).
-fn detect_spring(candles: &[Candle], dip_price: f64, dip_bar_index: usize) -> bool {
+fn detect_spring(candles: &[Candle], dip_price: f64, dip_bar_index: usize, recovery_bars: usize) -> bool {
     if dip_bar_index + 1 >= candles.len() {
         return false;
     }
     for j in (dip_bar_index + 1)..candles.len() {
         if candles[j].low < dip_price {
-            let end = (j + SPRING_RECOVERY_BARS).min(candles.len());
+            let end = (j + recovery_bars).min(candles.len());
             for k in (j + 1)..end {
                 if candles[k].close > dip_price {
                     return true;
@@ -273,13 +249,13 @@ fn detect_spring(candles: &[Candle], dip_price: f64, dip_bar_index: usize) -> bo
 
 /// Doc §10: Tepe barından sonra fiyat tepe üstüne çıkmış, en fazla SPRING_RECOVERY_BARS içinde
 /// close tekrar tepe altına dönmüş mü.
-fn detect_upthrust(candles: &[Candle], peak_price: f64, peak_bar_index: usize) -> bool {
+fn detect_upthrust(candles: &[Candle], peak_price: f64, peak_bar_index: usize, recovery_bars: usize) -> bool {
     if peak_bar_index + 1 >= candles.len() {
         return false;
     }
     for j in (peak_bar_index + 1)..candles.len() {
         if candles[j].high > peak_price {
-            let end = (j + SPRING_RECOVERY_BARS).min(candles.len());
+            let end = (j + recovery_bars).min(candles.len());
             for k in (j + 1)..end {
                 if candles[k].close < peak_price {
                     return true;
@@ -298,21 +274,23 @@ fn detect_upthrust(candles: &[Candle], peak_price: f64, peak_bar_index: usize) -
 /// Tek timeframe için dip ve tepe aramasını yapar; dönüş tespiti, dönüş gücü ve Spring/Upthrust hesaplanır.
 ///
 /// Doc §16: OHLCV → Pivot Low/High → Reversal analizi (dip/tepe fiyatı, reversal_detected,
-/// reversal_strength, spring/upthrust). `pivot_len` None ise DEFAULT_PIVOT_LEN (5) kullanılır.
+/// reversal_strength, spring/upthrust). `pivot_len` None ise `config.pivot_length` kullanılır.
 pub fn compute_reversal_analysis(
     candles: &[Candle],
     pivot_len: Option<usize>,
+    config: &Config,
 ) -> ReversalAnalysis {
-    let pl = pivot_len.unwrap_or(DEFAULT_PIVOT_LEN);
-    let atr_val = atr(candles, ATR_PERIOD).unwrap_or_else(|| {
+    let pl = pivot_len.unwrap_or(config.pivot_length as usize);
+    let atr_n = config.reversal_atr_period as usize;
+    let atr_val = atr(candles, atr_n).unwrap_or_else(|| {
         candles
             .last()
             .map(|c| (c.high - c.low).max(1e-6))
             .unwrap_or(1.0)
     });
 
-    let dip = find_dip_analysis(candles, pl, atr_val);
-    let peak = find_peak_analysis(candles, pl, atr_val);
+    let dip = find_dip_analysis(candles, pl, atr_val, config);
+    let peak = find_peak_analysis(candles, pl, atr_val, config);
 
     ReversalAnalysis { dip, peak }
 }
@@ -321,13 +299,19 @@ fn find_dip_analysis(
     candles: &[Candle],
     pl: usize,
     atr_val: f64,
+    cfg: &Config,
 ) -> Option<DipAnalysis> {
     let (dip_price, dip_time, dip_bar_index) = get_dip_price_and_index(candles, pl)?;
     let bars_since_dip = candles.len().saturating_sub(dip_bar_index + 1);
-    let reversal_detected = is_reversal_from_dip(candles, dip_price, dip_bar_index, atr_val);
+    let reversal_detected = is_reversal_from_dip(candles, dip_price, dip_bar_index, atr_val, cfg);
     let (reversal_strength, bounce_from_dip, bounce_r) =
-        reversal_strength_from_dip(candles, dip_price, atr_val);
-    let spring_detected = detect_spring(candles, dip_price, dip_bar_index);
+        reversal_strength_from_dip(candles, dip_price, atr_val, cfg);
+    let spring_detected = detect_spring(
+        candles,
+        dip_price,
+        dip_bar_index,
+        cfg.reversal_spring_recovery_bars as usize,
+    );
 
     Some(DipAnalysis {
         dip_price,
@@ -346,13 +330,19 @@ fn find_peak_analysis(
     candles: &[Candle],
     pl: usize,
     atr_val: f64,
+    cfg: &Config,
 ) -> Option<PeakAnalysis> {
     let (peak_price, peak_time, peak_bar_index) = get_peak_price_and_index(candles, pl)?;
     let bars_since_peak = candles.len().saturating_sub(peak_bar_index + 1);
-    let reversal_detected = is_reversal_from_peak(candles, peak_price, peak_bar_index, atr_val);
+    let reversal_detected = is_reversal_from_peak(candles, peak_price, peak_bar_index, atr_val, cfg);
     let (decline_strength, decline_from_peak, decline_r) =
-        decline_strength_from_peak(candles, peak_price, atr_val);
-    let upthrust_detected = detect_upthrust(candles, peak_price, peak_bar_index);
+        decline_strength_from_peak(candles, peak_price, atr_val, cfg);
+    let upthrust_detected = detect_upthrust(
+        candles,
+        peak_price,
+        peak_bar_index,
+        cfg.reversal_spring_recovery_bars as usize,
+    );
 
     Some(PeakAnalysis {
         peak_price,

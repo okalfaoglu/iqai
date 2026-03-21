@@ -258,7 +258,8 @@
         if (data.ai) {
           var div = document.createElement('div');
           div.className = 'ai-block';
-          div.innerHTML = '<div class="ai-label">AI özeti</div><pre style="margin:0; white-space:pre-wrap;">' + data.ai + '</pre>';
+          div.innerHTML = '<div class="ai-label">AI özeti</div><pre style="margin:0; white-space:pre-wrap;">' + data.ai + '</pre>' +
+            '<p class="hint" style="margin-top:8px;font-size:11px;color:#94a3b8;">Kayıtlar: <code>/api/ai-explanations?symbol=' + encodeURIComponent(symbol) + '</code> — bkz. docs/AI_EXPLANATIONS.md</p>';
           box.appendChild(div);
         }
         if (!data.report && !data.ai) box.textContent = 'Bu sembol için veri yok veya AI yanıt vermedi.';

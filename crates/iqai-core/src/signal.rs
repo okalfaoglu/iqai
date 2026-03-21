@@ -891,3 +891,70 @@ impl SignalEngine {
         })
     }
 }
+
+#[cfg(test)]
+mod signal_engine_tests {
+    use super::{CandleBuffer, SignalEngine};
+    use crate::config::Config;
+    use crate::types::{Candle, Timeframe};
+
+    fn synthetic_uptrend(n: usize) -> Vec<Candle> {
+        let mut v = Vec::with_capacity(n);
+        let mut price = 100.0_f64;
+        for i in 0..n {
+            let t = (i as i64) * 60_000;
+            price += 0.12;
+            v.push(Candle {
+                time: t,
+                open: price,
+                high: price + 0.4,
+                low: price - 0.4,
+                close: price + 0.08,
+                volume: 800.0 + i as f64,
+            });
+        }
+        v
+    }
+
+    /// `process` için tüm TF’lerde yeterli mum (trend hesapları için).
+    fn buffer_all_tf(n: usize) -> CandleBuffer {
+        let c = synthetic_uptrend(n);
+        let mut buf = CandleBuffer::new();
+        for tf in [
+            Timeframe::M1,
+            Timeframe::M5,
+            Timeframe::M15,
+            Timeframe::M30,
+            Timeframe::H1,
+            Timeframe::H4,
+            Timeframe::D1,
+        ] {
+            buf.update(tf, c.clone());
+        }
+        buf
+    }
+
+    #[test]
+    fn candle_buffer_update_and_get() {
+        let mut b = CandleBuffer::new();
+        let c = synthetic_uptrend(10);
+        b.update(Timeframe::M5, c.clone());
+        assert_eq!(b.get(Timeframe::M5).unwrap().len(), 10);
+        assert!(b.get(Timeframe::H1).is_none());
+    }
+
+    #[test]
+    fn signal_engine_process_runs_without_panic() {
+        let mut engine = SignalEngine::new(Config::default());
+        let buf = buffer_all_tf(50);
+        let _signals = engine.process(&buf, Timeframe::M5);
+    }
+
+    #[test]
+    fn trend_for_tf_returns_when_enough_bars() {
+        let engine = SignalEngine::new(Config::default());
+        let buf = buffer_all_tf(25);
+        let t = engine.trend_for_tf(&buf, Timeframe::M5);
+        assert!(t >= -1 && t <= 1);
+    }
+}

@@ -275,6 +275,29 @@ pub fn build_analysis_snapshot(
             extra.insert("sm_signals".to_string(), serde_json::Value::Array(arr));
         }
     }
+    if let Some(a) = opp.radar_setup_alignment {
+        extra.insert("radar_setup_alignment".to_string(), serde_json::json!(a));
+    }
+    if let Some(ref q) = opp.q_setup {
+        extra.insert(
+            "q_setup".to_string(),
+            serde_json::json!({
+                "entry": q.entry,
+                "stop_loss": q.stop_loss,
+                "take_profit": q.take_profit,
+                "q_score": q.q_score,
+            }),
+        );
+    }
+    if let Some(tp) = opp.elliott_secondary_tp {
+        extra.insert("elliott_secondary_tp".to_string(), serde_json::json!(tp));
+    }
+    if let Some(ref s) = opp.elliott_summary {
+        extra.insert("elliott_summary".to_string(), serde_json::Value::String(s.clone()));
+    }
+    if let Some(ref h) = opp.abc_correction_hint {
+        extra.insert("abc_correction_hint".to_string(), serde_json::Value::String(h.clone()));
+    }
     if !extra.is_empty() {
         s.extra_json = Some(serde_json::to_string(&extra).unwrap_or_default());
     }

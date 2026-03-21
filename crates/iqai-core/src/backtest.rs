@@ -100,12 +100,30 @@ pub fn run_backtest(
     initial_capital: f64,
     risk_pct_per_trade: f64,
     leverage: f64,
+    commission_bps: u32,
+    slippage_bps: u32,
 ) -> BacktestResult {
     let min_len = (config.pivot_length * 4 + 50) as usize;
     let mut trades = Vec::new();
     let mut balance = initial_capital;
     let mut position: Option<OpenPosition> = None;
     let engine = SignalEngine::new(config.clone());
+    let commission_rate = commission_bps as f64 / 10_000.0;
+
+    // Live/auto_trader'deki slippage yönünü taklit et:
+    // - Long'ta kapanış fiyatı düşer
+    // - Short'ta kapanış fiyatı yükselir
+    let apply_slippage = |price: f64, is_long: bool| -> f64 {
+        if slippage_bps == 0 || !price.is_finite() {
+            return price;
+        }
+        let pct = slippage_bps as f64 / 10_000.0;
+        if is_long {
+            price * (1.0 - pct)
+        } else {
+            price * (1.0 + pct)
+        }
+    };
 
     if candles.len() < min_len {
         return BacktestResult {
@@ -152,13 +170,23 @@ pub fn run_backtest(
                 }
             };
 
-            let pnl = if pos.is_long {
-                (exit_price - pos.entry_price) * pos.qty
+            // Trigger edilen seviyeye slippage uygula (PnL/fee hesabı için).
+            let effective_exit = apply_slippage(exit_price, pos.is_long);
+
+            let pnl_gross = if pos.is_long {
+                (effective_exit - pos.entry_price) * pos.qty
             } else {
-                (pos.entry_price - exit_price) * pos.qty
+                (pos.entry_price - effective_exit) * pos.qty
             };
+
+            // Live tarafında olduğu gibi (notional_open + notional_close) üzerinden fee al.
+            let notional_open = pos.entry_price * pos.qty;
+            let notional_close = effective_exit * pos.qty;
+            let fee = (notional_open + notional_close) * commission_rate;
+            let pnl = pnl_gross - fee;
+
             let pnl_r = if pos.risk_r > 1e-10 {
-                pnl / (pos.risk_r * pos.qty)
+                pnl / (pos.risk_r * pos.qty).max(1e-10)
             } else {
                 0.0
             };
@@ -274,7 +302,17 @@ mod tests {
         let candles: Vec<Candle> = (0..min_len + 100)
             .map(|i| make_candle(i as i64 * 60_000, 100.0, 101.0, 99.0, 100.5, 1000.0))
             .collect();
-        let result = run_backtest(&candles, &config, Timeframe::M5, "TEST", 10_000.0, 1.0, 10.0);
+        let result = run_backtest(
+            &candles,
+            &config,
+            Timeframe::M5,
+            "TEST",
+            10_000.0,
+            1.0,
+            10.0,
+            4,  // commission_bps
+            0,  // slippage_bps
+        );
         assert_eq!(result.bar_count, candles.len());
         assert!(result.initial_capital == 10_000.0);
         assert!(result.final_capital >= 0.0);

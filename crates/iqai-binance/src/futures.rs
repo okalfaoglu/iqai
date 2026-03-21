@@ -1,14 +1,21 @@
 //! Binance Futures (USDT-M) API
 
 use std::collections::HashMap;
+use std::sync::Mutex;
 
 use async_trait::async_trait;
-use iqai_core::exchange::{ExchangeConnector, ExchangeError, ExchangeResult, OrderResponse, OrderSide};
+use iqai_core::exchange::{
+    classify_binance_json, ExchangeConnector, ExchangeError, ExchangeResult, OrderResponse,
+    OrderSide, RcaOpenMarketSnapshot,
+};
+use iqai_core::indicators::atr;
 use iqai_core::market_context::{FundingRate, OpenInterest, OrderBookSnapshot};
+use iqai_core::traceparent_from_uuid;
 use iqai_core::types::{Candle, Exchange, MarketType, Timeframe};
 use reqwest::Client;
 use tokio::sync::RwLock;
 
+use crate::http_retry::send_get_retry;
 use crate::sign;
 
 const BINANCE_FUTURES_API: &str = "https://fapi.binance.com";
@@ -68,9 +75,21 @@ pub struct BinanceFuturesClient {
     client: Client,
     api_key: Option<String>,
     secret_key: Option<String>,
+    /// `process_signal` sırasında `ExchangeTraceScopeGuard` ile set; GET/POST `traceparent`.
+    traceparent: Mutex<Option<String>>,
+    /// Sembol bazlı komisyon oranı cache'i (signed USER_DATA endpoint).
+    commission_cache: RwLock<HashMap<String, CommissionCacheEntry>>,
+    /// Cache TTL (ms). 0 ise her çağrıda anlık fetch.
+    commission_cache_ttl_ms: u64,
     /// Sembol bazlı exchangeInfo filtreleri (LOT_SIZE, MIN_NOTIONAL)
     symbol_filters: RwLock<HashMap<String, SymbolFilters>>,
     exchange_info_loaded: RwLock<bool>,
+}
+
+#[derive(Clone, Debug)]
+struct CommissionCacheEntry {
+    fetched_at_ms: u64,
+    value: Option<u32>,
 }
 
 impl BinanceFuturesClient {
@@ -79,6 +98,9 @@ impl BinanceFuturesClient {
             client: Client::new(),
             api_key: None,
             secret_key: None,
+            traceparent: Mutex::new(None),
+            commission_cache: RwLock::new(HashMap::new()),
+            commission_cache_ttl_ms: 600_000,
             symbol_filters: RwLock::new(HashMap::new()),
             exchange_info_loaded: RwLock::new(false),
         }
@@ -89,9 +111,41 @@ impl BinanceFuturesClient {
             client: Client::new(),
             api_key: Some(api_key),
             secret_key: Some(secret_key),
+            traceparent: Mutex::new(None),
+            commission_cache: RwLock::new(HashMap::new()),
+            commission_cache_ttl_ms: 600_000,
             symbol_filters: RwLock::new(HashMap::new()),
             exchange_info_loaded: RwLock::new(false),
         }
+    }
+
+    /// Binance komisyon oranı cache TTL ayarı.
+    ///
+    /// - `ttl_ms=0`  => her çağrıda anlık fetch
+    /// - `ttl_ms>0` => TTL içinde cache kullan
+    pub fn with_commission_cache_ttl_ms(mut self, ttl_ms: u64) -> Self {
+        self.commission_cache_ttl_ms = ttl_ms;
+        self
+    }
+
+    fn optional_traceparent(&self) -> Option<String> {
+        self.traceparent.lock().ok().and_then(|g| g.clone())
+    }
+
+    fn apply_traceparent(&self, req: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        if let Some(tp) = self.optional_traceparent() {
+            req.header("traceparent", tp)
+        } else {
+            req
+        }
+    }
+
+    async fn send_get<F>(&self, build: F) -> Result<reqwest::Response, ExchangeError>
+    where
+        F: Fn() -> reqwest::RequestBuilder,
+    {
+        let tp = self.optional_traceparent();
+        send_get_retry(&self.client, tp.as_deref(), build).await
     }
 
     /// GET /fapi/v1/exchangeInfo — tüm sembollerin LOT_SIZE ve MIN_NOTIONAL filtrelerini önbelleğe alır
@@ -101,11 +155,8 @@ impl BinanceFuturesClient {
         }
         let url = format!("{}/fapi/v1/exchangeInfo", BINANCE_FUTURES_API);
         let body: serde_json::Value = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .send_get(|| self.client.get(&url))
+            .await?
             .json()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -212,11 +263,8 @@ impl BinanceFuturesClient {
             limit.min(1500)
         );
         let resp: Vec<Vec<serde_json::Value>> = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .send_get(|| self.client.get(&url))
+            .await?
             .json()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -272,11 +320,8 @@ impl BinanceFuturesClient {
                 end_time_ms
             );
             let resp: Vec<Vec<serde_json::Value>> = self
-                .client
-                .get(&url)
-                .send()
-                .await
-                .map_err(|e| ExchangeError::Http(e.to_string()))?
+                .send_get(|| self.client.get(&url))
+                .await?
                 .json()
                 .await
                 .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -319,11 +364,8 @@ impl BinanceFuturesClient {
             funding_time: i64,
         }
         let resp: Vec<FundingRow> = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .send_get(|| self.client.get(&url))
+            .await?
             .json()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -338,6 +380,93 @@ impl BinanceFuturesClient {
             rate,
             next_funding_time: Some(row.funding_time),
         })
+    }
+
+    /// GET /fapi/v1/ticker/bookTicker — spread'i bps (mid'e göre) döner.
+    pub async fn fetch_book_ticker_spread_bps(&self, symbol: &str) -> Result<f64, ExchangeError> {
+        let symbol_futures = if symbol.ends_with("USDT") {
+            symbol.to_string()
+        } else {
+            format!("{}USDT", symbol)
+        };
+        let url = format!(
+            "{}/fapi/v1/ticker/bookTicker?symbol={}",
+            BINANCE_FUTURES_API, symbol_futures
+        );
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct BookTicker {
+            bid_price: String,
+            ask_price: String,
+        }
+        let resp: BookTicker = self
+            .send_get(|| self.client.get(&url))
+            .await?
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+        let bid: f64 = resp
+            .bid_price
+            .parse()
+            .map_err(|_| ExchangeError::Api("Invalid bidPrice".into()))?;
+        let ask: f64 = resp
+            .ask_price
+            .parse()
+            .map_err(|_| ExchangeError::Api("Invalid askPrice".into()))?;
+        let mid = (bid + ask) / 2.0;
+        if !mid.is_finite() || mid <= 0.0 {
+            return Err(ExchangeError::Api("Invalid mid for spread".into()));
+        }
+        Ok((ask - bid) / mid * 10_000.0)
+    }
+
+    /// TFAI-Q01: funding + spread + ATR/close (sinyal TF mumları).
+    pub async fn build_rca_open_market_snapshot(
+        &self,
+        symbol: &str,
+        timeframe: Timeframe,
+    ) -> RcaOpenMarketSnapshot {
+        let (funding_res, spread_res, klines_res) = tokio::join!(
+            self.fetch_funding_rate(symbol),
+            self.fetch_book_ticker_spread_bps(symbol),
+            self.fetch_klines_impl(symbol, timeframe.to_binance_interval(), 50),
+        );
+        if funding_res.is_err() {
+            log::debug!(
+                "[FUTURES] RCA open: funding fetch skipped/err for {}",
+                symbol
+            );
+        }
+        if spread_res.is_err() {
+            log::debug!("[FUTURES] RCA open: bookTicker skipped/err for {}", symbol);
+        }
+        let klines_len = klines_res.as_ref().ok().map(|c| c.len());
+        let funding_rate_at_open = funding_res.ok().map(|f| f.rate);
+        let spread_at_open_bps = spread_res.ok();
+        let volatility_at_open = klines_res.ok().and_then(|candles| {
+            if candles.len() < 15 {
+                return None;
+            }
+            let atr_val = atr(&candles, 14)?;
+            let close = candles.last()?.close;
+            if close.abs() > 1e-12 && atr_val.is_finite() {
+                Some(atr_val / close.abs())
+            } else {
+                None
+            }
+        });
+        if volatility_at_open.is_none() {
+            log::debug!(
+                "[FUTURES] RCA open: ATR vol skipped for {} (klines len {:?})",
+                symbol,
+                klines_len
+            );
+        }
+        RcaOpenMarketSnapshot {
+            volatility_at_open,
+            spread_at_open_bps,
+            funding_rate_at_open,
+        }
     }
 
     /// Açık pozisyon – GET /fapi/v1/openInterest
@@ -358,11 +487,8 @@ impl BinanceFuturesClient {
             open_interest: String,
         }
         let resp: OiResp = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .send_get(|| self.client.get(&url))
+            .await?
             .json()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -400,11 +526,8 @@ impl BinanceFuturesClient {
             asks: Vec<[String; 2]>,
         }
         let resp: DepthResp = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .send_get(|| self.client.get(&url))
+            .await?
             .json()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -456,11 +579,8 @@ impl BinanceFuturesClient {
             price: String,
         }
         let resp: TickerPrice = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .send_get(|| self.client.get(&url))
+            .await?
             .json()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -493,12 +613,8 @@ impl BinanceFuturesClient {
             taker_commission_rate: String,
         }
         let resp: CommissionRate = self
-            .client
-            .get(&url)
-            .header("X-MBX-APIKEY", api_key)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .send_get(|| self.client.get(&url).header("X-MBX-APIKEY", api_key))
+            .await?
             .json()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -524,6 +640,13 @@ impl ExchangeConnector for BinanceFuturesClient {
 
     fn market_type(&self) -> MarketType {
         MarketType::Futures
+    }
+
+    fn set_trace_id_for_request(&self, trace_id: Option<&str>) {
+        let tp = trace_id.and_then(traceparent_from_uuid);
+        if let Ok(mut g) = self.traceparent.lock() {
+            *g = tp;
+        }
     }
 
     async fn fetch_klines(
@@ -577,9 +700,7 @@ impl ExchangeConnector for BinanceFuturesClient {
         log::info!("[FUTURES] Market order: {} {} qty={} (requested {:.6})", side_str, symbol, quantity_str, quantity);
 
         let resp = self
-            .client
-            .post(&url)
-            .header("X-MBX-APIKEY", api_key)
+            .apply_traceparent(self.client.post(&url).header("X-MBX-APIKEY", api_key))
             .send()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -591,8 +712,9 @@ impl ExchangeConnector for BinanceFuturesClient {
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
 
         if !status.is_success() {
-            let msg = body["msg"].as_str().unwrap_or("unknown error");
-            return Err(ExchangeError::Api(format!("Binance Futures {}: {}", status, msg)));
+            return Err(
+                classify_binance_json("binance_futures", status.as_u16(), &body).into(),
+            );
         }
 
         Ok(OrderResponse {
@@ -652,9 +774,7 @@ impl ExchangeConnector for BinanceFuturesClient {
             side_str, symbol, quantity_str, limit_price
         );
         let resp = self
-            .client
-            .post(&url)
-            .header("X-MBX-APIKEY", api_key)
+            .apply_traceparent(self.client.post(&url).header("X-MBX-APIKEY", api_key))
             .send()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -664,8 +784,9 @@ impl ExchangeConnector for BinanceFuturesClient {
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
         if !status.is_success() {
-            let msg = body["msg"].as_str().unwrap_or("unknown error");
-            return Err(ExchangeError::Api(format!("Binance Futures {}: {}", status, msg)));
+            return Err(
+                classify_binance_json("binance_futures", status.as_u16(), &body).into(),
+            );
         }
         Ok(OrderResponse {
             order_id: body["orderId"].to_string(),
@@ -683,7 +804,35 @@ impl ExchangeConnector for BinanceFuturesClient {
     }
 
     async fn get_commission_bps(&self, symbol: &str) -> Option<u32> {
-        self.fetch_commission_rate(symbol).await.ok()
+        let now_ms = sign::timestamp_ms();
+        let symbol_upper = symbol.to_uppercase();
+
+        // TTL=0 => her çağrıda anlık fetch
+        if self.commission_cache_ttl_ms > 0 {
+            if let Some(entry) = self
+                .commission_cache
+                .read()
+                .await
+                .get(&symbol_upper)
+                .cloned()
+            {
+                let age = now_ms.saturating_sub(entry.fetched_at_ms);
+                if age < self.commission_cache_ttl_ms {
+                    return entry.value;
+                }
+            }
+        }
+
+        let value = self.fetch_commission_rate(symbol).await.ok();
+        let entry = CommissionCacheEntry {
+            fetched_at_ms: now_ms,
+            value,
+        };
+        self.commission_cache
+            .write()
+            .await
+            .insert(symbol_upper, entry);
+        value
     }
 
     async fn get_balance(&self, asset: &str) -> ExchangeResult<f64> {
@@ -703,12 +852,8 @@ impl ExchangeConnector for BinanceFuturesClient {
         );
 
         let resp = self
-            .client
-            .get(&url)
-            .header("X-MBX-APIKEY", api_key)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+            .send_get(|| self.client.get(&url).header("X-MBX-APIKEY", api_key))
+            .await?;
 
         let status = resp.status();
         let body: serde_json::Value = resp
@@ -717,8 +862,9 @@ impl ExchangeConnector for BinanceFuturesClient {
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
 
         if !status.is_success() {
-            let msg = body["msg"].as_str().unwrap_or("unknown error");
-            return Err(ExchangeError::Api(format!("Binance Futures {}: {}", status, msg)));
+            return Err(
+                classify_binance_json("binance_futures", status.as_u16(), &body).into(),
+            );
         }
 
         let arr = body.as_array().ok_or_else(|| {
@@ -735,5 +881,13 @@ impl ExchangeConnector for BinanceFuturesClient {
             }
         }
         Ok(0.0)
+    }
+
+    async fn fetch_rca_open_market_snapshot(
+        &self,
+        symbol: &str,
+        timeframe: Timeframe,
+    ) -> RcaOpenMarketSnapshot {
+        self.build_rca_open_market_snapshot(symbol, timeframe).await
     }
 }

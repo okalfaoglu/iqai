@@ -145,7 +145,8 @@
         <thead>
           <tr>
             <th>Sembol</th>
-            <th>Açılan</th>
+            <th>Toplam kayıt</th>
+            <th>Açık</th>
             <th>Kapanan</th>
             <th>Kar</th>
             <th>Zarar</th>
@@ -161,7 +162,8 @@
         <tfoot>
           <tr class="total-row" id="totalRow">
             <td>TOPLAM</td>
-            <td id="tOpened">—</td>
+            <td id="tTotalPos">—</td>
+            <td id="tOpen">—</td>
             <td id="tClosed">—</td>
             <td id="tWinners">—</td>
             <td id="tLosers">—</td>
@@ -219,15 +221,16 @@
         }
         const symbols = data.symbols || [];
         if (symbols.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#9ca3af;">Henüz işlem yok.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#9ca3af;">Henüz işlem yok.</td></tr>';
           document.getElementById('summary').textContent = 'Mod: ' + (data.mode || mode) + ' — Kayıtlı işlem bulunamadı.';
           return;
         }
 
-        let tOpened = 0, tClosed = 0, tWinners = 0, tLosers = 0;
+        let tTotalPos = 0, tOpen = 0, tClosed = 0, tWinners = 0, tLosers = 0;
         let tDaily = 0, tWeekly = 0, tMonthly = 0, tYearly = 0, tTotal = 0;
         symbols.forEach(function (r) {
-          tOpened += r.opened_count || 0;
+          tTotalPos += r.total_positions != null ? r.total_positions : (r.opened_count || 0);
+          tOpen += r.open_count || 0;
           tClosed += r.closed_count || 0;
           tWinners += r.winners || 0;
           tLosers += r.losers || 0;
@@ -239,7 +242,8 @@
           const tr = document.createElement('tr');
           tr.innerHTML =
             '<td>' + (r.symbol || '—') + '</td>' +
-            '<td>' + fmtNum(r.opened_count) + '</td>' +
+            '<td>' + fmtNum(r.total_positions != null ? r.total_positions : r.opened_count) + '</td>' +
+            '<td>' + fmtNum(r.open_count) + '</td>' +
             '<td>' + fmtNum(r.closed_count) + '</td>' +
             '<td>' + fmtNum(r.winners) + '</td>' +
             '<td>' + fmtNum(r.losers) + '</td>' +
@@ -253,7 +257,8 @@
         });
 
         const winRatePct = tClosed > 0 ? (tWinners / tClosed * 100).toFixed(1) : '—';
-        document.getElementById('tOpened').textContent = tOpened;
+        document.getElementById('tTotalPos').textContent = tTotalPos;
+        document.getElementById('tOpen').textContent = tOpen;
         document.getElementById('tClosed').textContent = tClosed;
         document.getElementById('tWinners').textContent = tWinners;
         document.getElementById('tLosers').textContent = tLosers;
@@ -270,7 +275,7 @@
         document.getElementById('tTotal').className = pnlClass(tTotal);
 
         document.getElementById('summary').textContent =
-          'Mod: ' + (data.mode || mode) + ' — Açılan: ' + tOpened + ', Kapanan: ' + tClosed +
+          'Mod: ' + (data.mode || mode) + ' — Toplam kayıt: ' + tTotalPos + ', Açık: ' + tOpen + ', Kapanan: ' + tClosed +
           ' (Kar: ' + tWinners + ', Zarar: ' + tLosers + ') — Başarı: ' + winRatePct + (winRatePct !== '—' ? '%' : '') +
           ' — Toplam PnL: ' + fmtPnl(tTotal) + ' USDT';
       } catch (e) {

@@ -33,6 +33,11 @@ Bu doküman Q-ANALIZ verisinin 3 katmanda nasıl kullanılacağını netleştiri
   - Segment performansı (TF, sembol, recommendation, direction)
   - Backtest/forward-test doğrulaması
 
+### Partial close notu (kapsam)
+
+`analysis_outcomes` kayıtları `AutoTrader::close_position()` içinde üretilir (pozisyon tamamen kapanınca).
+`AutoTrader::partial_close()` çağrıları için `analysis_outcomes` yazılmaz; bu sayede outcome ölçümü “tüm trade” seviyesinde kalır ve remaining_pct / kısmi kapanışlardan kaynaklı çift sayım riski önlenir.
+
 ## Çalışma Prensibi
 
 - Q-RADAR karar üretimi canlı candle akışından yapılır.

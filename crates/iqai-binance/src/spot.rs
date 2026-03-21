@@ -1,10 +1,18 @@
 //! Binance Spot API
 
+use std::sync::Mutex;
+
 use async_trait::async_trait;
-use iqai_core::exchange::{ExchangeConnector, ExchangeError, ExchangeResult, OrderResponse, OrderSide};
+use iqai_core::exchange::{
+    classify_binance_json, ExchangeConnector, ExchangeError, ExchangeResult, OrderResponse,
+    OrderSide, RcaOpenMarketSnapshot,
+};
+use iqai_core::indicators::atr;
+use iqai_core::traceparent_from_uuid;
 use iqai_core::types::{Candle, Exchange, MarketType, Timeframe};
 use reqwest::Client;
 
+use crate::http_retry::send_get_retry;
 use crate::sign;
 
 const BINANCE_SPOT_API: &str = "https://api.binance.com";
@@ -14,6 +22,7 @@ pub struct BinanceSpotClient {
     client: Client,
     api_key: Option<String>,
     secret_key: Option<String>,
+    traceparent: Mutex<Option<String>>,
 }
 
 impl BinanceSpotClient {
@@ -22,6 +31,7 @@ impl BinanceSpotClient {
             client: Client::new(),
             api_key: None,
             secret_key: None,
+            traceparent: Mutex::new(None),
         }
     }
 
@@ -30,7 +40,28 @@ impl BinanceSpotClient {
             client: Client::new(),
             api_key: Some(api_key),
             secret_key: Some(secret_key),
+            traceparent: Mutex::new(None),
         }
+    }
+
+    fn optional_traceparent(&self) -> Option<String> {
+        self.traceparent.lock().ok().and_then(|g| g.clone())
+    }
+
+    fn apply_traceparent(&self, req: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        if let Some(tp) = self.optional_traceparent() {
+            req.header("traceparent", tp)
+        } else {
+            req
+        }
+    }
+
+    async fn send_get<F>(&self, build: F) -> Result<reqwest::Response, ExchangeError>
+    where
+        F: Fn() -> reqwest::RequestBuilder,
+    {
+        let tp = self.optional_traceparent();
+        send_get_retry(&self.client, tp.as_deref(), build).await
     }
 
     pub async fn fetch_klines_impl(
@@ -47,11 +78,8 @@ impl BinanceSpotClient {
             limit.min(1000)
         );
         let resp: Vec<Vec<serde_json::Value>> = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?
+            .send_get(|| self.client.get(&url))
+            .await?
             .json()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -102,11 +130,8 @@ impl BinanceSpotClient {
                 end_time_ms
             );
             let resp: Vec<Vec<serde_json::Value>> = self
-                .client
-                .get(&url)
-                .send()
-                .await
-                .map_err(|e| ExchangeError::Http(e.to_string()))?
+                .send_get(|| self.client.get(&url))
+                .await?
                 .json()
                 .await
                 .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -129,6 +154,70 @@ impl BinanceSpotClient {
         }
         Ok(all)
     }
+
+    /// GET /api/v3/ticker/bookTicker — spread'i bps (mid'e göre).
+    pub async fn fetch_book_ticker_spread_bps(&self, symbol: &str) -> Result<f64, ExchangeError> {
+        let url = format!(
+            "{}/api/v3/ticker/bookTicker?symbol={}",
+            BINANCE_SPOT_API,
+            symbol.to_uppercase()
+        );
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct BookTicker {
+            bid_price: String,
+            ask_price: String,
+        }
+        let resp: BookTicker = self
+            .send_get(|| self.client.get(&url))
+            .await?
+            .json()
+            .await
+            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+        let bid: f64 = resp
+            .bid_price
+            .parse()
+            .map_err(|_| ExchangeError::Api("Invalid bidPrice".into()))?;
+        let ask: f64 = resp
+            .ask_price
+            .parse()
+            .map_err(|_| ExchangeError::Api("Invalid askPrice".into()))?;
+        let mid = (bid + ask) / 2.0;
+        if !mid.is_finite() || mid <= 0.0 {
+            return Err(ExchangeError::Api("Invalid mid for spread".into()));
+        }
+        Ok((ask - bid) / mid * 10_000.0)
+    }
+
+    /// TFAI-Q01: spread + ATR/close (spot'ta funding yok).
+    pub async fn build_rca_open_market_snapshot(
+        &self,
+        symbol: &str,
+        timeframe: Timeframe,
+    ) -> RcaOpenMarketSnapshot {
+        let (spread_res, klines_res) = tokio::join!(
+            self.fetch_book_ticker_spread_bps(symbol),
+            self.fetch_klines_impl(symbol, timeframe.to_binance_interval(), 50),
+        );
+        let spread_at_open_bps = spread_res.ok();
+        let volatility_at_open = klines_res.ok().and_then(|candles| {
+            if candles.len() < 15 {
+                return None;
+            }
+            let atr_val = atr(&candles, 14)?;
+            let close = candles.last()?.close;
+            if close.abs() > 1e-12 && atr_val.is_finite() {
+                Some(atr_val / close.abs())
+            } else {
+                None
+            }
+        });
+        RcaOpenMarketSnapshot {
+            volatility_at_open,
+            spread_at_open_bps,
+            funding_rate_at_open: None,
+        }
+    }
 }
 
 impl Default for BinanceSpotClient {
@@ -145,6 +234,13 @@ impl ExchangeConnector for BinanceSpotClient {
 
     fn market_type(&self) -> MarketType {
         MarketType::Spot
+    }
+
+    fn set_trace_id_for_request(&self, trace_id: Option<&str>) {
+        let tp = trace_id.and_then(traceparent_from_uuid);
+        if let Ok(mut g) = self.traceparent.lock() {
+            *g = tp;
+        }
     }
 
     async fn fetch_klines(
@@ -191,9 +287,7 @@ impl ExchangeConnector for BinanceSpotClient {
         log::info!("[SPOT] Market order: {} {} qty={:.6}", side_str, symbol, quantity);
 
         let resp = self
-            .client
-            .post(&url)
-            .header("X-MBX-APIKEY", api_key)
+            .apply_traceparent(self.client.post(&url).header("X-MBX-APIKEY", api_key))
             .send()
             .await
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
@@ -205,8 +299,7 @@ impl ExchangeConnector for BinanceSpotClient {
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
 
         if !status.is_success() {
-            let msg = body["msg"].as_str().unwrap_or("unknown error");
-            return Err(ExchangeError::Api(format!("Binance Spot {}: {}", status, msg)));
+            return Err(classify_binance_json("binance_spot", status.as_u16(), &body).into());
         }
 
         let fills = body["fills"].as_array();
@@ -250,12 +343,8 @@ impl ExchangeConnector for BinanceSpotClient {
         );
 
         let resp = self
-            .client
-            .get(&url)
-            .header("X-MBX-APIKEY", api_key)
-            .send()
-            .await
-            .map_err(|e| ExchangeError::Http(e.to_string()))?;
+            .send_get(|| self.client.get(&url).header("X-MBX-APIKEY", api_key))
+            .await?;
 
         let status = resp.status();
         let body: serde_json::Value = resp
@@ -264,8 +353,7 @@ impl ExchangeConnector for BinanceSpotClient {
             .map_err(|e| ExchangeError::Http(e.to_string()))?;
 
         if !status.is_success() {
-            let msg = body["msg"].as_str().unwrap_or("unknown error");
-            return Err(ExchangeError::Api(format!("Binance Spot {}: {}", status, msg)));
+            return Err(classify_binance_json("binance_spot", status.as_u16(), &body).into());
         }
 
         let asset_upper = asset.to_uppercase();
@@ -281,5 +369,13 @@ impl ExchangeConnector for BinanceSpotClient {
             }
         }
         Ok(0.0)
+    }
+
+    async fn fetch_rca_open_market_snapshot(
+        &self,
+        symbol: &str,
+        timeframe: Timeframe,
+    ) -> RcaOpenMarketSnapshot {
+        self.build_rca_open_market_snapshot(symbol, timeframe).await
     }
 }

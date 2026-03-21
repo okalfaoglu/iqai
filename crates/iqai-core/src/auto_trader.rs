@@ -8,15 +8,29 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use crate::app_config::TradingConfig;
 use crate::config::Config;
+use crate::position_rca::{ClosePositionRca, PositionOpenRca};
 use crate::exchange::{ExchangeConnector, OrderSide};
 use crate::trade_db::TradeDb;
 use crate::trade_manager::{calculate_position_size, Position, PositionSide, TradeAction, TradeManager};
 use crate::types::{Candle, QSetup, SignalType, Timeframe};
 
 /// Kapanışta kayma: long için fiyat aşağı, short için yukarı (olumsuz fill).
+/// TFAI-O-05: log / grep için tek satırda `trace_id`, `signal_id`, `position_uuid`, `order_id`.
+pub fn format_trade_correlation(
+    trace_id: &str,
+    signal_db_id: i64,
+    position_uuid: &str,
+    order_id: &str,
+) -> String {
+    format!(
+        "trace_id={trace_id} signal_id={signal_db_id} position_uuid={position_uuid} order_id={order_id}"
+    )
+}
+
 fn apply_slippage(price: f64, is_long: bool, slippage_bps: u32) -> f64 {
     if slippage_bps == 0 {
         return price;
@@ -51,6 +65,7 @@ impl TradingMode {
         match s.to_lowercase().as_str() {
             "live" => Self::Live,
             "dry" => Self::Dry,
+            "paper" => Self::Paper,
             _ => Self::Paper,
         }
     }
@@ -121,7 +136,7 @@ pub struct TradeSignal {
     pub timestamp: i64,
 }
 
-/// Yönetilen açık pozisyon
+/// Yönetilen açık pozisyon (TFAI-Q01: `position_uuid`, MAE/MFE)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ManagedPosition {
     pub position: Position,
@@ -131,6 +146,21 @@ pub struct ManagedPosition {
     pub realized_pnl: f64,
     /// SQLite positions.id (DB modlarda dolu)
     pub db_id: Option<i64>,
+    /// TFAI-Q01: pozisyon RCA UUID (DB `position_uuid` ile aynı).
+    #[serde(default)]
+    pub position_uuid: String,
+    /// İşlem süresince takip edilen max olumsuz sapma (USD, pozitif).
+    #[serde(default)]
+    pub mae_usd: f64,
+    /// İşlem süresince takip edilen max olumlu sapma (USD).
+    #[serde(default)]
+    pub mfe_usd: f64,
+    /// TFAI-O-05: pozisyon yaşam döngüsü kök trace (sinyalden üretilir).
+    #[serde(default)]
+    pub trace_id: String,
+    /// `signals.id` (DB yoksa veya kayıt yoksa 0).
+    #[serde(default)]
+    pub signal_db_id: i64,
 }
 
 /// Auto-Trader sonuç logu
@@ -256,12 +286,18 @@ pub struct AutoTraderConfig {
     pub db_path: Option<String>,
     /// Komisyon (basis points). Önce borsa API'sinden alınır; yoksa config (varsayılan 4).
     pub commission_bps: u32,
+    /// `commission_bps` config'ten set edildiyse, Binance'den tekrar fetch etme.
+    pub commission_bps_from_config: bool,
     /// Kapanışta kayma (basis points). Long kapanışta fiyat aşağı, short'ta yukarı uygulanır.
     pub slippage_bps: u32,
     /// true ise piyasa emri yerine limit IOC (maks kayma ile).
     pub use_limit_order: bool,
     /// Limit emirde izin verilen maks kayma, basis points (örn. 50 = %0.5).
     pub limit_slippage_bps: u32,
+    /// RCA: strateji kimliği (DB `strategy_id`).
+    pub strategy_id: String,
+    /// RCA: borsa kimliği (DB `exchange`).
+    pub exchange_id: String,
 }
 
 impl Default for AutoTraderConfig {
@@ -286,15 +322,25 @@ impl Default for AutoTraderConfig {
             fake_breakout_tp_rr: 2.0,
             db_path: None,
             commission_bps: 4,
+            commission_bps_from_config: true,
             slippage_bps: 0,
             use_limit_order: false,
             limit_slippage_bps: 50,
+            strategy_id: "iqai_default".to_string(),
+            exchange_id: "binance_futures".to_string(),
         }
     }
 }
 
 impl AutoTraderConfig {
     pub fn from_trading_config(tc: &TradingConfig) -> Self {
+        if let Err(errs) = tc.validate() {
+            for e in errs {
+                log::warn!("[TradingConfig] {}", e);
+            }
+        }
+        let commission_bps_from_config = tc.commission_bps.is_some();
+        let commission_bps = tc.commission_bps.unwrap_or(4);
         Self {
             enabled: tc.enabled.unwrap_or(false),
             mode: TradingMode::from_str(tc.mode.as_deref().unwrap_or("paper")),
@@ -314,10 +360,21 @@ impl AutoTraderConfig {
             fake_breakout_sl_atr_mult: tc.fake_breakout_sl_atr_mult.unwrap_or(0.2),
             fake_breakout_tp_rr: tc.fake_breakout_tp_rr.unwrap_or(2.0),
             db_path: tc.db_path.clone(),
-            commission_bps: tc.commission_bps.unwrap_or(4),
+            commission_bps,
+            commission_bps_from_config,
             slippage_bps: tc.slippage_bps.unwrap_or(0),
             use_limit_order: tc.use_limit_order.unwrap_or(false),
             limit_slippage_bps: tc.limit_slippage_bps.unwrap_or(50),
+            strategy_id: tc
+                .strategy_id
+                .clone()
+                .unwrap_or_else(|| "iqai_default".to_string()),
+            exchange_id: tc.exchange_id.clone().unwrap_or_else(|| {
+                match tc.market.as_deref().map(|s| s.to_lowercase()) {
+                    Some(ref m) if m == "spot" => "binance_spot".to_string(),
+                    _ => "binance_futures".to_string(),
+                }
+            }),
         }
     }
 }
@@ -416,8 +473,49 @@ impl AutoTrader {
     }
 
     /// Restart sonrası DB'den açık pozisyonları belleğe yükler (recovery).
-    pub fn restore_open_positions(&mut self, rows: Vec<(i64, i64, String, String, String, String, f64, f64, f64, f64, f64, String)>) {
-        for (db_id, opened_at, symbol, tf_str, source_str, side_str, entry_price, quantity, stop_loss, take_profit, current_sl, order_id) in rows {
+    pub fn restore_open_positions(
+        &mut self,
+        rows: Vec<(
+            i64,
+            i64,
+            String,
+            String,
+            String,
+            String,
+            f64,
+            f64,
+            f64,
+            f64,
+            f64,
+            String,
+            String,
+            String,
+            i64,
+        )>,
+    ) {
+        for (
+            db_id,
+            opened_at,
+            symbol,
+            tf_str,
+            source_str,
+            side_str,
+            entry_price,
+            quantity,
+            stop_loss,
+            take_profit,
+            current_sl,
+            order_id,
+            position_uuid,
+            trace_id,
+            signal_db_id,
+        ) in rows
+        {
+            let position_uuid = if position_uuid.is_empty() {
+                uuid::Uuid::new_v4().to_string()
+            } else {
+                position_uuid
+            };
             let Some(timeframe) = Timeframe::from_str(&tf_str) else { continue };
             let is_long = side_str.eq_ignore_ascii_case("LONG");
             let side = if is_long { PositionSide::Long } else { PositionSide::Short };
@@ -455,6 +553,11 @@ impl AutoTrader {
                 opened_at,
                 realized_pnl: 0.0,
                 db_id: Some(db_id),
+                position_uuid,
+                mae_usd: 0.0,
+                mfe_usd: 0.0,
+                trace_id,
+                signal_db_id,
             };
             let key = position_key(&symbol, timeframe);
             self.open_positions.insert(key, managed);
@@ -537,6 +640,16 @@ impl AutoTrader {
 
     /// Sinyali işle: pozisyon boyutu hesapla → emir gönder / simüle et → DB'ye yaz.
     /// DRY/PAPER'da `current_prices` verilirse açılış fill fiyatı o anki fiyat (son mum kapanışı) alınır; yoksa sinyal entry kullanılır.
+    ///
+    /// O-05+: `tracing` span `iqai.process_signal` — `trace_id` alanı DB/log ile uyumlu; OTel exporter eklendiğinde kök span olur.
+    #[tracing::instrument(
+        name = "iqai.process_signal",
+        skip(self, exchange, current_prices),
+        fields(
+            trace_id = tracing::field::Empty,
+            symbol = %signal.symbol,
+        )
+    )]
     pub async fn process_signal(
         &mut self,
         signal: TradeSignal,
@@ -544,6 +657,11 @@ impl AutoTrader {
         exchange: &dyn ExchangeConnector,
         current_prices: Option<&HashMap<String, f64>>,
     ) -> Result<Option<ManagedPosition>, String> {
+        // O-05: her process_signal denemesi için tek kök trace (red + emir + pozisyon aynı zincir).
+        let trace_id = uuid::Uuid::new_v4().to_string();
+        tracing::Span::current().record("trace_id", tracing::field::display(&trace_id));
+        tracing::Span::current().record("mode", tracing::field::display(self.config.mode.as_str()));
+
         let (mut ok, mut reason) = self.should_take_signal(&signal, account_balance);
 
         // DRY/PAPER: mevcut fiyat zaten TP ötesindeyse giriş yapma (geç kalmış sinyal)
@@ -561,14 +679,26 @@ impl AutoTrader {
 
         // DB'ye sinyal kaydı (kabul/red fark etmez)
         let signal_db_id = if let Some(ref db) = self.db {
-            db.insert_signal(&signal, ok, if ok { None } else { Some(&reason) }, self.config.mode)
-                .map_err(|e| format!("DB sinyal yazma hatası: {}", e))?
+            db.insert_signal(
+                &signal,
+                ok,
+                if ok { None } else { Some(&reason) },
+                self.config.mode,
+                Some(&trace_id),
+            )
+            .map_err(|e| format!("DB sinyal yazma hatası: {}", e))?
         } else {
             0
         };
 
         if !ok {
-            log::info!("[AutoTrader][{}] Sinyal reddedildi: {} — {}", self.config.mode, signal.source, reason);
+            log::info!(
+                "[AutoTrader][{}] Sinyal reddedildi: {} — {} | {}",
+                self.config.mode,
+                signal.source,
+                reason,
+                format_trade_correlation(&trace_id, signal_db_id, "", ""),
+            );
             return Ok(None);
         }
 
@@ -594,6 +724,9 @@ impl AutoTrader {
         let mode = self.config.mode;
 
         let (order_id, avg_price) = if mode.sends_real_orders() {
+            if let Some(ref db) = self.db {
+                let _ = db.sli_incr("exec_order_open_attempt_total", 1.0);
+            }
             let fill_price = current_prices
                 .and_then(|m| m.get(&signal.symbol).copied())
                 .unwrap_or(signal.entry);
@@ -611,14 +744,27 @@ impl AutoTrader {
             };
             match order_result {
                 Ok(resp) => {
+                    if let Some(ref db) = self.db {
+                        let _ = db.sli_incr("exec_order_open_success_total", 1.0);
+                    }
                     log::info!(
-                        "[AutoTrader][LIVE] Order {} filled: {:.6} @ {:.2}",
-                        resp.order_id, resp.executed_qty, resp.avg_price,
+                        "[AutoTrader][LIVE] Order {} filled: {:.6} @ {:.2} | {}",
+                        resp.order_id,
+                        resp.executed_qty,
+                        resp.avg_price,
+                        format_trade_correlation(&trace_id, signal_db_id, "", &resp.order_id),
                     );
                     (resp.order_id, if resp.avg_price > 0.0 { resp.avg_price } else { signal.entry })
                 }
                 Err(e) => {
-                    log::error!("[AutoTrader] Emir hatası: {}", e);
+                    if let Some(ref db) = self.db {
+                        let _ = db.sli_incr("exec_order_open_failure_total", 1.0);
+                    }
+                    log::error!(
+                        "[AutoTrader] Emir hatası: {} | {}",
+                        e,
+                        format_trade_correlation(&trace_id, signal_db_id, "", ""),
+                    );
                     return Err(format!("Emir hatası: {}", e));
                 }
             }
@@ -627,16 +773,57 @@ impl AutoTrader {
             let fill_price = current_prices
                 .and_then(|m| m.get(&signal.symbol).copied())
                 .unwrap_or(signal.entry);
+            let sim_oid = format!("{}-{}", mode.as_str().to_uppercase(), signal.timestamp);
             log::info!(
-                "[AutoTrader][{}] {} {} qty={:.6} @ {:.2} SL={:.2} TP={:.2}",
+                "[AutoTrader][{}] {} {} qty={:.6} @ {:.2} SL={:.2} TP={:.2} | {}",
                 mode,
                 if signal.is_long { "LONG" } else { "SHORT" },
-                signal.symbol, qty, fill_price, signal.stop_loss, signal.take_profit,
+                signal.symbol,
+                qty,
+                fill_price,
+                signal.stop_loss,
+                signal.take_profit,
+                format_trade_correlation(&trace_id, signal_db_id, "", &sim_oid),
             );
-            (format!("{}-{}", mode.as_str().to_uppercase(), signal.timestamp), fill_price)
+            (sim_oid, fill_price)
         };
 
         let position = self.trade_manager.create_position(side, avg_price, qty, signal.stop_loss, signal.take_profit);
+
+        let position_uuid = uuid::Uuid::new_v4().to_string();
+        let opened_at_us = signal.timestamp.saturating_mul(1000);
+        let wall_ms = chrono::Utc::now().timestamp_millis();
+        let signal_to_entry_ms = wall_ms.saturating_sub(signal.timestamp);
+        let entry_slippage_bps = if signal.entry.abs() > 1e-12 {
+            if signal.is_long {
+                (avg_price - signal.entry) / signal.entry * 10_000.0
+            } else {
+                (signal.entry - avg_price) / signal.entry * 10_000.0
+            }
+        } else {
+            0.0
+        };
+        let position_notional_usd = avg_price.abs() * qty.max(0.0);
+        let open_market = exchange
+            .fetch_rca_open_market_snapshot(&signal.symbol, signal.timeframe)
+            .await;
+        let rca = PositionOpenRca {
+            position_uuid: position_uuid.clone(),
+            strategy_id: self.config.strategy_id.clone(),
+            exchange: self.config.exchange_id.clone(),
+            trace_id: Some(trace_id.clone()),
+            opened_at_us,
+            entry_slippage_bps,
+            signal_mid_price: signal.entry,
+            entry_price_avg: avg_price,
+            position_notional_usd,
+            leverage: self.config.max_leverage.clamp(1.0, 125.0) as u32,
+            rr_at_open: signal.rr,
+            signal_to_entry_ms,
+            volatility_at_open: open_market.volatility_at_open,
+            spread_at_open_bps: open_market.spread_at_open_bps,
+            funding_rate_at_open: open_market.funding_rate_at_open,
+        };
 
         let mut managed = ManagedPosition {
             position,
@@ -645,13 +832,35 @@ impl AutoTrader {
             opened_at: signal.timestamp,
             realized_pnl: 0.0,
             db_id: None,
+            position_uuid,
+            mae_usd: 0.0,
+            mfe_usd: 0.0,
+            trace_id: trace_id.clone(),
+            signal_db_id,
         };
 
         // DB'ye pozisyon kaydı
         if let Some(ref db) = self.db {
-            match db.insert_position(signal_db_id, &managed, mode) {
+            match db.insert_position(signal_db_id, &managed, mode, &rca) {
                 Ok(id) => {
                     managed.db_id = Some(id);
+                    let opened_payload = json!({
+                        "trace_id": managed.trace_id,
+                        "signal_id": managed.signal_db_id,
+                    })
+                    .to_string();
+                    if let Err(e) = db.insert_position_event(
+                        &managed.position_uuid,
+                        "position.opened",
+                        Some(managed.order_id.as_str()),
+                        Some(managed.position.quantity * managed.position.remaining_pct),
+                        Some(managed.position.quantity * managed.position.remaining_pct),
+                        Some(managed.position.entry_price),
+                        None,
+                        Some(&opened_payload),
+                    ) {
+                        log::error!("[AutoTrader] position_events opened: {}", e);
+                    }
                     // Analiz link'i oluştur – mümkünse en yakın Q-RADAR event'i ve snapshot bilgisiyle.
                     let tf_str = signal.timeframe.to_binance_interval();
                     // H4 gibi TF'ler için pencereler TF'e göre ayarlanabilir; şimdilik 1 saat (ms).
@@ -701,8 +910,20 @@ impl AutoTrader {
         });
 
         log::info!(
-            "[AutoTrader][{}] Pozisyon açıldı: {} {} {:.6} @ {:.2} | RR={:.2} Score={:.0}",
-            mode, signal.source, signal.symbol, qty, avg_price, signal.rr, signal.score,
+            "[AutoTrader][{}] Pozisyon açıldı: {} {} {:.6} @ {:.2} | RR={:.2} Score={:.0} | {}",
+            mode,
+            signal.source,
+            signal.symbol,
+            qty,
+            avg_price,
+            signal.rr,
+            signal.score,
+            format_trade_correlation(
+                &managed.trace_id,
+                managed.signal_db_id,
+                &managed.position_uuid,
+                &managed.order_id,
+            ),
         );
 
         Ok(Some(managed))
@@ -730,11 +951,35 @@ impl AutoTrader {
                 Some(&p) => p,
                 None => continue,
             };
+            // RCA: MAE/MFE (USD) — kalan notional ile ölçeklenir.
+            let q = managed.position.quantity * managed.position.remaining_pct;
+            if managed.signal.is_long {
+                let favorable = (price - managed.position.entry_price) * q;
+                let adverse = (managed.position.entry_price - price) * q;
+                managed.mfe_usd = managed.mfe_usd.max(favorable.max(0.0));
+                managed.mae_usd = managed.mae_usd.max(adverse.max(0.0));
+            } else {
+                let favorable = (managed.position.entry_price - price) * q;
+                let adverse = (price - managed.position.entry_price) * q;
+                managed.mfe_usd = managed.mfe_usd.max(favorable.max(0.0));
+                managed.mae_usd = managed.mae_usd.max(adverse.max(0.0));
+            }
             // Pozisyon timeframe'ine göre mum seti (sembol_tf anahtarı)
             let candles = candles_map.get(key.as_str()).map(|v| v.as_slice()).unwrap_or(&[]);
 
             let old_sl = managed.position.current_sl;
-            let action = self.trade_manager.evaluate(&mut managed.position, price, candles);
+            let old_remaining_pct = managed.position.remaining_pct;
+            let mut action = self
+                .trade_manager
+                .evaluate(&mut managed.position, price, candles);
+
+            // Eğer remaining_pct clamp edilecekse, partial_close'da kullanılacak pct de aynı efektif değer olsun.
+            if let TradeAction::PartialClose { pct, .. } = &mut action {
+                let p = if pct.is_finite() { *pct } else { 0.0 };
+                let p = p.clamp(0.0, 1.0);
+                let rem = if old_remaining_pct.is_finite() { old_remaining_pct } else { 0.0 };
+                *pct = p.min(rem.max(0.0));
+            }
             self.trade_manager.apply_action(&mut managed.position, &action);
 
             match &action {
@@ -742,6 +987,25 @@ impl AutoTrader {
                 TradeAction::UpdateTrailingStop { new_sl } => {
                     if let (Some(ref db), Some(db_id)) = (&self.db, managed.db_id) {
                         let _ = db.update_position_sl(db_id, *new_sl);
+                        if !managed.position_uuid.is_empty() {
+                            let payload = json!({
+                                "trace_id": managed.trace_id,
+                                "signal_id": managed.signal_db_id,
+                                "reason": "trailing",
+                                "new_sl": new_sl,
+                            })
+                            .to_string();
+                            let _ = db.insert_position_event(
+                                &managed.position_uuid,
+                                "position.sl_moved",
+                                None,
+                                None,
+                                Some(managed.position.quantity * managed.position.remaining_pct),
+                                Some(*new_sl),
+                                None,
+                                Some(&payload),
+                            );
+                        }
                     }
                     sl_events.push(TradeEvent::SlUpdated {
                         symbol: symbol.clone(),
@@ -754,6 +1018,26 @@ impl AutoTrader {
                 TradeAction::MoveSlToBreakeven => {
                     if let (Some(ref db), Some(db_id)) = (&self.db, managed.db_id) {
                         let _ = db.update_position_sl(db_id, managed.position.entry_price);
+                        if !managed.position_uuid.is_empty() {
+                            let ep = managed.position.entry_price;
+                            let payload = json!({
+                                "trace_id": managed.trace_id,
+                                "signal_id": managed.signal_db_id,
+                                "reason": "breakeven",
+                                "new_sl": ep,
+                            })
+                            .to_string();
+                            let _ = db.insert_position_event(
+                                &managed.position_uuid,
+                                "position.sl_moved",
+                                None,
+                                None,
+                                Some(managed.position.quantity * managed.position.remaining_pct),
+                                Some(ep),
+                                None,
+                                Some(&payload),
+                            );
+                        }
                     }
                     sl_events.push(TradeEvent::SlUpdated {
                         symbol: symbol.clone(),
@@ -785,9 +1069,23 @@ impl AutoTrader {
         };
 
         let close_side = if managed.signal.is_long { OrderSide::Sell } else { OrderSide::Buy };
-        let close_qty = managed.position.quantity * managed.position.remaining_pct;
+        let close_fraction = if managed.position.remaining_pct.is_finite() {
+            managed.position.remaining_pct.clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let close_qty = managed.position.quantity * close_fraction;
 
+        // remaining_pct=0 durumunda (partial close sonrası aşırı clamp vb.) anlamsız log/trade event üretme.
+        if close_qty <= 0.0 {
+            return Ok(None);
+        }
+
+        let close_order_id: Option<String>;
         if self.config.mode.sends_real_orders() && close_qty > 0.0 {
+            if let Some(ref db) = self.db {
+                let _ = db.sli_incr("exec_order_close_attempt_total", 1.0);
+            }
             let limit_price = if managed.signal.is_long {
                 current_price * (1.0 - self.config.limit_slippage_bps as f64 / 10_000.0)
             } else {
@@ -803,18 +1101,56 @@ impl AutoTrader {
                     .await
             };
             match order_result {
-                Ok(resp) => log::info!("[AutoTrader][LIVE] Close {}: {:.6} @ {:.2}", resp.order_id, resp.executed_qty, resp.avg_price),
+                Ok(resp) => {
+                    close_order_id = Some(resp.order_id.clone());
+                    if let Some(ref db) = self.db {
+                        let _ = db.sli_incr("exec_order_close_success_total", 1.0);
+                    }
+                    log::info!(
+                        "[AutoTrader][LIVE] Close {}: {:.6} @ {:.2} | {}",
+                        resp.order_id,
+                        resp.executed_qty,
+                        resp.avg_price,
+                        format_trade_correlation(
+                            &managed.trace_id,
+                            managed.signal_db_id,
+                            &managed.position_uuid,
+                            &resp.order_id,
+                        ),
+                    );
+                }
                 Err(e) => {
-                    log::error!("[AutoTrader] Kapanış emir hatası: {}", e);
+                    if let Some(ref db) = self.db {
+                        let _ = db.sli_incr("exec_order_close_failure_total", 1.0);
+                    }
+                    log::error!(
+                        "[AutoTrader] Kapanış emir hatası: {} | {}",
+                        e,
+                        format_trade_correlation(
+                            &managed.trace_id,
+                            managed.signal_db_id,
+                            &managed.position_uuid,
+                            "",
+                        ),
+                    );
                     return Err(format!("Kapanış emir hatası: {}", e));
                 }
             }
+        } else {
+            close_order_id = Some(format!(
+                "SIM-CLOSE-{}",
+                chrono::Utc::now().timestamp_millis()
+            ));
         }
 
-        let commission_bps = exchange
-            .get_commission_bps(&managed.signal.symbol)
-            .await
-            .unwrap_or(self.config.commission_bps);
+        let commission_bps = if self.config.commission_bps_from_config {
+            self.config.commission_bps
+        } else {
+            exchange
+                .get_commission_bps(&managed.signal.symbol)
+                .await
+                .unwrap_or(self.config.commission_bps)
+        };
         let effective_exit = apply_slippage(current_price, managed.signal.is_long, self.config.slippage_bps);
         let pnl_gross = if managed.signal.is_long {
             (effective_exit - managed.position.entry_price) * close_qty
@@ -826,6 +1162,16 @@ impl AutoTrader {
         let fee = (notional_open + notional_close) * (commission_bps as f64 / 10_000.0);
         let pnl = pnl_gross - fee;
         let pnl_r = pnl / (managed.position.risk_r * close_qty).max(1e-10);
+        let notional_close_leg = (managed.position.entry_price * close_qty).max(1e-12);
+        let pnl_bps = 10_000.0 * pnl / notional_close_leg;
+        let lifecycle_duration_ms = chrono::Utc::now()
+            .timestamp_millis()
+            .saturating_sub(managed.signal.timestamp);
+        let exit_orders_json = serde_json::json!([
+            managed.order_id.as_str(),
+            close_order_id.as_deref().unwrap_or("")
+        ])
+        .to_string();
         self.daily_pnl += pnl;
 
         let trade_log = TradeLog {
@@ -834,7 +1180,7 @@ impl AutoTrader {
             source: managed.signal.source,
             side: if managed.signal.is_long { "LONG".into() } else { "SHORT".into() },
             entry: managed.position.entry_price,
-            exit: current_price,
+            exit: effective_exit,
             quantity: close_qty,
             pnl,
             pnl_r,
@@ -844,7 +1190,51 @@ impl AutoTrader {
         // DB: pozisyonu kapat + trade log yaz
         if let Some(ref db) = self.db {
             if let Some(db_id) = managed.db_id {
-                let _ = db.close_position(db_id, current_price, pnl, pnl_r, reason);
+                let exit_slippage_bps = if current_price.abs() > 1e-12 {
+                    if managed.signal.is_long {
+                        (current_price - effective_exit) / current_price * 10_000.0
+                    } else {
+                        (effective_exit - current_price) / current_price * 10_000.0
+                    }
+                } else {
+                    0.0
+                };
+                let rca = ClosePositionRca {
+                    exit_slippage_bps,
+                    mae_usd: managed.mae_usd,
+                    mfe_usd: managed.mfe_usd,
+                    fees_total_usd: fee,
+                    trace_id: if managed.trace_id.is_empty() {
+                        None
+                    } else {
+                        Some(managed.trace_id.clone())
+                    },
+                    pnl_gross_usd: pnl_gross,
+                    pnl_net_usd: pnl,
+                    pnl_bps,
+                    exit_price_avg: effective_exit,
+                    lifecycle_duration_ms,
+                    close_order_id,
+                    exit_orders_json,
+                };
+                let _ = db.close_position(db_id, effective_exit, pnl, pnl_r, reason, &rca);
+                if !managed.position_uuid.is_empty() {
+                    let closed_payload = json!({
+                        "trace_id": managed.trace_id,
+                        "signal_id": managed.signal_db_id,
+                    })
+                    .to_string();
+                    let _ = db.insert_position_event(
+                        &managed.position_uuid,
+                        "position.closed",
+                        None,
+                        Some(-close_qty),
+                        Some(0.0),
+                        Some(effective_exit),
+                        Some(fee),
+                        Some(&closed_payload),
+                    );
+                }
 
                 // Basit outcome kaydı: full-trade performansı
                 if let Ok(links) = db.get_trade_analysis_links_by_position(db_id) {
@@ -894,7 +1284,7 @@ impl AutoTrader {
             symbol: managed.signal.symbol.clone(),
             side: trade_log.side.clone(),
             entry: managed.position.entry_price,
-            exit: current_price,
+            exit: effective_exit,
             quantity: close_qty,
             pnl,
             pnl_r,
@@ -904,8 +1294,19 @@ impl AutoTrader {
         });
 
         log::info!(
-            "[AutoTrader][{}] Kapatıldı: {} {} PnL={:.2} ({:.2}R) — {}",
-            self.config.mode, managed.signal.symbol, trade_log.side, pnl, pnl_r, reason,
+            "[AutoTrader][{}] Kapatıldı: {} {} PnL={:.2} ({:.2}R) — {} | {}",
+            self.config.mode,
+            managed.signal.symbol,
+            trade_log.side,
+            pnl,
+            pnl_r,
+            reason,
+            format_trade_correlation(
+                &managed.trace_id,
+                managed.signal_db_id,
+                &managed.position_uuid,
+                &managed.order_id,
+            ),
         );
 
         self.trade_history.push(trade_log.clone());
@@ -921,15 +1322,26 @@ impl AutoTrader {
         reason: &str,
         exchange: &dyn ExchangeConnector,
     ) -> Result<(), String> {
+        if !pct.is_finite() || pct <= 0.0 {
+            return Ok(());
+        }
+
         let managed = match self.open_positions.get(key) {
             Some(m) => m,
             None => return Ok(()),
         };
 
+        let pct = pct.clamp(0.0, 1.0);
         let close_qty = managed.position.quantity * pct;
+        if close_qty <= 0.0 {
+            return Ok(());
+        }
         let close_side = if managed.signal.is_long { OrderSide::Sell } else { OrderSide::Buy };
 
         if self.config.mode.sends_real_orders() && close_qty > 0.0 {
+            if let Some(ref db) = self.db {
+                let _ = db.sli_incr("exec_order_partial_close_attempt_total", 1.0);
+            }
             let limit_price = if managed.signal.is_long {
                 current_price * (1.0 - self.config.limit_slippage_bps as f64 / 10_000.0)
             } else {
@@ -945,18 +1357,56 @@ impl AutoTrader {
                     .await
             };
             match order_result {
-                Ok(resp) => log::info!("[AutoTrader][LIVE] Partial close {}: {:.6} @ {:.2}", resp.order_id, resp.executed_qty, resp.avg_price),
-                Err(e) => return Err(format!("Kısmi kapanış hatası: {}", e)),
+                Ok(resp) => {
+                    if let Some(ref db) = self.db {
+                        let _ = db.sli_incr("exec_order_partial_close_success_total", 1.0);
+                    }
+                    log::info!(
+                        "[AutoTrader][LIVE] Partial close {}: {:.6} @ {:.2} | {}",
+                        resp.order_id,
+                        resp.executed_qty,
+                        resp.avg_price,
+                        format_trade_correlation(
+                            &managed.trace_id,
+                            managed.signal_db_id,
+                            &managed.position_uuid,
+                            &resp.order_id,
+                        ),
+                    );
+                }
+                Err(e) => {
+                    if let Some(ref db) = self.db {
+                        let _ = db.sli_incr("exec_order_partial_close_failure_total", 1.0);
+                    }
+                    return Err(format!("Kısmi kapanış hatası: {}", e));
+                }
             }
         } else {
-            log::info!("[AutoTrader][{}] Partial close {} {:.0}% @ {:.2} — {}", self.config.mode, key, pct * 100.0, current_price, reason);
+            log::info!(
+                "[AutoTrader][{}] Partial close {} {:.0}% @ {:.2} — {} | {}",
+                self.config.mode,
+                key,
+                pct * 100.0,
+                current_price,
+                reason,
+                format_trade_correlation(
+                    &managed.trace_id,
+                    managed.signal_db_id,
+                    &managed.position_uuid,
+                    &managed.order_id,
+                ),
+            );
         }
 
         if let Some(m) = self.open_positions.get_mut(key) {
-            let commission_bps = exchange
-                .get_commission_bps(&m.signal.symbol)
-                .await
-                .unwrap_or(self.config.commission_bps);
+            let commission_bps = if self.config.commission_bps_from_config {
+                self.config.commission_bps
+            } else {
+                exchange
+                    .get_commission_bps(&m.signal.symbol)
+                    .await
+                    .unwrap_or(self.config.commission_bps)
+            };
             let effective_exit = apply_slippage(current_price, m.signal.is_long, self.config.slippage_bps);
             let pnl_gross = if m.signal.is_long {
                 (effective_exit - m.position.entry_price) * close_qty
@@ -972,10 +1422,30 @@ impl AutoTrader {
                 symbol: m.signal.symbol.clone(),
                 side: if m.signal.is_long { "LONG".into() } else { "SHORT".into() },
                 pct,
-                price: current_price,
+                price: effective_exit,
                 reason: reason.to_string(),
                 mode: self.config.mode,
             });
+            if let Some(ref db) = self.db {
+                if !m.position_uuid.is_empty() {
+                    let rem = m.position.quantity * m.position.remaining_pct;
+                    let tp_payload = json!({
+                        "trace_id": m.trace_id,
+                        "signal_id": m.signal_db_id,
+                    })
+                    .to_string();
+                    let _ = db.insert_position_event(
+                        &m.position_uuid,
+                        "position.tp_partial",
+                        None,
+                        Some(-close_qty),
+                        Some(rem),
+                        Some(effective_exit),
+                        Some(fee),
+                        Some(&tp_payload),
+                    );
+                }
+            }
         }
 
         Ok(())
@@ -1121,4 +1591,37 @@ impl AutoTrader {
 
 fn position_key(symbol: &str, tf: Timeframe) -> String {
     format!("{}_{}", symbol, tf.to_binance_interval())
+}
+
+#[cfg(test)]
+mod trace_correlation_tests {
+    use super::format_trade_correlation;
+
+    #[test]
+    fn correlation_line_has_all_keys() {
+        let s = format_trade_correlation("abc-trace", 7, "pos-uuid", "ord-9");
+        assert!(s.contains("trace_id=abc-trace"));
+        assert!(s.contains("signal_id=7"));
+        assert!(s.contains("position_uuid=pos-uuid"));
+        assert!(s.contains("order_id=ord-9"));
+    }
+}
+
+#[cfg(test)]
+mod trading_mode_from_str_tests {
+    use super::TradingMode;
+
+    #[test]
+    fn parses_live_dry_paper_case_insensitive() {
+        assert_eq!(TradingMode::from_str("live"), TradingMode::Live);
+        assert_eq!(TradingMode::from_str("LIVE"), TradingMode::Live);
+        assert_eq!(TradingMode::from_str("dry"), TradingMode::Dry);
+        assert_eq!(TradingMode::from_str("paper"), TradingMode::Paper);
+    }
+
+    #[test]
+    fn unknown_defaults_to_paper() {
+        assert_eq!(TradingMode::from_str(""), TradingMode::Paper);
+        assert_eq!(TradingMode::from_str("invalid"), TradingMode::Paper);
+    }
 }
