@@ -474,6 +474,11 @@ impl ImpulseLevels {
 pub struct ImpulseValidation {
     pub w2_valid: bool,
     pub w3_valid: bool,
+    /// Impulse: W4 düzeltmesi W1 tepe/dibinin ötesinde olmamalı (klasik: W4, W1 bölgesine girmez).
+    pub w4_vs_w1_valid: bool,
+    /// Impulse: W4 ekstremi W3 ekstremunun «geri» tarafında olmalı (bull: W4 dibi < W3 zirvesi; bear: tersi).
+    pub w4_vs_w3_valid: bool,
+    /// `w4_vs_w1_valid && w4_vs_w3_valid`
     pub w4_valid: bool,
     /// N°11: W1, W3, W5 aynı anda extended olamaz (en fazla 1 extended)
     pub no_triple_extension_valid: bool,
@@ -522,11 +527,18 @@ pub fn validate_impulse_with_w5(
         None => w1_len > 0.0 && w3_len >= w1_len,
     };
     let w1_extreme = if is_bullish { w1_high } else { w1_low };
-    let w4_valid = if is_bullish {
+    let w4_vs_w1_valid = if is_bullish {
         w4_extreme > w1_extreme
     } else {
         w4_extreme < w1_extreme
     };
+    // W4, W3’ün motive ucu kadar ileri gitmemeli (bull’da W4 dibi < W3 zirvesi).
+    let w4_vs_w3_valid = if is_bullish {
+        w4_extreme < w3_extreme
+    } else {
+        w4_extreme > w3_extreme
+    };
+    let w4_valid = w4_vs_w1_valid && w4_vs_w3_valid;
     // N°11: W1, W3, W5 asla üçü birden extended olamaz (extended = >= 1.618 × min)
     let no_triple_extension_valid = match w5_extreme {
         Some(w5) => {
@@ -544,6 +556,8 @@ pub fn validate_impulse_with_w5(
     ImpulseValidation {
         w2_valid,
         w3_valid,
+        w4_vs_w1_valid,
+        w4_vs_w3_valid,
         w4_valid,
         no_triple_extension_valid,
         formation_valid,
@@ -665,11 +679,18 @@ pub fn validate_diagonal(
     // Kural 2: W3 en kısa olamaz (Impulse ile aynı)
     let w3_valid = w1_len > 0.0 && w3_len >= w1_len;
     // Kural 3: W4-W0 kırmamalı (motive diagonal yapıda trend kökünü bozmamak için)
-    let w4_valid = if is_bullish {
+    let w4_above_w0 = if is_bullish {
         w4_extreme > w0
     } else {
         w4_extreme < w0
     };
+    // W4 düzeltmesi W3 ekstremunun gerisinde kalmalı (impulse ile aynı geometri).
+    let w4_vs_w3 = if is_bullish {
+        w4_extreme < w3_extreme
+    } else {
+        w4_extreme > w3_extreme
+    };
+    let w4_valid = w4_above_w0 && w4_vs_w3;
     // Kural 4: W4-W1 örtüşebilir (Diagonal'a özgü – validate_diagonal sadece W4 overlap durumunda çağrılır)
     let shape = diagonal_shape(w0, w1_high, w1_low, w2_extreme, w3_extreme, w4_extreme, is_bullish);
     DiagonalValidation {
@@ -1738,5 +1759,50 @@ pub fn validate_corrective_subwaves(
         c_inner: inner_counts[2],
         pattern: pattern.to_string(),
         valid,
+    }
+}
+
+#[cfg(test)]
+mod impulse_validation_tests {
+    use super::{validate_impulse, validate_impulse_with_w5};
+
+    /// ETHUSDT benzeri: W4 etiketi W3'ten yüksek → impulse geçersiz.
+    #[test]
+    fn rejects_bullish_w4_extreme_not_below_w3() {
+        let v = validate_impulse(
+            2060.09, 2123.25, 2060.09, 2085.10, 2288.00, 2305.60, true,
+        );
+        assert!(v.w4_vs_w1_valid, "W1 bölgesi dışında kalmış örnek");
+        assert!(!v.w4_vs_w3_valid);
+        assert!(!v.w4_valid);
+        assert!(!v.formation_valid);
+    }
+
+    #[test]
+    fn accepts_bullish_w4_dip_below_w3() {
+        let v = validate_impulse(
+            100.0, 110.0, 100.0, 105.0, 130.0, 120.0, true,
+        );
+        assert!(v.w4_vs_w3_valid);
+        assert!(v.w4_vs_w1_valid);
+        assert!(v.w4_valid);
+    }
+
+    #[test]
+    fn rejects_bearish_w4_extreme_not_above_w3() {
+        let v = validate_impulse(
+            200.0, 200.0, 180.0, 195.0, 150.0, 145.0, false,
+        );
+        assert!(!v.w4_vs_w3_valid);
+        assert!(!v.formation_valid);
+    }
+
+    #[test]
+    fn w5_present_still_requires_w4_vs_w3() {
+        let v = validate_impulse_with_w5(
+            2060.09, 2123.25, 2060.09, 2085.10, 2288.00, 2305.60, Some(2400.0), true,
+        );
+        assert!(!v.w4_vs_w3_valid);
+        assert!(!v.formation_valid);
     }
 }

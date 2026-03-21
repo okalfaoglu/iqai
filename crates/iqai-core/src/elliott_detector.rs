@@ -803,8 +803,11 @@ fn build_impulse_result(
                 if !val.w3_valid {
                     parts.push("W3 en kısa");
                 }
-                if !val.w4_valid {
-                    parts.push("W4-W1 örtüşme");
+                if !val.w4_vs_w1_valid {
+                    parts.push("W4-W1 bölgesi (impulse: örtüşme)");
+                }
+                if !val.w4_vs_w3_valid {
+                    parts.push("W4, W3 ekstremunu aştı (geçersiz düzeltme)");
                 }
                 if !val.no_triple_extension_valid {
                     parts.push("Triple extension");
