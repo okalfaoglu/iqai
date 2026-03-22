@@ -569,6 +569,14 @@
     // Classic formasyon çizgilerine göre hover tooltip modeli
     let classicHoverModels = [];
 
+    /** Elliott pivot: tepe → aboveBar, dip → belowBar (`is_high` API alanı). */
+    function ewWaveMarkerPosition(p) {
+      if (p && typeof p.is_high === 'boolean') return p.is_high ? 'aboveBar' : 'belowBar';
+      const L = String(p.label || '');
+      if (['0', '2', '4', 'B'].includes(L)) return 'belowBar';
+      return 'aboveBar';
+    }
+
     function tvDefaultSymbol(exchange) {
       const e = (exchange || 'BINANCE').toUpperCase();
       if (e === 'BIST') return 'XU100';
@@ -1127,14 +1135,14 @@
         const ewValid = ann.elliott && (ann.elliott.validation_ok === true);
         const ewFormEnabled = ann.elliott && isEwFormationEnabled(ann.elliott.formation, ann.elliott.formation_type);
         const ewPointMarkers = showElliott && ewValid && ewFormEnabled && (ann.elliott?.wave_points || []).map(p => ({
-          time: p.time, position: 'belowBar', color: '#E040FB', shape: 'circle', text: `W${p.label} ${(p.price||0).toFixed(2)}`
+          time: p.time, position: ewWaveMarkerPosition(p), color: '#E040FB', shape: 'circle', text: `W${p.label} ${(p.price||0).toFixed(2)}`
         }));
         const formations = data.formations || [];
         const formationsFiltered = formations.filter(f => isEwFormationEnabled(f.formation, f.formation_type));
         const formColors = ['#00E5FF', '#00BFA5', '#E040FB', '#76FF03', '#FFB627'];
         const formMarkers = showElliott && formationsFiltered.length > 0
           ? formationsFiltered.flatMap((f, fi) => (f.wave_points || []).map(p => ({
-              time: p.time, position: 'belowBar', color: formColors[fi % formColors.length],
+              time: p.time, position: ewWaveMarkerPosition(p), color: formColors[fi % formColors.length],
               shape: 'circle', text: `W${p.label} ${(p.price||0).toFixed(2)}`
             })))
           : [];
@@ -1290,20 +1298,30 @@
             if (!usedDraw) {
               // TradingView benzeri: formasyon gövdesini çevreleyen sınır + orta/neck çizgisi.
               if (k.includes('Triangle')) {
-                const apexOffset = h * 0.08;
-                const up2 = ref + apexOffset;
-                const lo2 = ref - apexOffset;
-                // üst ve alt kenarlar (1-3 ve 2-4 hissi)
-                addSeg(t1, upper, t2, up2, color, 2, 0);
-                addSeg(t1, lower, t2, lo2, color, 2, 0);
-                addHoverLine(t1, upper, t2, up2);
-                addHoverLine(t1, lower, t2, lo2);
-                // orta/neck çizgisi
+                const apex = (upper + lower) / 2;
+                const band = Math.max(1e-9, upper - lower);
+                if (k === 'AscendingTriangle') {
+                  const loR = lower + band * 0.82;
+                  addSeg(t1, upper, t2, upper, color, 2, 0);
+                  addSeg(t1, lower, t2, loR, color, 2, 0);
+                  addHoverLine(t1, upper, t2, upper);
+                  addHoverLine(t1, lower, t2, loR);
+                } else if (k === 'DescendingTriangle') {
+                  const upR = upper - band * 0.82;
+                  addSeg(t1, upper, t2, upR, color, 2, 0);
+                  addSeg(t1, lower, t2, lower, color, 2, 0);
+                  addHoverLine(t1, upper, t2, upR);
+                  addHoverLine(t1, lower, t2, lower);
+                } else {
+                  addSeg(t1, upper, t2, apex, color, 2, 0);
+                  addSeg(t1, lower, t2, apex, color, 2, 0);
+                  addHoverLine(t1, upper, t2, apex);
+                  addHoverLine(t1, lower, t2, apex);
+                }
                 addSeg(t1, ref, t2, ref, color, 1, 2);
                 addHoverLine(t1, ref, t2, ref);
-                // sol ve sağ dik kenarlar
                 addSeg(t1, upper, t1, lower, color, 1, 1);
-                addSeg(t2, up2, t2, lo2, color, 1, 1);
+                addSeg(t2, upper, t2, lower, color, 1, 1);
               } else if (k === 'DoubleTop' || k === 'DoubleBottom') {
                 addSeg(t1, ref, t2, ref, color, 2, 0);
                 addSeg(t1, sec != null ? sec : upper, t2, sec != null ? sec : upper, color, 1, 2);
@@ -1311,13 +1329,21 @@
                 addHoverLine(t1, sec != null ? sec : upper, t2, sec != null ? sec : upper);
               } else if (k === 'HeadAndShoulders' || k === 'InverseHeadAndShoulders') {
                 addSeg(t1, ref, t2, ref, color, 2, 0);
-                if (sec != null) addSeg(t1, sec, t2, sec, color, 1, 1);
-                addSeg(t1, ref + (h * 0.35), t2, ref + (h * 0.25), color, 1, 2);
+                if (sec != null) {
+                  const spanT = Math.max(1, t2 - t1);
+                  const midT = Math.floor((t1 + t2) / 2);
+                  const pad = Math.max(1, Math.floor(spanT * 0.08));
+                  addSeg(t1, sec, midT - pad, sec, color, 1, 0);
+                  addSeg(midT + pad, sec, t2, sec, color, 1, 0);
+                  addHoverLine(t1, sec, midT - pad, sec);
+                  addHoverLine(midT + pad, sec, t2, sec);
+                }
                 addHoverLine(t1, ref, t2, ref);
-                if (sec != null) addHoverLine(t1, sec, t2, sec);
-                addHoverLine(t1, ref + (h * 0.35), t2, ref + (h * 0.25));
               } else if (k === 'BullFlag' || k === 'BearFlag') {
-                const slope = (k === 'BullFlag' ? -1 : 1) * h * 0.06;
+                const span = Math.max(1, t2 - t1);
+                const ch = Math.max(1e-9, upper - lower);
+                // Kanal yüksekliğiyle ölçekli eğim (sabit %6 pattern yüksekliği yerine).
+                const slope = (k === 'BullFlag' ? -1 : 1) * ch * 0.35;
                 const up2 = upper + slope;
                 const lo2 = lower + slope;
                 // kanal üst/altı
@@ -1497,9 +1523,7 @@
           if (ew.wave_points && ew.wave_points.length > 0 && candleSeries && candleSeries.setMarkers) {
             const markers = (ew.wave_points || []).map(p => ({
               time: p.time > 1_000_000_000_000 ? p.time / 1000 : p.time,
-              position: p.label === '0' || p.label === '1' || p.label === '2' || p.label === '3' || p.label === '4' || p.label === '5'
-                ? 'belowBar'
-                : 'aboveBar',
+              position: ewWaveMarkerPosition(p),
               color: '#F5F3FF',
               shape: 'circle',
               text: p.label

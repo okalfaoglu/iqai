@@ -130,6 +130,8 @@ pub struct ElliottWavePoint {
     pub time: i64,
     pub price: f64,
     pub label: String,
+    /// Pivot tepe (aboveBar) / dip (belowBar) — GUI marker konumu.
+    pub is_high: bool,
 }
 
 #[derive(serde::Serialize)]
@@ -817,6 +819,7 @@ fn elliott_result_to_annotations(
             time: p.time,
             price: p.price,
             label: p.label,
+            is_high: p.is_high,
         })
         .collect();
 

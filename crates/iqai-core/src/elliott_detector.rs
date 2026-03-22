@@ -28,6 +28,8 @@ pub struct ElliottWavePointCore {
     pub time: i64,
     pub price: f64,
     pub label: String,
+    /// Pivot tepe mi (GUI: aboveBar), dip mi (belowBar).
+    pub is_high: bool,
 }
 
 /// Dalga bacak (time1, price1, time2, price2, label, dotted)
@@ -198,6 +200,8 @@ pub fn collect_swings(candles: &[Candle], pivot_len: usize) -> Vec<(i64, f64, bo
         let pivot_idx = sub.len() - 1 - pivot_len;
         let t = candles[pivot_idx].time;
 
+        // Aynı barda hem pivot_high hem pivot_low true olabilir; ikisini birden eklemek
+        // alternasyonu bozar (ör. "dip" fiyatı önceki tepeyi aşar). Yalnızca biri seçilir.
         if let Some(ph) = pivot_high(sub, pivot_len) {
             if last_was_high != Some(true) {
                 let ok = last_price
@@ -209,8 +213,7 @@ pub fn collect_swings(candles: &[Candle], pivot_len: usize) -> Vec<(i64, f64, bo
                     last_price = Some(ph);
                 }
             }
-        }
-        if let Some(pl_val) = pivot_low(sub, pivot_len) {
+        } else if let Some(pl_val) = pivot_low(sub, pivot_len) {
             if last_was_high != Some(false) {
                 let ok = last_price
                     .map(|lp| (pl_val - lp).abs() / lp.max(1e-10) >= ELLIOTT_SWING_DEVIATION_PCT)
@@ -288,19 +291,21 @@ pub fn compute_elliott(candles: &[Candle], config: &Config, invert: bool) -> Ell
     let (zigzag_valid, _, _) = zigzag_ok;
     if zigzag_valid && (result.validation_ok != Some(true) || result.formation == "—") {
         result = build_zigzag_result(&last4, &swings);
-    } else if let Some(flat_typ) = check_flat(&last4) {
-        result = build_flat_result(&last4, flat_typ, &swings);
-    } else if swings.len() >= 6 && (result.validation_ok != Some(true) || result.formation == "—") {
-        if let Some(tri) = try_triangle(&swings) {
-            result = tri;
-        } else if let Some(dzz) = try_double_zigzag(&swings) {
-            result = dzz;
-        } else if let Some(dt) = try_double_three(&swings) {
-            result = dt;
-        } else if let Some(tzz) = try_triple_zigzag(&swings) {
-            result = tzz;
-        } else if let Some(tt) = try_triple_three(&swings) {
-            result = tt;
+    } else if result.validation_ok != Some(true) || result.formation == "—" {
+        if let Some(flat_typ) = check_flat(&last4) {
+            result = build_flat_result(&last4, flat_typ, &swings);
+        } else if swings.len() >= 6 {
+            if let Some(tri) = try_triangle(&swings) {
+                result = tri;
+            } else if let Some(dzz) = try_double_zigzag(&swings) {
+                result = dzz;
+            } else if let Some(dt) = try_double_three(&swings) {
+                result = dt;
+            } else if let Some(tzz) = try_triple_zigzag(&swings) {
+                result = tzz;
+            } else if let Some(tt) = try_triple_three(&swings) {
+                result = tt;
+            }
         }
     }
 
@@ -390,12 +395,13 @@ fn find_impulse_window(
             for s in (0..=base.len() - 6).rev() {
                 let w = &base[s..s + 6];
                 let first_high = w[0].2;
+                // Alternating pivots: çift indeks (0,2,4) = first_high; tek (1,3,5) = !first_high
                 if first_high != need_first_high
                     || w[1].2 == first_high
                     || w[2].2 != first_high
                     || w[3].2 == first_high
                     || w[4].2 != first_high
-                    || w[5].2 != first_high
+                    || w[5].2 == first_high
                 {
                     continue;
                 }
@@ -477,11 +483,12 @@ fn leg(t1: i64, p1: f64, t2: i64, p2: f64, label: &str, dotted: bool) -> Elliott
     }
 }
 
-fn pt(time: i64, price: f64, label: &str) -> ElliottWavePointCore {
+fn pt(time: i64, price: f64, label: &str, is_high: bool) -> ElliottWavePointCore {
     ElliottWavePointCore {
         time,
         price,
         label: label.to_string(),
+        is_high,
     }
 }
 
@@ -645,16 +652,16 @@ fn build_impulse_result(
         return result;
     }
 
-    let (t0, p0, _) = recent[0];
-    let (t1, p1, _) = recent[1];
-    let (t2, p2, _) = recent[2];
+    let (t0, p0, h0) = recent[0];
+    let (t1, p1, h1) = recent[1];
+    let (t2, p2, h2) = recent[2];
     let t0s = t0 / 1000;
     let t1s = t1 / 1000;
     let t2s = t2 / 1000;
 
-    result.wave_points.push(pt(t0s, p0, "0"));
-    result.wave_points.push(pt(t1s, p1, "1"));
-    result.wave_points.push(pt(t2s, p2, "2"));
+    result.wave_points.push(pt(t0s, p0, "0", h0));
+    result.wave_points.push(pt(t1s, p1, "1", h1));
+    result.wave_points.push(pt(t2s, p2, "2", h2));
 
     if recent.len() == 3 {
         result.formation = "Impulse (1-2)".to_string();
@@ -678,9 +685,9 @@ fn build_impulse_result(
         };
         result.wave_legs.push(leg(t2s, p2, last_t, w3_tgt, "3", true));
     } else if recent.len() == 4 {
-        let (t3, p3, _) = recent[3];
+        let (t3, p3, h3) = recent[3];
         let t3s = t3 / 1000;
-        result.wave_points.push(pt(t3s, p3, "3"));
+        result.wave_points.push(pt(t3s, p3, "3", h3));
         result.wave_legs.push(leg(t2s, p2, t3s, p3, "3", false));
         let w4_est = if imp.is_bullish {
             p3 - 0.382 * (p3 - p2).abs()
@@ -698,19 +705,19 @@ fn build_impulse_result(
     }
 
     if recent.len() >= 5 {
-        let (t3, p3, _) = recent[3];
-        let (t4, p4, _) = recent[4];
+        let (t3, p3, h3) = recent[3];
+        let (t4, p4, h4) = recent[4];
         let t3s = t3 / 1000;
         let t4s = t4 / 1000;
 
-        result.wave_points.push(pt(t3s, p3, "3"));
-        result.wave_points.push(pt(t4s, p4, "4"));
+        result.wave_points.push(pt(t3s, p3, "3", h3));
+        result.wave_points.push(pt(t4s, p4, "4", h4));
         result.wave_legs.push(leg(t2s, p2, t3s, p3, "3", false));
         result.wave_legs.push(leg(t3s, p3, t4s, p4, "4", false));
 
         if impulse_complete && recent.len() >= 6 {
-            let (t5, p5, _) = recent[5];
-            result.wave_points.push(pt(t5 / 1000, p5, "5"));
+            let (t5, p5, h5) = recent[5];
+            result.wave_points.push(pt(t5 / 1000, p5, "5", h5));
             result.wave_legs.push(leg(t4s, p4, t5 / 1000, p5, "5", false));
         }
 
@@ -1209,7 +1216,12 @@ fn build_zigzag_result(last4: &[(i64, f64, bool)], all_swings: &[(i64, f64, bool
     };
 
     ElliottDetectorResult {
-        wave_points: vec![pt(t0s, p0, "A"), pt(t1s, p1, "A'"), pt(t2s, p2, "B"), pt(t3s, p3, "C")],
+        wave_points: vec![
+            pt(t0s, p0, "A", last4[0].2),
+            pt(t1s, p1, "A'", last4[1].2),
+            pt(t2s, p2, "B", last4[2].2),
+            pt(t3s, p3, "C", last4[3].2),
+        ],
         wave_legs: vec![
             leg(t0s, p0, t1s, p1, "A", false),
             leg(t1s, p1, t2s, p2, "B", false),
@@ -1278,7 +1290,12 @@ fn build_flat_result(last4: &[(i64, f64, bool)], flat_type: FlatType, all_swings
     };
 
     ElliottDetectorResult {
-        wave_points: vec![pt(t0s, p0, "0"), pt(t1s, p1, "A"), pt(t2s, p2, "B"), pt(t3s, p3, "C")],
+        wave_points: vec![
+            pt(t0s, p0, "0", last4[0].2),
+            pt(t1s, p1, "A", last4[1].2),
+            pt(t2s, p2, "B", last4[2].2),
+            pt(t3s, p3, "C", last4[3].2),
+        ],
         wave_legs: vec![
             leg(t0s, p0, t1s, p1, "A", false),
             leg(t1s, p1, t2s, p2, "B", false),
@@ -1365,8 +1382,13 @@ fn try_triangle(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResult> {
     let mut wave_points = vec![];
     let mut wave_legs = vec![];
 
-    for (i, (t, p, _)) in last6.iter().enumerate() {
-        wave_points.push(pt(t / 1000, *p, labels.get(i).copied().unwrap_or("?")));
+    for (i, (t, p, is_h)) in last6.iter().enumerate() {
+        wave_points.push(pt(
+            t / 1000,
+            *p,
+            labels.get(i).copied().unwrap_or("?"),
+            *is_h,
+        ));
     }
     for i in 0..5 {
         let (t1, p1, _) = last6[i];
@@ -1491,8 +1513,8 @@ fn try_double_zigzag(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResul
     let labels = ["W-a", "W-b", "W-c", "X", "Y-a", "Y-b", "Y-c", "Y-end"];
     let mut wave_points = Vec::new();
     let mut wave_legs = Vec::new();
-    for (i, (t, p, _)) in s.iter().enumerate() {
-        wave_points.push(pt(t / 1000, *p, labels[i]));
+    for (i, (t, p, is_h)) in s.iter().enumerate() {
+        wave_points.push(pt(t / 1000, *p, labels[i], *is_h));
     }
     for i in 0..7 {
         wave_legs.push(leg(
@@ -1573,8 +1595,8 @@ fn try_double_three(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResult
     let labels = ["W-a", "W-b", "W-c", "X", "Y-a", "Y-b", "Y-c", "Y-end"];
     let mut wave_points = Vec::new();
     let mut wave_legs = Vec::new();
-    for (i, (t, p, _)) in s.iter().enumerate() {
-        wave_points.push(pt(t / 1000, *p, labels[i]));
+    for (i, (t, p, is_h)) in s.iter().enumerate() {
+        wave_points.push(pt(t / 1000, *p, labels[i], *is_h));
     }
     for i in 0..7 {
         wave_legs.push(leg(
@@ -1633,8 +1655,8 @@ fn try_triple_zigzag(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResul
     let labels = ["W-a","W-b","W-c","X1","Y-a","Y-b","Y-c","X2","Z-a","Z-b","Z-c","Z-end"];
     let mut wave_points = Vec::new();
     let mut wave_legs = Vec::new();
-    for (i, (t, p, _)) in s.iter().enumerate() {
-        wave_points.push(pt(t / 1000, *p, labels[i]));
+    for (i, (t, p, is_h)) in s.iter().enumerate() {
+        wave_points.push(pt(t / 1000, *p, labels[i], *is_h));
     }
     for i in 0..11 {
         wave_legs.push(leg(s[i].0/1000, s[i].1, s[i+1].0/1000, s[i+1].1, labels[i+1], false));
@@ -1682,8 +1704,8 @@ fn try_triple_three(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResult
     let labels = ["W-a","W-b","W-c","X1","Y-a","Y-b","Y-c","X2","Z-a","Z-b","Z-c","Z-end"];
     let mut wave_points = Vec::new();
     let mut wave_legs = Vec::new();
-    for (i, (t, p, _)) in s.iter().enumerate() {
-        wave_points.push(pt(t / 1000, *p, labels[i]));
+    for (i, (t, p, is_h)) in s.iter().enumerate() {
+        wave_points.push(pt(t / 1000, *p, labels[i], *is_h));
     }
     for i in 0..11 {
         wave_legs.push(leg(s[i].0/1000, s[i].1, s[i+1].0/1000, s[i+1].1, labels[i+1], false));
@@ -1780,5 +1802,28 @@ fn compute_projections(
         None
     } else {
         Some(proj)
+    }
+}
+
+#[cfg(test)]
+mod find_impulse_window_tests {
+    use super::find_impulse_window;
+
+    /// 6 pivot LOW–HIGH–…–HIGH: son koşul `w[5].2 == first_high` olmalı; tersi tüm bull 6’lı pencereleri eler.
+    #[test]
+    fn six_pivot_bullish_finds_complete_window() {
+        let swings: Vec<(i64, f64, bool)> = vec![
+            (0, 100.0, false),
+            (1, 110.0, true),
+            (2, 105.0, false),
+            (3, 130.0, true),
+            (4, 120.0, false),
+            (5, 140.0, true),
+        ];
+        let (w, is_bull, impulse_complete) = find_impulse_window(&swings, true, false);
+        assert!(impulse_complete, "6-nokta penceresi seçilmeli");
+        assert!(is_bull);
+        assert_eq!(w.len(), 6);
+        assert_eq!(w.last().unwrap().1, 140.0);
     }
 }

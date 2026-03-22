@@ -196,6 +196,65 @@ fn interpolate_price(t1: i64, p1: f64, t2: i64, p2: f64, target_t: i64) -> f64 {
     p1 + slope * (target_t - t1) as f64
 }
 
+fn argmin_low_in(slice: &[Candle], from: usize, to_inclusive: usize) -> (usize, f64) {
+    let mut best_i = from;
+    let mut best_v = slice[from].low;
+    for i in from..=to_inclusive {
+        if slice[i].low < best_v {
+            best_v = slice[i].low;
+            best_i = i;
+        }
+    }
+    (best_i, best_v)
+}
+
+fn argmax_high_in(slice: &[Candle], from: usize, to_inclusive: usize) -> (usize, f64) {
+    let mut best_i = from;
+    let mut best_v = slice[from].high;
+    for i in from..=to_inclusive {
+        if slice[i].high > best_v {
+            best_v = slice[i].high;
+            best_i = i;
+        }
+    }
+    (best_i, best_v)
+}
+
+/// Kapanışa karşı OLS doğrusu; kalıntı RMSE (fiyat birimi).
+fn ols_close_rmse(segment: &[Candle]) -> Option<f64> {
+    let n = segment.len();
+    if n < 10 {
+        return None;
+    }
+    let nf = n as f64;
+    let xs: Vec<f64> = (0..n).map(|i| i as f64).collect();
+    let ys: Vec<f64> = segment.iter().map(|c| c.close).collect();
+    let mx = xs.iter().sum::<f64>() / nf;
+    let my = ys.iter().sum::<f64>() / nf;
+    let var_x = xs.iter().map(|x| (x - mx).powi(2)).sum::<f64>() / nf;
+    if var_x < 1e-18 {
+        return None;
+    }
+    let cov = xs
+        .iter()
+        .zip(ys.iter())
+        .map(|(x, y)| (x - mx) * (y - my))
+        .sum::<f64>()
+        / nf;
+    let slope = cov / var_x;
+    let intercept = my - slope * mx;
+    let mse = xs
+        .iter()
+        .zip(ys.iter())
+        .map(|(x, y)| {
+            let pred = slope * x + intercept;
+            (y - pred).powi(2)
+        })
+        .sum::<f64>()
+        / nf;
+    Some(mse.sqrt())
+}
+
 fn build_draw_data(
     candles_range: &[Candle],
     pivot_len: usize,
@@ -437,8 +496,20 @@ pub fn detect_classic_patterns(
         }
     }
 
-    // Override/align draw data using Elliott swings (Option A).
+    // Elliott swing overlay: sadece üçgen / range / kanal (Trendoscope benzeri iki trendline).
+    // Cup, H&S, çift tepe/dip, bayrak kendi `build_draw_data` geometrisini korur.
     for p in out.iter_mut() {
+        let overlay_swings = matches!(
+            p.kind,
+            ClassicPatternKind::SymmetricalTriangle
+                | ClassicPatternKind::AscendingTriangle
+                | ClassicPatternKind::DescendingTriangle
+                | ClassicPatternKind::Range
+                | ClassicPatternKind::Channel
+        );
+        if !overlay_swings {
+            continue;
+        }
         if let Some(draw) = build_draw_data_from_swings(
             &swings,
             5,
@@ -577,14 +648,11 @@ fn detect_triangle(
     let (first_lo_idx, first_lo) = lows.first().copied()?;
     let (last_lo_idx, last_lo) = lows.last().copied()?;
 
-    if first_lo >= last_lo {
-        // Lows must be flat or rising for valid triangle in our heuristic.
-        return None;
-    }
-
     let highs_down = last_hi < first_hi;
     let lows_up = last_lo > first_lo;
-    if !highs_down && !lows_up {
+    let lows_flat = (first_lo - last_lo).abs() / first_lo.max(1e-10) < 0.01;
+    // Daralma: üstler iner ve/veya dipler yükselir; alçalan üçgende destek yatay (lows_flat).
+    if !highs_down && !lows_up && !lows_flat {
         return None;
     }
 
@@ -1171,12 +1239,14 @@ fn collect_family_extrema(slice: &[Candle], min_series: usize, top: bool) -> Vec
     for i in 0..=(len - min_series * 2) {
         let mut first_ok = true;
         let mut second_ok = true;
+        // Tepe: önce düşüş mumları, sonra yükseliş (tepe oluşumu).
+        // Dip: önce düşüş (çöküş), sonra yükseliş (dönüş) — alçak için tersi değil.
         for j in i..(i + min_series) {
             let bearish = slice[j].open > slice[j].close;
             if top {
                 first_ok &= bearish;
             } else {
-                first_ok &= !bearish;
+                first_ok &= bearish;
             }
         }
         for j in (i + min_series)..(i + min_series * 2) {
@@ -1184,7 +1254,7 @@ fn collect_family_extrema(slice: &[Candle], min_series: usize, top: bool) -> Vec
             if top {
                 second_ok &= bullish;
             } else {
-                second_ok &= !bullish;
+                second_ok &= bullish;
             }
         }
         if !(first_ok && second_ok) {
@@ -1270,6 +1340,11 @@ fn detect_cup_and_handle(
         .iter()
         .map(|c| c.high)
         .fold(f64::NEG_INFINITY, f64::max);
+
+    let rim_ratio = right_rim / max_price.max(1e-10);
+    if !(0.90..=1.10).contains(&rim_ratio) {
+        return None;
+    }
 
     let rim_avg = (max_price + right_rim) / 2.0;
     let depth = rim_avg - min_price;
@@ -1405,20 +1480,18 @@ fn detect_head_and_shoulders(
         if (ls - rs).abs() > shoulder_tol {
             // Shoulders too asymmetric.
         } else {
-            // Neckline: lows between LS-H and H-RS.
-            let left_min = slice[ls_idx..=h_idx]
-                .iter()
-                .map(|c| c.low)
-                .fold(f64::INFINITY, f64::min);
-            let right_min = slice[h_idx..=rs_idx]
-                .iter()
-                .map(|c| c.low)
-                .fold(f64::INFINITY, f64::min);
-            let neckline = (left_min + right_min) / 2.0;
-            let height = h - neckline;
+            // Neckline: iki çukuru birleştiren doğru (eğimli neckline).
+            let (lt_idx, left_min) = argmin_low_in(slice, ls_idx, h_idx);
+            let (rt_idx, right_min) = argmin_low_in(slice, h_idx, rs_idx);
+            let t_neck_l = slice[lt_idx].time;
+            let t_neck_r = slice[rt_idx].time;
+            let start_time = slice[ls_idx].time;
+            let end_time = slice[rs_idx].time;
+            let neckline = interpolate_price(t_neck_l, left_min, t_neck_r, right_min, end_time);
+            let neck_at_head =
+                interpolate_price(t_neck_l, left_min, t_neck_r, right_min, slice[h_idx].time);
+            let height = h - neck_at_head;
             if height > 0.0 {
-                let start_time = slice[ls_idx].time;
-                let end_time = slice[rs_idx].time;
                 let mut targets = Vec::new();
                 targets.push(ClassicPatternTarget {
                     price: neckline - 0.618 * height,
@@ -1454,6 +1527,22 @@ fn detect_head_and_shoulders(
                     trend_aligned,
                     atr_expansion,
                 );
+                let mut draw = build_draw_data(
+                    &slice[ls_idx..=rs_idx],
+                    2,
+                    5,
+                    neckline,
+                    start_time,
+                    end_time,
+                );
+                if let Some(ref mut d) = draw {
+                    d.center_line = Some(ClassicDrawLine {
+                        t1: t_neck_l,
+                        p1: left_min,
+                        t2: t_neck_r,
+                        p2: right_min,
+                    });
+                }
                 return Some(ClassicPatternDetection {
                     symbol: symbol.to_string(),
                     timeframe,
@@ -1468,7 +1557,7 @@ fn detect_head_and_shoulders(
                     quality_score,
                     invalidation_level: Some(rs.max(ls)),
                     targets,
-                    draw: build_draw_data(&slice[ls_idx..=rs_idx], 2, 5, neckline, start_time, end_time),
+                    draw,
                 });
             }
         }
@@ -1496,21 +1585,19 @@ fn detect_head_and_shoulders(
     if (ls - rs).abs() > shoulder_tol {
         return None;
     }
-    let left_max = slice[ls_idx..=h_idx]
-        .iter()
-        .map(|c| c.high)
-        .fold(f64::NEG_INFINITY, f64::max);
-    let right_max = slice[h_idx..=rs_idx]
-        .iter()
-        .map(|c| c.high)
-        .fold(f64::NEG_INFINITY, f64::max);
-    let neckline = (left_max + right_max) / 2.0;
-    let height = neckline - h;
+    let (lt_idx, left_max) = argmax_high_in(slice, ls_idx, h_idx);
+    let (rt_idx, right_max) = argmax_high_in(slice, h_idx, rs_idx);
+    let t_neck_l = slice[lt_idx].time;
+    let t_neck_r = slice[rt_idx].time;
+    let start_time = slice[ls_idx].time;
+    let end_time = slice[rs_idx].time;
+    let neckline = interpolate_price(t_neck_l, left_max, t_neck_r, right_max, end_time);
+    let neck_at_head =
+        interpolate_price(t_neck_l, left_max, t_neck_r, right_max, slice[h_idx].time);
+    let height = neck_at_head - h;
     if height <= 0.0 {
         return None;
     }
-    let start_time = slice[ls_idx].time;
-    let end_time = slice[rs_idx].time;
     let mut targets = Vec::new();
     targets.push(ClassicPatternTarget {
         price: neckline + 0.618 * height,
@@ -1546,6 +1633,22 @@ fn detect_head_and_shoulders(
         trend_aligned,
         atr_expansion,
     );
+    let mut draw = build_draw_data(
+        &slice[ls_idx..=rs_idx],
+        2,
+        5,
+        neckline,
+        start_time,
+        end_time,
+    );
+    if let Some(ref mut d) = draw {
+        d.center_line = Some(ClassicDrawLine {
+            t1: t_neck_l,
+            p1: left_max,
+            t2: t_neck_r,
+            p2: right_max,
+        });
+    }
     Some(ClassicPatternDetection {
         symbol: symbol.to_string(),
         timeframe,
@@ -1560,7 +1663,7 @@ fn detect_head_and_shoulders(
         quality_score,
         invalidation_level: Some(ls.min(rs)),
         targets,
-        draw: build_draw_data(&slice[ls_idx..=rs_idx], 2, 5, neckline, start_time, end_time),
+        draw,
     })
 }
 
@@ -1733,10 +1836,15 @@ fn detect_range(
     let mid = (max_h + min_l) / 2.0;
     let first_close = segment.first().unwrap().close;
     let last_close = segment.last().unwrap().close;
-    let drift = (last_close - first_close).abs();
+    let closes: Vec<f64> = segment.iter().map(|c| c.close).collect();
+    let nf = closes.len() as f64;
+    let mean_c = closes.iter().sum::<f64>() / nf;
+    let std_c = (closes.iter().map(|c| (c - mean_c).powi(2)).sum::<f64>() / nf).sqrt();
+    let end_drift = (last_close - first_close).abs();
+    // Yuvarlak dönüş: uç kapanışlar aynı olsa bile kapanışların yayılımı büyükse range değil.
+    let drift_metric = std_c.max(end_drift * 0.25);
 
-    // Flat-ish market: drift küçük, range belli (hafif trendde bile range adayı).
-    if drift / range > 0.58 {
+    if drift_metric / range > 0.58 {
         return None;
     }
 
@@ -1754,7 +1862,7 @@ fn detect_range(
         priority: 1,
     });
 
-    let confidence: f64 = (1.0 - drift / range).clamp(0.4, 0.9);
+    let confidence: f64 = (1.0 - drift_metric / range).clamp(0.4, 0.9);
     let fibo_ok = true;
     let rsi_div = false;
     let volume_breakout = has_breakout_volume(slice, 20, 1.2);
@@ -1824,14 +1932,11 @@ fn detect_channel(
         return None;
     }
 
-    // Channel: price stays inside parallel-ish band.
+    // Kanal: kapanışlar doğrusal trene yakın mı (OLS RMSE / ATR).
     let mid = (max_h + min_l) / 2.0;
-    let mut deviations = Vec::new();
-    for c in segment {
-        deviations.push((c.close - mid).abs());
-    }
-    let avg_dev = deviations.iter().sum::<f64>() / deviations.len() as f64;
-    if avg_dev / range > 0.48 {
+    let atr_val = atr(segment, 14).unwrap_or(range / 5.0).max(1e-10);
+    let rmse = ols_close_rmse(segment).unwrap_or(range);
+    if rmse / atr_val > 0.8 {
         return None;
     }
 
@@ -1862,7 +1967,7 @@ fn detect_channel(
         PatternDirection::Neutral => {}
     }
 
-    let confidence: f64 = (1.0 - avg_dev / range).clamp(0.4, 0.9);
+    let confidence: f64 = (1.0 - (rmse / atr_val).min(1.0)).clamp(0.4, 0.9);
     let fibo_ok = true;
     let rsi_div = false;
     let volume_breakout = has_breakout_volume(slice, 20, 1.2);
@@ -1895,5 +2000,60 @@ fn detect_channel(
         targets,
         draw: build_draw_data(segment, 2, 5, mid, start_time, end_time),
     })
+}
+
+#[cfg(test)]
+mod classic_patterns_tests {
+    use super::*;
+    use crate::types::Candle;
+
+    fn candle(time: i64, open: f64, high: f64, low: f64, close: f64) -> Candle {
+        Candle {
+            time,
+            open,
+            high,
+            low,
+            close,
+            volume: 1.0,
+        }
+    }
+
+    #[test]
+    fn interpolate_price_linear_midpoint() {
+        let mid = interpolate_price(0, 100.0, 1000, 200.0, 500);
+        assert!((mid - 150.0).abs() < 1e-9, "mid={}", mid);
+        assert!((interpolate_price(5, 10.0, 5, 10.0, 99) - 10.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn ols_close_rmse_near_zero_for_colinear_closes() {
+        let mut seg: Vec<Candle> = Vec::with_capacity(20);
+        for i in 0..20 {
+            let y = 50.0 + 3.0 * (i as f64);
+            seg.push(candle(i * 60_000, y - 0.05, y + 0.1, y - 0.1, y));
+        }
+        let rmse = ols_close_rmse(&seg).expect("ols");
+        assert!(rmse < 1e-5, "rmse={}", rmse);
+    }
+
+    #[test]
+    fn collect_family_extrema_bottom_finds_trough_after_sell_then_buy() {
+        // min_series=2: önce 2 düşüş, sonra 2 yükseliş mumu → dip ailesi.
+        let slice = vec![
+            candle(0, 10.0, 10.0, 9.5, 9.6),
+            candle(1, 9.6, 9.7, 9.0, 9.1),
+            candle(2, 9.1, 9.8, 9.05, 9.7),
+            candle(3, 9.7, 10.0, 9.4, 9.95),
+            candle(4, 10.0, 10.0, 9.8, 9.9),
+        ];
+        let ext = collect_family_extrema(&slice, 2, false);
+        assert!(!ext.is_empty());
+        let min_price = ext.iter().map(|(_, p)| *p).fold(f64::INFINITY, f64::min);
+        assert!(
+            (min_price - 9.0).abs() < 0.02,
+            "expected trough near 9.0, got {}",
+            min_price
+        );
+    }
 }
 

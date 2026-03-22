@@ -1091,6 +1091,9 @@ pub fn flat_type(b_retrace_ratio: f64) -> Option<FlatType> {
 }
 
 /// Flat validasyonu: Regular B≈%90–100, Expanded B>%123.6, Running (B aştığında C kısa)
+///
+/// `b_retrace` işaretli tutulur: B, A’nın düzeltme yönünde değilse (ör. bull A sonrası B daha da yukarı)
+/// oran negatif olur → `flat_type` eşiğinin altında kalır ve flat reddedilir (`.abs()` ile maskelenmez).
 pub fn flat_valid_detailed(
     a_start: f64,
     a_end: f64,
@@ -1107,7 +1110,7 @@ pub fn flat_valid_detailed(
     } else {
         (a_end - b_extreme) / a_len
     };
-    let b_ratio = b_retrace.abs();
+    let b_ratio = b_retrace;
     let typ = flat_type(b_ratio);
     if typ.is_none() {
         return (false, None);
@@ -1117,11 +1120,20 @@ pub fn flat_valid_detailed(
     } else {
         (c_extreme - a_start).abs() / a_len
     };
-    // Spec: Regular C ≈ A %100 (A sonuna yakın); Expanded C > %123.6; Running C kısa
+    // Spec: Regular C ≈ A %100; Expanded B/C üst sınır (aşırı oranlar “flat” değil); Running: flat_type’taki (1.05,1.236) bant + C kısa
+    const EXPANDED_B_MAX: f64 = 2.0;
+    const EXPANDED_C_MAX: f64 = fibo::EXT_2618;
     let valid = match typ.unwrap() {
         FlatType::Regular => b_ratio >= 0.9 && b_ratio <= 1.05 && c_retrace >= 0.85 && c_retrace <= 1.15,
-        FlatType::Expanded => b_ratio >= 1.236 && c_retrace >= 1.0,
-        FlatType::Running => b_ratio >= 1.236 && c_retrace < 1.0 && c_retrace >= 0.5,
+        FlatType::Expanded => {
+            b_ratio >= 1.236
+                && b_ratio <= EXPANDED_B_MAX
+                && c_retrace >= 1.0
+                && c_retrace <= EXPANDED_C_MAX
+        }
+        FlatType::Running => {
+            b_ratio > 1.05 && b_ratio < 1.236 && c_retrace < 1.0 && c_retrace >= 0.5
+        }
     };
     (valid, typ)
 }
@@ -1804,5 +1816,33 @@ mod impulse_validation_tests {
         );
         assert!(!v.w4_vs_w3_valid);
         assert!(!v.formation_valid);
+    }
+}
+
+#[cfg(test)]
+mod flat_valid_detailed_tests {
+    use super::{flat_valid_detailed, FlatType};
+
+    /// Cyan örnek: A yukarı, B daha da yukarı → b_retrace negatif; abs olmadan flat reddedilir.
+    #[test]
+    fn rejects_b_when_same_direction_as_bullish_a() {
+        let (valid, typ) = flat_valid_detailed(2288.0, 2305.60, 2349.99, 2150.70, false);
+        assert!(!valid);
+        assert!(typ.is_none());
+    }
+
+    /// Turuncu örnek: B/A > 2 → Expanded üst sınırı aşılır.
+    #[test]
+    fn rejects_expanded_flat_excessive_b_ratio() {
+        let (valid, _) = flat_valid_detailed(2148.0, 2088.52, 2209.49, 2077.03, true);
+        assert!(!valid);
+    }
+
+    /// Mor örnek: genişlemiş flat, B ve C oranları makul bantta.
+    #[test]
+    fn accepts_typical_expanded_flat() {
+        let (valid, typ) = flat_valid_detailed(2155.90, 2120.04, 2175.84, 2114.20, true);
+        assert!(valid);
+        assert_eq!(typ, Some(FlatType::Expanded));
     }
 }
