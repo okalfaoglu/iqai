@@ -217,6 +217,9 @@ pub struct SmartMoneyConfig {
     pub elliott_stability_auto_invalidate_bars: Option<u32>,
     /// İtki/düzeltme iç-dalga 1:1 doğrulama — `config.elliott_subwave_strict`
     pub elliott_subwave_strict: Option<bool>,
+    /// Tez `content.txt` §2.5.3–2.5.4 sayısal kuralları — `config.elliott_thesis_te_y_rules`
+    #[serde(alias = "elliott_thesis_teY_rules")]
+    pub elliott_thesis_te_y_rules: Option<bool>,
 }
 
 /// Otomatik trading ayarları – config.json "trading" bölümü.

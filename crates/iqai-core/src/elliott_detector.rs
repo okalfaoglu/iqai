@@ -17,7 +17,7 @@ use crate::elliott::{
     validate_subwave_structure_with_mode,
     validate_triangle_abcde,
     validate_zigzag_abc, w1_w5_equality, AlternationResult, DiagonalSubStructure, FlatType,
-    ImpulseChannel, WaveDegree,
+    ImpulseChannel, TezElliottEwSnapshot, TezImpulseRules, TezZigzagRules, WaveDegree,
 };
 use crate::impulse_detector::{detect_impulse, W5Confirmation};
 use crate::indicators::{pivot_high, pivot_low, rsi};
@@ -153,6 +153,8 @@ pub struct ElliottDetectorResult {
     pub corr_subwave_validation: Option<crate::elliott::CorrSubWaveValidation>,
     /// Dalgalardan sonra oluşacak/oluşan formasyonlar için referans seviyeleri (hesaplama referansı)
     pub next_formation_ref: Option<crate::elliott::NextFormationRefLevels>,
+    /// `content.txt` §2.5.3–2.5.4 tez kuralları özeti + dalga-içi-dalga ipucu (web paneli)
+    pub tez_ew: Option<TezElliottEwSnapshot>,
 
     // ── Elliott fusion (EWO + confluence + stabilite + SMC–W2; `elliott_fusion.rs`) ──
     pub ewo_value: Option<f64>,
@@ -216,6 +218,7 @@ impl Default for ElliottDetectorResult {
             nested_extension: None,
             corr_subwave_validation: None,
             next_formation_ref: None,
+            tez_ew: None,
             ewo_value: None,
             ewo_signal: None,
             ewo_bull: None,
@@ -347,7 +350,7 @@ pub fn compute_elliott(
         vec![]
     };
 
-    let zigzag_ok = check_zigzag(&last4);
+    let zigzag_ok = check_zigzag(&last4, config.elliott_thesis_te_y_rules);
 
     let (zigzag_valid, _, _) = zigzag_ok;
     if zigzag_valid && (result.validation_ok != Some(true) || result.formation == "—") {
@@ -358,7 +361,7 @@ pub fn compute_elliott(
         } else if swings.len() >= 6 {
             if let Some(tri) = try_triangle(&swings) {
                 result = tri;
-            } else if let Some(dzz) = try_double_zigzag(&swings) {
+            } else if let Some(dzz) = try_double_zigzag(&swings, config.elliott_thesis_te_y_rules) {
                 result = dzz;
             } else if let Some(dt) = try_double_three(&swings) {
                 result = dt;
@@ -896,8 +899,22 @@ fn build_impulse_result(
             None
         };
         let val = validate_impulse_with_w5(
-            w0, w1_h, w1_l, w2_ext, w3_ext, w4_ext, w5_opt, bullish,
+            w0,
+            w1_h,
+            w1_l,
+            w2_ext,
+            w3_ext,
+            w4_ext,
+            w5_opt,
+            bullish,
+            config.elliott_thesis_te_y_rules,
         );
+        result.tez_ew = Some(TezElliottEwSnapshot {
+            source: "content.txt §2.5.3–2.5.4 (İstanbul Kültür Üniversitesi tezi)".to_string(),
+            impulse: Some(TezImpulseRules::from_validation(&val)),
+            zigzag: None,
+            nested_wave_hint: "İtki 5-3-5-3-5: subwave_validation (W1–W5 iç swing); tez modu: smart_money.elliott_thesis_te_y_rules".to_string(),
+        });
         let diag = validate_diagonal(w0, w1_h, w1_l, w2_ext, w3_ext, w4_ext, bullish);
 
         let (validation_ok_val, validation_msg_val, formation_label, formation_type_label) =
@@ -1319,17 +1336,17 @@ fn build_impulse_result(
     result
 }
 
-fn check_zigzag(last4: &[(i64, f64, bool)]) -> (bool, Vec<f64>, bool) {
+fn check_zigzag(last4: &[(i64, f64, bool)], thesis_te_y: bool) -> (bool, Vec<f64>, bool) {
     if last4.len() != 4 {
         return (false, vec![], false);
     }
     let (p0, p1, p2, p3) = (last4[0].1, last4[1].1, last4[2].1, last4[3].1);
     let (h0, h1, h2, h3) = (last4[0].2, last4[1].2, last4[2].2, last4[3].2);
     if h0 && !h1 && h2 && !h3 {
-        let (valid, c_targets) = validate_zigzag_abc(p0, p1, p2, p3, true);
+        let (valid, c_targets) = validate_zigzag_abc(p0, p1, p2, p3, true, thesis_te_y);
         (valid, c_targets, true)
     } else if !h0 && h1 && !h2 && h3 {
-        let (valid, c_targets) = validate_zigzag_abc(p0, p1, p2, p3, false);
+        let (valid, c_targets) = validate_zigzag_abc(p0, p1, p2, p3, false, thesis_te_y);
         (valid, c_targets, false)
     } else {
         (false, vec![], false)
@@ -1383,6 +1400,7 @@ fn build_zigzag_result(
         true,
         config.elliott_subwave_strict,
     );
+    let zz_tez = TezZigzagRules::from_abc_prices(p0, p1, p2, p3, is_bearish_zz);
     let msg = if csv.valid {
         format!("Zigzag kuralları geçerli (iç: {}-{}-{})", a_inner, b_inner, c_inner)
     } else {
@@ -1390,6 +1408,12 @@ fn build_zigzag_result(
     };
 
     ElliottDetectorResult {
+        tez_ew: Some(TezElliottEwSnapshot {
+            source: "content.txt §2.5.4.2 Zigzag (5-3-5)".to_string(),
+            impulse: None,
+            zigzag: Some(zz_tez),
+            nested_wave_hint: "Zigzag 5-3-5: corr_subwave_validation (A,B,C iç swing)".to_string(),
+        }),
         wave_points: vec![
             pt(t0s, p0, "A", last4[0].2),
             pt(t1s, p1, "A'", last4[1].2),
@@ -1473,6 +1497,12 @@ fn build_flat_result(
     };
 
     ElliottDetectorResult {
+        tez_ew: Some(TezElliottEwSnapshot {
+            source: "content.txt §2.5.4.1 Yassı (3-3-5)".to_string(),
+            impulse: None,
+            zigzag: None,
+            nested_wave_hint: "Yassı 3-3-5: corr_subwave_validation; tez kuralları flat_valid_detailed ile".to_string(),
+        }),
         wave_points: vec![
             pt(t0s, p0, "0", last4[0].2),
             pt(t1s, p1, "A", last4[1].2),
@@ -1663,7 +1693,7 @@ fn try_triangle(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResult> {
 
 /// Double Zigzag (W-X-Y) tespiti: iki zigzag + ara X dalgası = 7 swing noktası
 /// PDF: "Two zigzags connected by an intervening corrective wave labeled X"
-fn try_double_zigzag(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResult> {
+fn try_double_zigzag(swings: &[(i64, f64, bool)], thesis_te_y: bool) -> Option<ElliottDetectorResult> {
     if swings.len() < 8 {
         return None;
     }
@@ -1677,10 +1707,10 @@ fn try_double_zigzag(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResul
         let (pp0, pp1, pp2, pp3) = (sub[0].1, sub[1].1, sub[2].1, sub[3].1);
         let (hh0, hh1, hh2, hh3) = (sub[0].2, sub[1].2, sub[2].2, sub[3].2);
         if hh0 && !hh1 && hh2 && !hh3 {
-            let (v, ct) = validate_zigzag_abc(pp0, pp1, pp2, pp3, true);
+            let (v, ct) = validate_zigzag_abc(pp0, pp1, pp2, pp3, true, thesis_te_y);
             (v, ct, true)
         } else if !hh0 && hh1 && !hh2 && hh3 {
-            let (v, ct) = validate_zigzag_abc(pp0, pp1, pp2, pp3, false);
+            let (v, ct) = validate_zigzag_abc(pp0, pp1, pp2, pp3, false, thesis_te_y);
             (v, ct, false)
         } else {
             (false, vec![], false)
@@ -1691,10 +1721,10 @@ fn try_double_zigzag(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResul
         let (pp0, pp1, pp2, pp3) = (sub[0].1, sub[1].1, sub[2].1, sub[3].1);
         let (hh0, hh1, hh2, hh3) = (sub[0].2, sub[1].2, sub[2].2, sub[3].2);
         if hh0 && !hh1 && hh2 && !hh3 {
-            let (v, ct) = validate_zigzag_abc(pp0, pp1, pp2, pp3, true);
+            let (v, ct) = validate_zigzag_abc(pp0, pp1, pp2, pp3, true, thesis_te_y);
             (v, ct, true)
         } else if !hh0 && hh1 && !hh2 && hh3 {
-            let (v, ct) = validate_zigzag_abc(pp0, pp1, pp2, pp3, false);
+            let (v, ct) = validate_zigzag_abc(pp0, pp1, pp2, pp3, false, thesis_te_y);
             (v, ct, false)
         } else {
             (false, vec![], false)
@@ -1821,7 +1851,7 @@ fn try_double_three(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResult
 /// Zigzag validasyonu helper – 4 swing'lik dilim üzerinde
 fn is_valid_zigzag_slice(s: &[(i64, f64, bool)]) -> bool {
     if s.len() != 4 { return false; }
-    let (v, _, _) = check_zigzag(s);
+    let (v, _, _) = check_zigzag(s, false);
     v
 }
 

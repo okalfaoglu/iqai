@@ -682,7 +682,89 @@ pub struct ImpulseValidation {
     pub w4_valid: bool,
     /// N°11: W1, W3, W5 aynı anda extended olamaz (en fazla 1 extended)
     pub no_triple_extension_valid: bool,
+    /// Tez 2.5.3: 3. dalga 1. dalganın **bitiş** fiyatının altında/üstünde olamaz (boğa: W3 ucu > W1 ucu).
+    pub w3_beyond_w1_terminal: bool,
+    /// Tez 2.5.3: 4. dalga 3. dalgadan **daha uzun** olamaz (fiyat genliği |W4| ≤ |W3|).
+    pub w4_len_lte_w3_len: bool,
     pub formation_valid: bool,
+}
+
+/// `content.txt` §2.5.3 itki kuralları — API / web özeti (dalga içinde dalga: `subwave_validation`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TezImpulseRules {
+    pub w2_not_past_w1_start: bool,
+    pub w3_not_shortest_among_135: bool,
+    pub w3_not_below_w1_end_price: bool,
+    pub w4_not_in_w1_price_area: bool,
+    pub w4_not_past_w3_start: bool,
+    pub w4_not_longer_than_w3: bool,
+    pub no_triple_extension: bool,
+    /// Tez maddelerinin tamamı (üçlü uzatma hariç tutulabilir — ayrı bayrak)
+    pub thesis_core_ok: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TezZigzagRules {
+    pub b_retrace_lte_618: bool,
+    pub c_not_shorter_than_b: bool,
+    pub c_exceeds_a_end: bool,
+    pub thesis_zigzag_ok: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TezElliottEwSnapshot {
+    /// Kaynak: `docs/content.txt` (Yıldız tezi §2.5.3–2.5.4)
+    pub source: String,
+    pub impulse: Option<TezImpulseRules>,
+    pub zigzag: Option<TezZigzagRules>,
+    pub nested_wave_hint: String,
+}
+
+impl TezImpulseRules {
+    pub fn from_validation(v: &ImpulseValidation) -> Self {
+        let thesis_core_ok = v.w2_valid
+            && v.w3_valid
+            && v.w4_vs_w1_valid
+            && v.w4_vs_w3_valid
+            && v.w3_beyond_w1_terminal
+            && v.w4_len_lte_w3_len;
+        Self {
+            w2_not_past_w1_start: v.w2_valid,
+            w3_not_shortest_among_135: v.w3_valid,
+            w3_not_below_w1_end_price: v.w3_beyond_w1_terminal,
+            w4_not_in_w1_price_area: v.w4_vs_w1_valid,
+            w4_not_past_w3_start: v.w4_vs_w3_valid,
+            w4_not_longer_than_w3: v.w4_len_lte_w3_len,
+            no_triple_extension: v.no_triple_extension_valid,
+            thesis_core_ok,
+        }
+    }
+}
+
+impl TezZigzagRules {
+    /// Tez §2.5.4.2 — B ≤ %61.8 A, C ≥ B genliği, C A sonunu geçer.
+    pub fn from_abc_prices(p0: f64, p1: f64, p2: f64, p3: f64, is_bearish_zz: bool) -> Self {
+        let a_len = (p1 - p0).abs();
+        let b_retrace = if a_len < 1e-12 {
+            0.0
+        } else if is_bearish_zz {
+            (p2 - p1) / a_len
+        } else {
+            (p1 - p2) / a_len
+        };
+        let b_retrace_lte_618 = b_retrace <= 0.618 + 1e-9 && b_retrace >= 0.0;
+        let b_len = (p2 - p1).abs();
+        let c_len = (p3 - p2).abs();
+        let c_not_shorter_than_b = c_len + 1e-12 >= b_len;
+        let c_exceeds_a_end = if is_bearish_zz { p3 < p1 } else { p3 > p1 };
+        let thesis_zigzag_ok = b_retrace_lte_618 && c_not_shorter_than_b && c_exceeds_a_end;
+        Self {
+            b_retrace_lte_618,
+            c_not_shorter_than_b,
+            c_exceeds_a_end,
+            thesis_zigzag_ok,
+        }
+    }
 }
 
 /// W0,W1,W2,W3,W4 fiyatları ile impulse kurallarını kontrol et
@@ -696,10 +778,21 @@ pub fn validate_impulse(
     w4_extreme: f64,
     is_bullish: bool,
 ) -> ImpulseValidation {
-    validate_impulse_with_w5(w0, w1_high, w1_low, w2_extreme, w3_extreme, w4_extreme, None, is_bullish)
+    validate_impulse_with_w5(
+        w0,
+        w1_high,
+        w1_low,
+        w2_extreme,
+        w3_extreme,
+        w4_extreme,
+        None,
+        is_bullish,
+        false,
+    )
 }
 
 /// W5 dahil tam validasyon (N°11 için)
+/// `apply_thesis_te_y`: `content.txt` §2.5.3 tez kuralları (W3 bitiş, W4 uzunluk) `formation_valid` içine dahil.
 pub fn validate_impulse_with_w5(
     w0: f64,
     w1_high: f64,
@@ -709,6 +802,7 @@ pub fn validate_impulse_with_w5(
     w4_extreme: f64,
     w5_extreme: Option<f64>,
     is_bullish: bool,
+    apply_thesis_te_y: bool,
 ) -> ImpulseValidation {
     // W2 düzeltme: bullish'ta W2 low > W0 ve W2 low < W1 high; bearish'ta simetrik
     let w2_valid = if is_bullish {
@@ -739,6 +833,15 @@ pub fn validate_impulse_with_w5(
         w4_extreme > w3_extreme
     };
     let w4_valid = w4_vs_w1_valid && w4_vs_w3_valid;
+    // Tez 2.5.3: 3. dalga 1. dalganın bitiş fiyatının «altında» (boğa) kalmamalı → W3 ucu > W1 ucu
+    let w3_beyond_w1_terminal = if is_bullish {
+        w3_extreme > w1_high
+    } else {
+        w3_extreme < w1_low
+    };
+    let w4_len = (w4_extreme - w3_extreme).abs();
+    // Tez: 4. dalga 3. dalgadan daha uzun olamaz (fiyat genliği)
+    let w4_len_lte_w3_len = w3_len > 1e-10 && w4_len <= w3_len + 1e-9 * w3_len.max(1.0);
     // N°11: W1, W3, W5 asla üçü birden extended olamaz (extended = >= 1.618 × min)
     let no_triple_extension_valid = match w5_extreme {
         Some(w5) => {
@@ -752,7 +855,12 @@ pub fn validate_impulse_with_w5(
         }
         None => true,
     };
-    let formation_valid = w2_valid && w3_valid && w4_valid && no_triple_extension_valid;
+    let mut formation_valid =
+        w2_valid && w3_valid && w4_valid && no_triple_extension_valid;
+    if apply_thesis_te_y {
+        formation_valid =
+            formation_valid && w3_beyond_w1_terminal && w4_len_lte_w3_len;
+    }
     ImpulseValidation {
         w2_valid,
         w3_valid,
@@ -760,6 +868,8 @@ pub fn validate_impulse_with_w5(
         w4_vs_w3_valid,
         w4_valid,
         no_triple_extension_valid,
+        w3_beyond_w1_terminal,
+        w4_len_lte_w3_len,
         formation_valid,
     }
 }
@@ -1212,9 +1322,10 @@ pub fn zigzag_valid(a_start: f64, a_end: f64, b_extreme: f64, a_down: bool) -> b
     }
 }
 
-/// Zigzag ABC validasyonu: B retrace 38.2–85.4%, C extension 100–161.8%, C exceeds A end.
+/// Zigzag ABC validasyonu: B retrace 38.2–85.4% (veya tez: max %61.8), C extension 100–161.8%, C exceeds A end.
 /// p0=A start, p1=A end, p2=B extreme, p3=C extreme.
 /// is_bearish_zz: true = bearish zigzag (A up, B down, C up).
+/// `thesis_te_y`: `content.txt` §2.5.4.2 — B en fazla %61.8; C dalgası B’den kısa olamaz.
 /// Returns (valid, c_targets) where c_targets are projection levels for C (100%, 123.6%, 138.2%, 161.8%).
 pub fn validate_zigzag_abc(
     p0: f64,
@@ -1222,6 +1333,7 @@ pub fn validate_zigzag_abc(
     p2: f64,
     p3: f64,
     is_bearish_zz: bool,
+    thesis_te_y: bool,
 ) -> (bool, Vec<f64>) {
     let a_len = (p1 - p0).abs();
     if a_len < 1e-12 {
@@ -1240,11 +1352,14 @@ pub fn validate_zigzag_abc(
     } else {
         (p1 - p2) / a_len
     };
-    let b_ok = b_retrace >= 0.382 && b_retrace <= 0.854;
+    let b_max = if thesis_te_y { 0.618 } else { 0.854 };
+    let b_ok = b_retrace >= 0.382 && b_retrace <= b_max;
+    let b_len = (p2 - p1).abs();
     let c_len = (p3 - p2).abs();
     let c_ratio = c_len / a_len;
     let c_ok = c_ratio >= 0.99 && c_ratio <= 1.65;
-    let valid = b_ok && c_ok;
+    let c_not_shorter_than_b = c_len + 1e-12 >= b_len;
+    let valid = b_ok && c_ok && (!thesis_te_y || c_not_shorter_than_b);
 
     let c_targets: Vec<f64> = fibo::ZIGZAG_C_EXTENSIONS
         .iter()
@@ -2053,6 +2168,7 @@ mod impulse_validation_tests {
     fn w5_present_still_requires_w4_vs_w3() {
         let v = validate_impulse_with_w5(
             2060.09, 2123.25, 2060.09, 2085.10, 2288.00, 2305.60, Some(2400.0), true,
+            false,
         );
         assert!(!v.w4_vs_w3_valid);
         assert!(!v.formation_valid);

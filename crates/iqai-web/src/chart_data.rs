@@ -121,6 +121,8 @@ pub struct ElliottAnnotations {
     pub nested_extension: Option<(bool, f64)>,
     /// Corrective alt-dalga doğrulaması (Zigzag/Flat A,B,C)
     pub corr_subwave_validation: Option<iqai_core::elliott::CorrSubWaveValidation>,
+    /// `content.txt` §2.5.3–2.5.4 tez kural özeti (itki / zigzag)
+    pub tez_ew: Option<iqai_core::elliott::TezElliottEwSnapshot>,
 
     // Elliott fusion (EWO + confluence + stabilite + SMC–W2)
     pub ewo_value: Option<f64>,
@@ -960,6 +962,7 @@ fn elliott_result_to_annotations(
         subwave_validation: r.subwave_validation,
         nested_extension: r.nested_extension,
         corr_subwave_validation: r.corr_subwave_validation,
+        tez_ew: r.tez_ew,
         ewo_value: r.ewo_value,
         ewo_signal: r.ewo_signal,
         ewo_bull: r.ewo_bull,

@@ -164,6 +164,7 @@
     .panel-elliott .ew-legend { font-size: 10px; color: #cbd5e1; margin-top: 6px; line-height: 1.35; }
     .panel-elliott .ew-legend .solid { color: #2dd4bf; }
     .panel-elliott .ew-legend .dotted { color: #fbbf24; }
+    .panel-elliott .ew-tez { font-size: 10px; color: #e9d5ff; margin-top: 8px; padding: 8px; border: 1px solid rgba(167, 139, 250, 0.35); border-radius: 6px; background: rgba(76, 29, 149, 0.14); line-height: 1.45; }
     .live-badge { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00e676; animation: pulse 1.5s infinite; margin-right: 6px; }
     .live-badge.off { background: #666; animation: none; }
     @keyframes pulse { 50% { opacity: 0.5; } }
@@ -536,6 +537,7 @@
     <div class="formation-name" id="ewFormationName">—</div>
     <div class="ew-degree-line" id="ewDegreeLine" style="font-size:11px;color:#B39DDB;margin-top:4px;line-height:1.35;">—</div>
     <div class="ew-fusion" id="ewFusionBlock" style="font-size:10px;color:#a5b4fc;margin-top:6px;line-height:1.45;">—</div>
+    <div class="ew-tez" id="ewTezEw" style="display:none"></div>
     <div class="ew-validation" id="ewValidation">—</div>
     <div id="ewExtras" style="font-size:10px;color:#90CAF9;margin-top:2px;padding:2px 0;border-top:1px solid #333"></div>
     <div class="ew-impulse-stage" id="ewImpulseStage">—</div>
@@ -711,6 +713,48 @@
       loadChart();
     }
 
+    function ewEscapeHtml(s) {
+      if (s == null || s === undefined) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+    /** Tez §2.5.3 itki / §2.5.4 zigzag — API `tez_ew` */
+    function formatTezEwPanel(tez) {
+      if (!tez) return '';
+      const rows = [];
+      if (tez.source) {
+        rows.push('<div style="opacity:0.9;margin-bottom:6px;color:#c4b5fd;">📄 ' + ewEscapeHtml(tez.source) + '</div>');
+      }
+      const mk = (ok, label) => '<span style="color:' + (ok ? '#00E676' : '#f87171') + '">' + (ok ? '✓' : '✗') + '</span> ' + label;
+      if (tez.impulse) {
+        const im = tez.impulse;
+        rows.push('<div style="color:#a78bfa;font-weight:600;margin:2px 0 4px;">§2.5.3 İtki (Impulse) — tez maddeleri</div>');
+        rows.push(mk(im.w2_not_past_w1_start, 'W2, W1 başlangıcını geçmez'));
+        rows.push(mk(im.w3_not_shortest_among_135, 'W3, W1/W3/W5 içinde en kısa değil'));
+        rows.push(mk(im.w3_not_below_w1_end_price, 'W3 ucu, W1 bitiş fiyatının ötesinde'));
+        rows.push(mk(im.w4_not_in_w1_price_area, 'W4, W1 fiyat alanına girmez'));
+        rows.push(mk(im.w4_not_past_w3_start, 'W4, W3 başlangıcını aşmaz (W3 ucu vs W4)'));
+        rows.push(mk(im.w4_not_longer_than_w3, '|W4| ≤ |W3| (genlik)'));
+        rows.push(mk(im.no_triple_extension, 'W1/W3/W5 aynı anda üçü birden uzatılmış değil'));
+        rows.push('<div style="margin-top:6px;font-weight:600;color:' + (im.thesis_core_ok ? '#00E676' : '#FFB627') + '">Tez itki çekirdek: ' + (im.thesis_core_ok ? '✓' : '✗') + '</div>');
+      }
+      if (tez.zigzag) {
+        const z = tez.zigzag;
+        rows.push('<div style="color:#a78bfa;font-weight:600;margin:10px 0 4px;">§2.5.4 Zigzag — tez maddeleri</div>');
+        rows.push(mk(z.b_retrace_lte_618, 'B geri çekilmesi ≤ %61.8 (A)'));
+        rows.push(mk(z.c_not_shorter_than_b, 'C dalgası B dalgasından kısa olamaz (genlik)'));
+        rows.push(mk(z.c_exceeds_a_end, 'C, A sonunu geçer'));
+        rows.push('<div style="margin-top:6px;font-weight:600;color:' + (z.thesis_zigzag_ok ? '#00E676' : '#FFB627') + '">Tez zigzag: ' + (z.thesis_zigzag_ok ? '✓' : '✗') + '</div>');
+      }
+      if (tez.nested_wave_hint) {
+        rows.push('<div style="margin-top:8px;font-size:9px;color:#94a3b8;border-top:1px solid rgba(148,163,184,0.25);padding-top:6px;">🔬 Dalga içi dalga: ' + ewEscapeHtml(tez.nested_wave_hint) + '</div>');
+      }
+      return rows.join('<br>');
+    }
+
     function updateElliottPanel(data) {
       const ew = data?.annotations?.elliott;
       if (ew) console.log('[EW extras]', {degree:ew.degree, truncation:ew.truncation, alternation:ew.alternation, channel:ew.channel});
@@ -721,6 +765,7 @@
       const ptsEl = document.getElementById('ewWavePoints');
       const w5El = document.getElementById('ewW5Pred');
       const setupsEl = document.getElementById('ewSetups');
+      const tezEl = document.getElementById('ewTezEw');
       if (!typeEl || !nameEl || !ptsEl) return;
       const degLineEl = document.getElementById('ewDegreeLine');
       const fusEl = document.getElementById('ewFusionBlock');
@@ -729,12 +774,22 @@
         nameEl.textContent = '—';
         if (degLineEl) degLineEl.textContent = '—';
         if (fusEl) fusEl.textContent = '—';
+        if (tezEl) { tezEl.style.display = 'none'; tezEl.innerHTML = ''; }
         if (valEl) { valEl.textContent = '—'; valEl.className = 'ew-validation'; }
         if (stageEl) stageEl.textContent = '—';
         ptsEl.textContent = '—';
         if (w5El) w5El.textContent = '—';
         if (setupsEl) setupsEl.textContent = '—';
         return;
+      }
+      if (tezEl) {
+        if (ew.tez_ew && (ew.tez_ew.source || ew.tez_ew.impulse || ew.tez_ew.zigzag || ew.tez_ew.nested_wave_hint)) {
+          tezEl.style.display = 'block';
+          tezEl.innerHTML = formatTezEwPanel(ew.tez_ew);
+        } else {
+          tezEl.style.display = 'none';
+          tezEl.innerHTML = '';
+        }
       }
       typeEl.textContent = ew.formation_type || '—';
       nameEl.textContent = ew.formation || '—';

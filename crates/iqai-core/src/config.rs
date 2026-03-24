@@ -91,6 +91,8 @@ pub struct Config {
     /// true: itki W1–W5 ve düzeltme A–B–C **iç dalga** sayımlarında 1:1 tez uyumu (5/5 veya 3/3 bacak).
     /// false (varsayılan): en az 3/5 itki veya 2/3 düzeltme — gürültülü grafikler için toleranslı.
     pub elliott_subwave_strict: bool,
+    /// `content.txt` §2.5.3: W3 bitiş > W1 bitiş, |W4|≤|W3|; §2.5.4.2 zigzag: B≤%61.8, C≥B — `formation_valid` / zigzag validasyonuna dahil.
+    pub elliott_thesis_te_y_rules: bool,
 
     // Q-ANALİZ / Q-RADAR parametreleri
     /// Q-Setup minimum skoru (0-100)
@@ -278,6 +280,7 @@ impl Default for Config {
             elliott_stability_confirm_bars: 3,
             elliott_stability_auto_invalidate_bars: 100,
             elliott_subwave_strict: false,
+            elliott_thesis_te_y_rules: false,
 
             // Q-ANALİZ varsayılanları
             q_score_threshold: 70.0,
@@ -519,6 +522,9 @@ impl Config {
             if let Some(v) = c.elliott_stability_confirm_bars { base.elliott_stability_confirm_bars = v.max(1); }
             if let Some(v) = c.elliott_stability_auto_invalidate_bars { base.elliott_stability_auto_invalidate_bars = v.max(20); }
             if let Some(v) = c.elliott_subwave_strict { base.elliott_subwave_strict = v; }
+            if let Some(v) = c.elliott_thesis_te_y_rules {
+                base.elliott_thesis_te_y_rules = v;
+            }
         }
         base
     }
