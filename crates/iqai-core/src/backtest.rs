@@ -68,6 +68,134 @@ pub struct BacktestResult {
     pub bar_count: usize,
 }
 
+/// Backtest optimizasyon hedef metriği.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BacktestOptimizationObjective {
+    /// En yüksek toplam getiri (%)
+    ReturnPct,
+    /// İşlem başına ortalama PnL
+    AvgPnlPerTrade,
+}
+
+/// Pivot/zigzag optimizasyon giriş parametreleri.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BacktestOptimizationParams {
+    /// Ana dalga (outer) aday pivot değerleri.
+    pub pivot_lengths: Vec<u32>,
+    /// İç dalga (inner) aday pivot değerleri. Boşsa outer'dan otomatik türetilir.
+    pub inner_pivot_lengths: Vec<u32>,
+    /// Çok az işlem üreten kombinasyonları elemek için minimum işlem sayısı.
+    pub min_trades: usize,
+    /// Sıralama metriği.
+    pub objective: BacktestOptimizationObjective,
+    /// En iyi N sonucu dön.
+    pub top_n: usize,
+}
+
+impl Default for BacktestOptimizationParams {
+    fn default() -> Self {
+        Self {
+            pivot_lengths: vec![5, 8, 13, 21],
+            inner_pivot_lengths: vec![],
+            min_trades: 3,
+            objective: BacktestOptimizationObjective::ReturnPct,
+            top_n: 5,
+        }
+    }
+}
+
+/// Tek bir aday kombinasyonun optimizasyon sonucu.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BacktestOptimizationCandidate {
+    pub pivot_length: u32,
+    pub elliott_inner_pivot_length: u32,
+    pub objective_score: f64,
+    pub result: BacktestResult,
+}
+
+/// Pivot/zigzag parametre taraması ile en iyi kombinasyonları bulur.
+///
+/// Amaç: ana dalga (`pivot_length`) + alt dalga (`elliott_inner_pivot_length`) ayarlarını,
+/// seçili backtest metriğine göre optimize etmek.
+pub fn optimize_elliott_pivots(
+    candles: &[Candle],
+    base_config: &Config,
+    chart_tf: Timeframe,
+    symbol: &str,
+    initial_capital: f64,
+    risk_pct_per_trade: f64,
+    leverage: f64,
+    commission_bps: u32,
+    slippage_bps: u32,
+    params: &BacktestOptimizationParams,
+) -> Vec<BacktestOptimizationCandidate> {
+    if params.pivot_lengths.is_empty() || candles.is_empty() {
+        return vec![];
+    }
+    let outer_vals = &params.pivot_lengths;
+    let mut candidates = Vec::new();
+
+    for &outer in outer_vals {
+        let inner_candidates: Vec<u32> = if params.inner_pivot_lengths.is_empty() {
+            // Outer'dan türet: dalga içi dalga için daha küçük ölçek.
+            let half = (outer / 2).max(2);
+            let third = (outer / 3).max(2);
+            let mut v = vec![half, third, outer.saturating_sub(1).max(2)];
+            v.sort_unstable();
+            v.dedup();
+            v
+        } else {
+            params
+                .inner_pivot_lengths
+                .iter()
+                .copied()
+                .map(|x| x.max(2))
+                .collect()
+        };
+
+        for inner in inner_candidates {
+            if inner >= outer {
+                // İç pivot, ana pivotdan küçük olmalı (çok-ölçekli ayrışma).
+                continue;
+            }
+            let mut cfg = base_config.clone();
+            cfg.pivot_length = outer.max(2);
+            cfg.elliott_inner_pivot_length = inner.max(2);
+            let result = run_backtest(
+                candles,
+                &cfg,
+                chart_tf,
+                symbol,
+                initial_capital,
+                risk_pct_per_trade,
+                leverage,
+                commission_bps,
+                slippage_bps,
+            );
+            if result.trades.len() < params.min_trades {
+                continue;
+            }
+            let score = match params.objective {
+                BacktestOptimizationObjective::ReturnPct => result.total_return_pct,
+                BacktestOptimizationObjective::AvgPnlPerTrade => {
+                    result.total_pnl / (result.trades.len() as f64).max(1.0)
+                }
+            };
+            candidates.push(BacktestOptimizationCandidate {
+                pivot_length: cfg.pivot_length,
+                elliott_inner_pivot_length: cfg.elliott_inner_pivot_length,
+                objective_score: score,
+                result,
+            });
+        }
+    }
+
+    candidates.sort_by(|a, b| b.objective_score.total_cmp(&a.objective_score));
+    candidates.truncate(params.top_n.max(1));
+    candidates
+}
+
 /// Açık pozisyon (backtest içinde).
 struct OpenPosition {
     entry_bar: usize,

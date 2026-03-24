@@ -329,6 +329,15 @@ pub fn compute_elliott(
     });
 
     let swings = collect_swings(candles, pivot_len);
+    // Multi-scale: ana dalga outer pivot, iç sayım inner pivot.
+    let inner_pivot_len = (config.elliott_inner_pivot_length as usize)
+        .max(2)
+        .min(pivot_len.saturating_sub(1).max(2));
+    let inner_swings = if inner_pivot_len == pivot_len {
+        swings.clone()
+    } else {
+        collect_swings(candles, inner_pivot_len)
+    };
 
     let (recent, is_bullish, impulse_complete) =
         find_impulse_window(&swings, imp.is_bullish, invert);
@@ -340,7 +349,7 @@ pub fn compute_elliott(
         impulse_complete,
         &imp,
         pivot_len,
-        &swings,
+        &inner_swings,
         config,
     );
 
@@ -354,10 +363,10 @@ pub fn compute_elliott(
 
     let (zigzag_valid, _, _) = zigzag_ok;
     if zigzag_valid && (result.validation_ok != Some(true) || result.formation == "—") {
-        result = build_zigzag_result(&last4, &swings, config);
+        result = build_zigzag_result(&last4, &inner_swings, config);
     } else if result.validation_ok != Some(true) || result.formation == "—" {
         if let Some(flat_typ) = check_flat(&last4) {
-            result = build_flat_result(&last4, flat_typ, &swings, config);
+            result = build_flat_result(&last4, flat_typ, &inner_swings, config);
         } else if swings.len() >= 6 {
             if let Some(tri) = try_triangle(&swings) {
                 result = tri;

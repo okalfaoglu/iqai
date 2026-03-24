@@ -58,6 +58,8 @@
     "elliott_stability_min_wave_bars": 5,
     "elliott_stability_confirm_bars": 3,
     "elliott_stability_auto_invalidate_bars": 100,
+    "_comment_elliott_inner_pivot_length": "Dalga içinde dalga için daha küçük ikinci pivot (outer pivot_length'ten küçük olmalı).",
+    "elliott_inner_pivot_length": 3,
     "_comment_elliott_subwave_strict": "true: itki W1–W5 ve zigzag/flat A–B–C iç-dalga 1:1 (tez); false: toleranslı (varsayılan).",
     "elliott_subwave_strict": false,
     "_comment_elliott_thesis_te_y": "true: docs/content.txt §2.5.3–2.5.4 (W3>W1 bitiş, |W4|≤|W3|; zigzag B≤61.8%, C≥B) formation_valid ile birleşir. false: varsayılan. Eski anahtar elliott_thesis_teY_rules hâlâ okunur (alias).",

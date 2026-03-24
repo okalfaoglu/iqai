@@ -215,6 +215,9 @@ pub struct SmartMoneyConfig {
     pub elliott_stability_min_wave_bars: Option<u32>,
     pub elliott_stability_confirm_bars: Option<u32>,
     pub elliott_stability_auto_invalidate_bars: Option<u32>,
+    /// İç dalga sayımı için ikinci (daha küçük) pivot uzunluğu.
+    /// Yoksa `pivot_length` kullanılır (tek ölçek).
+    pub elliott_inner_pivot_length: Option<u32>,
     /// İtki/düzeltme iç-dalga 1:1 doğrulama — `config.elliott_subwave_strict`
     pub elliott_subwave_strict: Option<bool>,
     /// Tez `content.txt` §2.5.3–2.5.4 sayısal kuralları — `config.elliott_thesis_te_y_rules`

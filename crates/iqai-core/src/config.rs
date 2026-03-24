@@ -88,6 +88,9 @@ pub struct Config {
     pub elliott_stability_confirm_bars: u32,
     /// Bu kadar bar sonra “timeout” uyarısı (stateless; Pine auto-invalidate ilhamı)
     pub elliott_stability_auto_invalidate_bars: u32,
+    /// İç dalga (nested) tespiti için ikinci ölçek pivot uzunluğu.
+    /// `pivot_length`'ten küçük önerilir; eşitse tek ölçek davranışı.
+    pub elliott_inner_pivot_length: u32,
     /// true: itki W1–W5 ve düzeltme A–B–C **iç dalga** sayımlarında 1:1 tez uyumu (5/5 veya 3/3 bacak).
     /// false (varsayılan): en az 3/5 itki veya 2/3 düzeltme — gürültülü grafikler için toleranslı.
     pub elliott_subwave_strict: bool,
@@ -279,6 +282,7 @@ impl Default for Config {
             elliott_stability_min_wave_bars: 5,
             elliott_stability_confirm_bars: 3,
             elliott_stability_auto_invalidate_bars: 100,
+            elliott_inner_pivot_length: 3,
             elliott_subwave_strict: false,
             elliott_thesis_te_y_rules: false,
 
@@ -521,6 +525,7 @@ impl Config {
             if let Some(v) = c.elliott_stability_min_wave_bars { base.elliott_stability_min_wave_bars = v.max(1); }
             if let Some(v) = c.elliott_stability_confirm_bars { base.elliott_stability_confirm_bars = v.max(1); }
             if let Some(v) = c.elliott_stability_auto_invalidate_bars { base.elliott_stability_auto_invalidate_bars = v.max(20); }
+            if let Some(v) = c.elliott_inner_pivot_length { base.elliott_inner_pivot_length = v.max(2); }
             if let Some(v) = c.elliott_subwave_strict { base.elliott_subwave_strict = v; }
             if let Some(v) = c.elliott_thesis_te_y_rules {
                 base.elliott_thesis_te_y_rules = v;
