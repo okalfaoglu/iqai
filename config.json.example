@@ -57,7 +57,9 @@
     "elliott_require_ewo_alignment": false,
     "elliott_stability_min_wave_bars": 5,
     "elliott_stability_confirm_bars": 3,
-    "elliott_stability_auto_invalidate_bars": 100
+    "elliott_stability_auto_invalidate_bars": 100,
+    "_comment_elliott_subwave_strict": "true: itki W1–W5 ve zigzag/flat A–B–C iç-dalga 1:1 (tez); false: toleranslı (varsayılan).",
+    "elliott_subwave_strict": false
   },
   "trading": {
     "enabled": false,

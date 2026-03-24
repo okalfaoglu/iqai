@@ -12,8 +12,9 @@ use crate::elliott::{
     depth_of_corrective_target_from_subwaves,
     detect_extended_wave, detect_nested_extension,
     detect_throw_over, detect_truncation, flat_valid_detailed, time_projection_w5,
-    validate_corrective_subwaves, validate_diagonal, validate_impulse,
-    validate_impulse_with_w5, validate_subwave_deep, validate_subwave_structure,
+    validate_corrective_subwaves_with_mode, validate_diagonal,
+    validate_impulse, validate_impulse_with_w5, validate_subwave_deep,
+    validate_subwave_structure_with_mode,
     validate_triangle_abcde,
     validate_zigzag_abc, w1_w5_equality, AlternationResult, DiagonalSubStructure, FlatType,
     ImpulseChannel, WaveDegree,
@@ -337,6 +338,7 @@ pub fn compute_elliott(
         &imp,
         pivot_len,
         &swings,
+        config,
     );
 
     let last4: Vec<_> = if swings.len() >= 4 {
@@ -349,10 +351,10 @@ pub fn compute_elliott(
 
     let (zigzag_valid, _, _) = zigzag_ok;
     if zigzag_valid && (result.validation_ok != Some(true) || result.formation == "—") {
-        result = build_zigzag_result(&last4, &swings);
+        result = build_zigzag_result(&last4, &swings, config);
     } else if result.validation_ok != Some(true) || result.formation == "—" {
         if let Some(flat_typ) = check_flat(&last4) {
-            result = build_flat_result(&last4, flat_typ, &swings);
+            result = build_flat_result(&last4, flat_typ, &swings, config);
         } else if swings.len() >= 6 {
             if let Some(tri) = try_triangle(&swings) {
                 result = tri;
@@ -805,6 +807,7 @@ fn build_impulse_result(
     imp: &crate::impulse_detector::ImpulseDetectorState,
     _pivot_len: usize,
     all_swings: &[(i64, f64, bool)],
+    config: &Config,
 ) -> ElliottDetectorResult {
     let mut result = ElliottDetectorResult::default();
 
@@ -1218,7 +1221,10 @@ fn build_impulse_result(
                         wave_inner_swings[w] = inner;
                     }
                 }
-                let mut swv = validate_subwave_structure(sw_counts);
+                let mut swv = validate_subwave_structure_with_mode(
+                    sw_counts,
+                    config.elliott_subwave_strict,
+                );
 
                 // Level-2: her dalganın iç alt-dalgaları arasındaki iç-iç swing sayıları
                 let mut level2_counts: [Vec<usize>; 5] = Default::default();
@@ -1351,7 +1357,11 @@ fn check_flat(last4: &[(i64, f64, bool)]) -> Option<FlatType> {
     }
 }
 
-fn build_zigzag_result(last4: &[(i64, f64, bool)], all_swings: &[(i64, f64, bool)]) -> ElliottDetectorResult {
+fn build_zigzag_result(
+    last4: &[(i64, f64, bool)],
+    all_swings: &[(i64, f64, bool)],
+    config: &Config,
+) -> ElliottDetectorResult {
     let (t0, p0, _) = last4[0];
     let (t1, p1, _) = last4[1];
     let (t2, p2, _) = last4[2];
@@ -1368,7 +1378,11 @@ fn build_zigzag_result(last4: &[(i64, f64, bool)], all_swings: &[(i64, f64, bool
     let a_inner = collect_inner_swings_between(all_swings, t0, t1).len();
     let b_inner = collect_inner_swings_between(all_swings, t1, t2).len();
     let c_inner = collect_inner_swings_between(all_swings, t2, t3).len();
-    let csv = validate_corrective_subwaves([a_inner, b_inner, c_inner], true);
+    let csv = validate_corrective_subwaves_with_mode(
+        [a_inner, b_inner, c_inner],
+        true,
+        config.elliott_subwave_strict,
+    );
     let msg = if csv.valid {
         format!("Zigzag kuralları geçerli (iç: {}-{}-{})", a_inner, b_inner, c_inner)
     } else {
@@ -1397,7 +1411,12 @@ fn build_zigzag_result(last4: &[(i64, f64, bool)], all_swings: &[(i64, f64, bool
     }
 }
 
-fn build_flat_result(last4: &[(i64, f64, bool)], flat_type: FlatType, all_swings: &[(i64, f64, bool)]) -> ElliottDetectorResult {
+fn build_flat_result(
+    last4: &[(i64, f64, bool)],
+    flat_type: FlatType,
+    all_swings: &[(i64, f64, bool)],
+    config: &Config,
+) -> ElliottDetectorResult {
     let (t0, p0, _) = last4[0];
     let (t1, p1, _) = last4[1];
     let (t2, p2, _) = last4[2];
@@ -1442,7 +1461,11 @@ fn build_flat_result(last4: &[(i64, f64, bool)], flat_type: FlatType, all_swings
     let a_inner = collect_inner_swings_between(all_swings, t0, t1).len();
     let b_inner = collect_inner_swings_between(all_swings, t1, t2).len();
     let c_inner = collect_inner_swings_between(all_swings, t2, t3).len();
-    let csv = validate_corrective_subwaves([a_inner, b_inner, c_inner], false);
+    let csv = validate_corrective_subwaves_with_mode(
+        [a_inner, b_inner, c_inner],
+        false,
+        config.elliott_subwave_strict,
+    );
     let msg = if csv.valid {
         format!("Flat kuralları geçerli ({}, iç: {}-{}-{})", formation_name, a_inner, b_inner, c_inner)
     } else {
@@ -1590,6 +1613,24 @@ fn try_triangle(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResult> {
         format!("Triangle dış yapı geçerli ({} {}; iç abc yeterli değil)", shape_label, subtype_str)
     };
 
+    let w2_blocked = crate::elliott::triangle_wave2_context_blocked(swings.len());
+    let validation_ok = if w2_blocked { Some(false) } else { Some(true) };
+    let validation_msg = if w2_blocked {
+        format!(
+            "{msg} — EWM: Üçgen W2 pozisyonunda olamaz; pivot/TF genişletin veya sayımı şüpheli kabul edin."
+        )
+    } else {
+        msg
+    };
+    let elliott_invalidate_hint = if w2_blocked {
+        Some(
+            "Üçgen yalnızca W4 veya B dalgasında olur; bu pencerede W2 üçgeni şüphesi (yasak)."
+                .to_string(),
+        )
+    } else {
+        None
+    };
+
     let a_len = (p1 - p0).abs();
     let is_bull_breakout = !h0;
     let thrust = crate::elliott::triangle_thrust_target(a_len, p5, is_bull_breakout);
@@ -1611,10 +1652,11 @@ fn try_triangle(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResult> {
         wave_legs,
         formation: formation_name,
         formation_type: format!("Düzeltme (Üçgen – {})", subtype_str),
-        validation_ok: Some(true),
-        validation_msg: Some(msg),
+        validation_ok,
+        validation_msg: Some(validation_msg),
         projections: Some(projections),
         corr_setup: Some(tri_setup),
+        elliott_invalidate_hint,
         ..Default::default()
     })
 }
@@ -2100,6 +2142,34 @@ mod find_impulse_window_tests {
         assert!(is_bull);
         assert_eq!(w.len(), 6);
         assert_eq!(w.last().unwrap().1, 140.0);
+    }
+}
+
+#[cfg(test)]
+mod try_triangle_w2_tests {
+    use super::try_triangle;
+
+    /// Dar geçmişte (8 pivot) üçgen + EWM W2 yasağı → `validation_ok == false`.
+    #[test]
+    fn eight_swing_triangle_marks_validation_failed() {
+        let swings = vec![
+            (0_i64, 85.0, false),
+            (1, 99.0, true),
+            (2, 88.0, false),
+            (3, 100.0, true),
+            (4, 90.0, false),
+            (5, 96.0, true),
+            (6, 92.0, false),
+            (7, 95.0, true),
+        ];
+        let r = try_triangle(&swings).expect("valid triangle geometry");
+        assert_eq!(r.validation_ok, Some(false));
+        let vm = r.validation_msg.as_deref().unwrap_or("");
+        assert!(
+            vm.contains("W2") || vm.contains("yasak"),
+            "msg={vm:?}"
+        );
+        assert!(r.elliott_invalidate_hint.is_some());
     }
 }
 

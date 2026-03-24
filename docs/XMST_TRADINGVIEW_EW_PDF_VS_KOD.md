@@ -1,24 +1,40 @@
 # XMSTradeX / TradingView Elliott PDF’leri × IQAI kod — TODO / DONE
 
-**Tarih:** 2026-03-24  
+**Tarih:** 2026-03-20  
 **Amaç:** *Elliott Wave Konuları* tarzı eğitim materyali ile `iqai-core` / `iqai-web` Elliott uygulamasını karşılaştırmak; **eksik, hatalı, problemli veya bizde olmayan** özellikleri tek yerde toplamak.
 
 ---
 
 ## 1. Kaynak PDF’ler ve okuma notu
 
-| # | Sizin paylaştığınız dosya (Cursor workspace storage) | Repoda doğrudan kopyası |
-|---|------------------------------------------------------|-------------------------|
-| 1 | `…\pdfs\83c23f9f-…\46249.pdf` | **Yok** — içerik bu makinede açılmadı; adından tez/rapor olabileceği **varsayılır**. |
-| 2 | `…\pdfs\c2643919-…\content.pdf` | **Yok** — aynı. |
-| 3 | `…\BINANCE_BTCUSDT için XMSTradeX tarafından ELLİOT WAVE KONULARI — TradingView.pdf` | **Kısmi eşdeğer:** `docs/ELLIOTT_CODE_REVIEW_AND_PLAN.md` **§1.1** (XMSTradeX notları özeti). |
+| # | Kaynak | Repoda |
+|---|--------|--------|
+| 1 | *The Basics of the Elliott Wave Principle* (metin tabanlı eğitim PDF’i) | `docs/THE_BASICS_OF_THE_ELLIOTT_WAVE_PRINCIPLE.pdf` |
+| 2 | İsteğe bağlı metin çıktısı (`poppler-utils` → `pdftotext`) | `docs/THE_BASICS_OF_THE_ELLIOTT_WAVE_PRINCIPLE.txt` — **yoksa** yerelde üretin; repoya commit isteğe bağlı |
+| 3 | Eski Cursor storage yolları (`46249.pdf`, `content.pdf`) | Repoda yok; içerik bilinmiyor |
+| 4 | XMSTradeX *Elliott Wave Konuları* (TradingView) | PDF repoda yoksa **kısmi eşdeğer:** `docs/ELLIOTT_CODE_REVIEW_AND_PLAN.md` **§1.1** |
 
-**Önemli:** Bu ortamda PDF metni taranmadı. **Sayfa numarası** ve **bölüm başlığı** eşlemesi için:
-
-- PDF’leri `docs/` altına kopyalayıp (ör. `docs/ref/XMST_EW_KONULARI.pdf`) repoda tutabilirsiniz, **veya**
-- İçindekiler tablosunu buraya yapıştırarak **§4 Elle sayfa eşlemesi** tablosunu doldurabilirsiniz.
+**Sayfa / bölüm eşlemesi:** İçindekileri **§4** tablosuna işleyin; TXT’den kopyalamak hızlıdır, **görselli sayfalar** için aşağıdaki nota bakın.
 
 **Teknik sözleşme (kurallar):** `docs/ELLIOTT_WAVE_SPEC.md` + Frost/Prechter uyumlu cheat sheet çevirisi aynı repoda.
+
+### 1.1 PDF → TXT (`pdftotext`)
+
+- Paket: `sudo apt install -y poppler-utils`
+- Örnek: `pdftotext -layout "docs/THE_BASICS_OF_THE_ELLIOTT_WAVE_PRINCIPLE.pdf" "docs/THE_BASICS_OF_THE_ELLIOTT_WAVE_PRINCIPLE.txt"`
+- Amaç: içindekiler ve başlıkları aramak; **§4** doldurmak.
+
+### 1.2 Resim, şema ve taranmış sayfalar
+
+`pdftotext` yalnızca PDF’deki **metin katmanını** okur:
+
+| Durum | TXT’de ne olur | Ne yapılmalı |
+|--------|----------------|--------------|
+| Normal metin + gömülü yazı | Başlıklar/metin gelir | §3–§4 ile eşle |
+| Sayfa çoğunlukla **görsel / şema** | Boş, çok kısa veya anlamsız | PDF’de **sayfa numarasını** §4’e yaz; kuralı `ELLIOTT_WAVE_SPEC.md` veya elle özetle |
+| **Taranmış** PDF (tarayıcı görüntüsü) | Genelde metin yok | Gerekirse OCR (`ocrmypdf`, `tesseract`) veya PDF’den elle not |
+
+**Özet:** “İçinde resim olabilir” = TXT tek başına yeterli olmayabilir; **§4’te PDF sayfa referansı** tutmak şart.
 
 ---
 
@@ -57,7 +73,7 @@
 |------|-------|-----------|
 | Zigzag A-B-C (5-3-5), B sınırı | **KISMEN** | `build_zigzag_result`, `compute_setup_zigzag_c`; iç swing doğrulama `validate_corrective_subwaves`. |
 | Flat regular / expanded / running | **KISMEN** | `flat_valid_detailed`, `build_flat_result`; irregular vs “failure” ayrımı **TODO** → `ELLIOTT_CODE_REVIEW_AND_PLAN.md` **A3**. |
-| Triangle (contracting/expanding), ABCDE | **KISMEN** | `try_triangle`, `validate_triangle_*`; **W2’de üçgen olamaz** kuralı → **RİSK** (audit) → aynı plan **A4**. |
+| Triangle (contracting/expanding), ABCDE | **KISMEN** | `try_triangle`, `validate_triangle_*`; **W2’de üçgen olamaz** → heuristik: toplam **8** pivot’ta `triangle_wave2_context_blocked` + `validation_ok: false`, `elliott_invalidate_hint` (`elliott.rs` / `elliott_detector.rs`). Tam pozisyon (W4 vs B) için daha geniş audit → **A4** kısmen. |
 | Double/triple zigzag ve kombinasyonlar | **KISMEN** | `try_double_zigzag`, `try_triple_zigzag`, `try_double_three` — Post kuralları kenar durumları **B3** (plan). |
 
 **Detaya girilmesi gereken yerler:** `elliott_detector.rs` (zigzag/flat/triangle builder’lar), `elliott.rs` (triangle/flat validasyonları).  
@@ -101,13 +117,13 @@
 
 ## 4. Elle PDF sayfa eşlemesi (şablon — doldurun)
 
-*XMSTradeX PDF içindekiler veya bölüm başlıkları buraya yapıştırıldıkça güncellenir.*
+*Kaynak: `THE_BASICS_… .txt` içindekiler / başlıklar + gerektiğinde PDF’de sayfa numarası (görseller için).*
 
-| PDF sayfa / bölüm | Konu başlığı | Bu dosyada § | Kod modülü |
-|-------------------|--------------|--------------|------------|
-| *örn. s. 3* | *örn. Impulse kuralları* | §3.1 | `elliott.rs` |
-| | | | |
-| | | | |
+| PDF sayfa / bölüm | Konu başlığı | Bu dosyada § | Kod modülü | Not |
+|-------------------|--------------|--------------|------------|-----|
+| *örn. s. 3* | *örn. Impulse kuralları* | §3.1 | `elliott.rs` | |
+| | | | | *şema sayfasıysa: “diagram only”* |
+| | | | | |
 
 ---
 
@@ -116,7 +132,7 @@
 1. **Fraktal / çoklu derece hiyerarşisi** (üst TF alt TF ilişkisi) — **TODO**  
 2. **Guideline vs rule** ayrımının kullanıcıya net skor olarak yansıması — **KISMEN / TODO** (`confidence` birleşik)  
 3. **Failure correction vs irregular flat** ayrı teşhis etiketi — **TODO**  
-4. **Üçgen W2 yasağı** tam pozisyon audit — **RİSK**  
+4. **Üçgen W2 yasağı** — **KISMEN**: 8-pivot heuristik + testler; tam W4/B ayrımı hâlâ **RİSK**  
 5. **ABCDE iç ABC** granülaritesi — **TODO** (`ELLIOTT_WAVE_SPEC.md` notu)  
 6. **TradingView tarzı tam state makinesi** (lock/cooldown) — **TODO**  
 7. **Notify eşiği** (yüksek confluence) — **TODO** (`notify.rs` ile bağlama)
@@ -129,6 +145,7 @@
 |-------|--------|
 | `docs/ELLIOTT_CODE_REVIEW_AND_PLAN.md` | XM özet + kod audit maddeleri (A0–C2, Faz 0–3) |
 | `docs/ELLIOTT_WAVE_SPEC.md` | Kural referansı (EWM cheat sheet çevirisi) |
+| `docs/THE_BASICS_OF_THE_ELLIOTT_WAVE_PRINCIPLE.pdf` (ve isteğe bağlı `.txt`) | Dış eğitim PDF’i; TXT = `pdftotext` çıktısı |
 | `docs/PINE_EW_SMC_FUSION_PORT_ANALYSIS.md` | Pine/fusion özellik eşlemesi |
 | `crates/iqai-core/src/elliott.rs` | Kurallar, setup, dalga derecesi formatı |
 | `crates/iqai-core/src/elliott_detector.rs` | Ana tespit ve sonuç üretimi |
@@ -140,6 +157,6 @@
 
 ## 7. Son not
 
-Bu dosya **PDF ikili içeriğini otomatik okuyamaz**; XMSTradeX *Elliott Wave Konuları* ile uyum, repodaki **metin özetleri** ve kod taramasına dayanır. PDF’yi `docs/ref/` altına ekleyip içindekileri **§4**’e işlerseniz, eğitim–kod izlenebilirliği tamamlanır.
+Bu dosya **görsel şemaları otomatik anlamaz**; metin katmanı `pdftotext` ile TXT’ye alınabilir (**§1.1**). XMSTradeX *Elliott Wave Konuları* PDF’i repoda yoksa uyum, **`ELLIOTT_CODE_REVIEW_AND_PLAN.md`** özeti ve kod taramasına dayanır. **§4** dolduruldukça eğitim–kod izlenebilirliği netleşir.
 
-**Sonraki adım (öneri):** `46249.pdf` ve `content.pdf` için kısa **içindekiler** (1 sayfa) buraya yapıştırın; madde numaralarını §3 alt başlıklarına bağlarız.
+**Sonraki adım:** `THE_BASICS_… .txt` içinden içindekileri **§4**’e satır satır işleyin; şema ağırlıklı sayfalarda **PDF sayfa no** + “diagram” notu kullanın.

@@ -1559,6 +1559,18 @@ pub enum TriangleSubtype {
 /// highs: [h0, h1, h2] – zirve noktaları (sırasıyla)
 /// lows: [l0, l1, l2] – dip noktaları
 /// b_exceeds_a_start: B dalgası A başlangıcını aşıyor mu
+/// EWM: Üçgen dalga **W2 pozisyonunda olamaz** (yalnızca W4 veya B).
+///
+/// `collect_swings` çıktısunda toplam pivot sayısı **tam 8** ise, son 6 pivot üçgen
+/// penceresidir; öncesinde yalnızca 2 pivot vardır → klasik **W0–W3** tabanı olmadan
+/// “düzeltme üçgeni” önerilir; bu **W2 üçgeni** (yasak) şüphesi doğurur.
+///
+/// Deterministik değildir (ör. B dalgası üçgeni daha kısa geçmişte de görülebilir);
+/// otomatik sayımda **uyarı / geçersiz sayım** tetiklemek için kullanılır.
+pub fn triangle_wave2_context_blocked(total_swings: usize) -> bool {
+    total_swings == 8
+}
+
 pub fn classify_triangle_subtype(
     highs: [f64; 3],
     lows: [f64; 3],
@@ -1828,7 +1840,17 @@ pub struct SubWaveValidation {
 /// İç swing sayısına göre alt-dalga yapısını doğrula.
 /// PDF: "Waves 1, 3, and 5 are themselves motive (5-wave), waves 2 and 4 are corrective (3-wave)."
 /// inner_counts: [W1, W2, W3, W4, W5] iç swing sayıları
+///
+/// `strict == true`: tez/kitap 1:1 — **beş dalganın tamamı** beklenen iç yapıya uymalı (5/5).
+/// `strict == false` (varsayılan): en az 3/5 uyum (gürültülü grafikler için toleranslı).
 pub fn validate_subwave_structure(inner_counts: [usize; 5]) -> SubWaveValidation {
+    validate_subwave_structure_with_mode(inner_counts, false)
+}
+
+pub fn validate_subwave_structure_with_mode(
+    inner_counts: [usize; 5],
+    strict: bool,
+) -> SubWaveValidation {
     // 5-dalgalı motive yapı → en az 4 iç swing (5 nokta arası 4 bacak)
     // 3-dalgalı corrective yapı → en az 2 iç swing
     let w1_ok = inner_counts[0] >= 4;
@@ -1842,8 +1864,12 @@ pub fn validate_subwave_structure(inner_counts: [usize; 5]) -> SubWaveValidation
         .filter(|&&x| x)
         .count() as u8;
 
-    // En az 3/5 uyum → geçerli (toleranslı — gerçek piyasada alt swing'ler her zaman ideal sayıda olmayabilir)
-    let valid = conforming >= 3;
+    let valid = if strict {
+        conforming == 5
+    } else {
+        // En az 3/5 uyum — gerçek piyasada alt swing'ler her zaman ideal sayıda olmayabilir
+        conforming >= 3
+    };
 
     SubWaveValidation {
         w1_inner: inner_counts[0],
@@ -1959,12 +1985,26 @@ pub fn validate_corrective_subwaves(
     inner_counts: [usize; 3],
     is_zigzag: bool,
 ) -> CorrSubWaveValidation {
+    validate_corrective_subwaves_with_mode(inner_counts, is_zigzag, false)
+}
+
+/// Düzeltme A-B-C iç yapısı: zigzag 5-3-5, flat 3-3-5.
+/// `strict`: A, B, C’nin üçü de eşikleri geçmeli (1:1 tez uyumu).
+pub fn validate_corrective_subwaves_with_mode(
+    inner_counts: [usize; 3],
+    is_zigzag: bool,
+    strict: bool,
+) -> CorrSubWaveValidation {
     let (a_ok, b_ok, c_ok, pattern) = if is_zigzag {
         (inner_counts[0] >= 4, inner_counts[1] >= 2, inner_counts[2] >= 4, "5-3-5")
     } else {
         (inner_counts[0] >= 2, inner_counts[1] >= 2, inner_counts[2] >= 4, "3-3-5")
     };
-    let valid = [a_ok, b_ok, c_ok].iter().filter(|&&x| x).count() >= 2;
+    let valid = if strict {
+        a_ok && b_ok && c_ok
+    } else {
+        [a_ok, b_ok, c_ok].iter().filter(|&&x| x).count() >= 2
+    };
     CorrSubWaveValidation {
         a_inner: inner_counts[0],
         b_inner: inner_counts[1],
@@ -2044,5 +2084,40 @@ mod flat_valid_detailed_tests {
         let (valid, typ) = flat_valid_detailed(2155.90, 2120.04, 2175.84, 2114.20, true);
         assert!(valid);
         assert_eq!(typ, Some(FlatType::Expanded));
+    }
+}
+
+#[cfg(test)]
+mod triangle_wave2_context_tests {
+    use super::triangle_wave2_context_blocked;
+
+    #[test]
+    fn eight_total_swings_flags_w2_triangle_heuristic() {
+        assert!(triangle_wave2_context_blocked(8));
+        assert!(!triangle_wave2_context_blocked(7));
+        assert!(!triangle_wave2_context_blocked(9));
+    }
+}
+
+#[cfg(test)]
+mod subwave_strict_tests {
+    use super::{validate_corrective_subwaves_with_mode, validate_subwave_structure_with_mode};
+
+    #[test]
+    fn impulse_strict_requires_all_five_legs() {
+        let ok = [4, 3, 4, 3, 4];
+        assert!(validate_subwave_structure_with_mode(ok, true).valid);
+        // W4: iç swing 1 → 3-dalgalı düzeltme için yetersiz (w4_ok false)
+        let partial = [4, 3, 4, 1, 4];
+        assert!(!validate_subwave_structure_with_mode(partial, true).valid);
+        assert!(validate_subwave_structure_with_mode(partial, false).valid);
+    }
+
+    #[test]
+    fn zigzag_strict_requires_abc_all() {
+        let ok = [4, 2, 4];
+        assert!(validate_corrective_subwaves_with_mode(ok, true, true).valid);
+        let partial = [4, 3, 2];
+        assert!(!validate_corrective_subwaves_with_mode(partial, true, true).valid);
     }
 }

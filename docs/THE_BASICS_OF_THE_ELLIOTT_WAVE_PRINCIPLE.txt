@@ -1,0 +1,1263 @@
+            THE BASICS
+                 OF THE
+ELLIOTT WAVE PRINCIPLE
+
+
+         by Robert R. Prechter, Jr.
+
+
+
+
+                 Published by
+          NEW CLASSICS LIBRARY
+                  a division of
+
+
+
+
+Post Office Box 1618, Gainesville, GA 30503 USA
+800-336-1618 or 770-536-0309 or fax 770-536-2514
+                     THE BASICS
+                         OF THE
+          ELLIOTT WAVE PRINCIPLE
+
+
+                 Copyright © 1995-2004
+                by Robert R. Prechter, Jr.
+
+
+        Printed in the United States of America
+
+
+               First Edition: August 1995
+             Second Edition: February 1996
+               Third Edition: April 2000
+               Fourth Edition: June 2004
+                      August 2007
+
+
+         For information, address the publishers:
+                 New Classics Library
+                        a division of
+                Elliott Wave International
+                   Post Office Box 1618
+             Gainesville, Georgia 30503 USA
+
+
+
+All rights reserved. The material in this volume may not be
+    reprinted or reproduced in any manner whatsoever.
+Violators will be prosecuted to the fullest extent of the law.
+
+
+                  Cover design: Marc Benejan
+                 Production: Pamela Greenwood
+
+
+
+                   ISBN: 0-932750-63-X
+                   CONTENTS
+
+ 7   The Basics
+ 7      The Five Wave Pattern
+ 8      Wave Mode
+10      The Essential Design
+11      Variations on the Basic Theme
+12      Wave Degree
+
+14   Motive Waves
+14      Impulse
+16         Extension
+17         Truncation
+18      Diagonal Triangles (Wedges)
+
+19   Corrective Waves
+19      Zigzags (5-3-5)
+21      Flats (3-3-5)
+22      Horizontal Triangles (Triangles)
+24      Combinations (Double and Triple Threes)
+
+26   Guidelines of Wave Formation
+26      Alternation
+26      Depth of Corrective Waves
+27      Channeling Technique
+28      Volume
+29      Learning the Basics
+
+32   The Fibonacci Sequence and its Application
+35      Ratio Analysis
+35         Retracements
+36         Motive Wave Multiples
+37         Corrective Wave Multiples
+
+40   Perspective
+
+41   Glossary
+                      FOREWORD
+
+     By understanding the Wave Principle, you can antici-
+pate large and small shifts in the psychology driving any
+investment market and help yourself minimize the emo-
+tions that drive your own investment decisions. Where did
+this valuable tool come from?
+     Ralph Nelson Elliott, a corporate accountant by pro-
+fession, studied price movements in the financial markets
+and observed that certain patterns repeat themselves. He
+offered proof of his discovery by making astonishingly ac-
+curate stock market forecasts. What appears random and
+unrelated, Elliott said, will actually trace out a recogniz-
+able pattern once you learn what to look for. Elliott called
+his discovery “the Wave Principle,” and its implications
+were huge. He had identified the common link that drives
+the trends in human affairs, from financial markets to fash-
+ion, from politics to popular culture.
+     Robert Prechter resurrected the Wave Principle from
+near obscurity in 1976. Bob was working as an analyst for
+Merrill Lynch when he discovered the complete body of
+R.N. Elliott’s work in the New York Public Library.
+     Mr. Prechter and A.J. Frost published Elliott Wave
+Principle in 1978. The book received enthusiastic reviews
+and became a Wall Street bestseller. Their forecast called
+for a roaring bull market in the 1980s, to be followed by a
+record bear market. Mr. Prechter left Merrill Lynch in 1979
+to start the monthly publication, The Elliott Wave Theo-
+rist, and a new focus for Wall Street and investors
+worldwide was born.
+     Knowledge of the Wave Principle among private and
+professional investors grew dramatically in the 1980s. The
+stunning accuracy of the forecasts in The Elliott Wave
+Theorist earned numerous awards, and received a level of
+recognition that no other such publication has ever
+achieved.
+
+
+
+                            -iv -
+     It is no coincidence that the global acceptance of the
+Elliott Wave Principle has paralleled the growth of Elliott
+Wave International (EWI), the market analysis and pub-
+lishing corporation founded by Robert R. Prechter, Jr. In
+the two decades since then, EWI has earned the reputa-
+tion as the world’s premier publisher of Elliott wave
+analysis and investment commentary. Tens of thousands
+of investors use the Wave Principle to guide their finan-
+cial decisions. Tens of thousands more have bought
+products indirectly, through distributors and representa-
+tives. Prechter and Frost’s book has now been translated
+into French, German, Dutch, Spanish, Swedish, Polish,
+Japanese, Chinese, and Russian.
+     Elliott Wave International is one of the world’s larg-
+est providers of technical analysis. The revolution in
+instant data transmission has given us a perfect vehicle
+for around-the-clock coverage of global financial markets.
+     We now provide institutional and private investors
+with 24-hour market commentary via electronic delivery.
+We also provide monthly publications, hotlines and
+educational services that include periodic conferences,
+intensive workshops and tutorials, video tapes, special
+reports and books.
+
+
+
+
+                            -v -
+                ABOUT THE AUTHOR
+
+     Founder and president of Elliott Wave International,
+Robert Prechter has been publishing market commentary
+since 1976. He began his career with the Merrill Lynch
+Market Analysis Department in New York. In 1984, Bob
+set a record in the options division of the U.S. Trading
+Championship with a real-money trading account. In De-
+cember 1989, Financial News Network (now CNBC) named
+him “Guru of the Decade.” Bob served for nine years on
+the Board of the Market Technicians Association and in
+1990-1991 served as its president. During the 1990s, he
+expanded his firm to provide analysis for institutions on
+every major financial market in the world. Bob has writ-
+ten 13 books on finance, most notably the two-volume set,
+Socionomics – The Science of History and Social Predic-
+tion. His recent title, Conquer the Crash — You Can Survive
+and Prosper in a Deflationary Crash and Depression, was
+a New York Times and Wall Street Journal business best-
+seller. In 1999, Bob received the CSTA’s first annual A.J.
+Frost Memorial Award for Outstanding Contribution to
+the Development of Technical Analysis. In 2003, Traders
+Library granted him its Hall of Fame award.
+
+
+
+
+                           -vi -
+                     THE BASICS
+
+     “The Wave Principle” is Ralph Nelson Elliott’s discov-
+ery that social, or crowd, behavior trends and reverses in
+recognizable patterns. Using stock market data for the Dow
+Jones Industrial Average (DJIA) as his main research tool,
+Elliott discovered that the ever-changing path of stock mar-
+ket prices reveals a structural design that in turn reflects
+a basic harmony found in nature. From this discovery, he
+developed a rational system of market analysis.
+     Under the Wave Principle, every market decision is
+both produced by meaningful information and produces
+meaningful information. Each transaction, while at once
+an effect, enters the fabric of the market and, by communi-
+cating transactional data to investors, joins the chain of
+causes of others’ behavior. This feedback loop is governed
+by man’s social nature, and since he has such a nature,
+the process generates forms. As the forms are repetitive,
+they have predictive value.
+     Elliott isolated thirteen “waves,” or patterns of direc-
+tional movement, that recur in markets and are repetitive
+in form, but are not necessarily repetitive in time or ampli-
+tude. He named, defined and illustrated the patterns. He
+then described how these structures link together to form
+larger versions of the same patterns, how those in turn
+are the building blocks for patterns of the next larger size,
+and so on. His descriptions constitute a set of empirically
+derived rules and guidelines for interpreting market ac-
+tion. The patterns that naturally occur under the Wave
+Principle are described below.
+
+The Five-Wave Pattern
+   In markets, progress ultimately takes the form of five
+waves of a specific structure. Three of these waves, which
+8                             The Basics of the Wave Principle
+
+
+
+
+                          Figure 1
+
+are labeled 1, 3 and 5, actually effect the directional move-
+ment. They are separated by two countertrend interrup-
+tions, which are labeled 2 and 4, as shown in Figure 1. The
+two interruptions are apparently a requisite for overall
+directional movement to occur.
+     At any time, the market may be identified as being
+somewhere in the basic five-wave pattern at the largest
+degree of trend. Because the five-wave pattern is the over-
+riding form of market progress, all other patterns are
+subsumed by it.
+
+Wave Mode
+     There are two modes of wave development: motive and
+corrective. Motive waves have a five-wave structure, while
+corrective waves have a three-wave structure or a varia-
+tion thereof. Motive mode is employed by both the five-wave
+Robert R. Prechter, Jr.                                   9
+
+
+
+
+pattern of Figure 1 and its same-directional components,
+i.e., waves 1, 3 and 5. Their structures are called “motive”
+because they powerfully impel the market. Corrective mode
+is employed by all countertrend interruptions, which in-
+clude waves 2 and 4 in Figure 1. Their structures are called
+“corrective” because they can accomplish only a partial
+retracement, or “correction,” of the progress achieved by
+any preceding motive wave. Thus, the two modes are fun-
+damentally different, both in their roles and in their
+construction, as will be detailed in an upcoming section.
+      The five-wave motive phase has subwaves denoted by
+numbers, and the three-wave corrective phase has sub-
+waves are denoted by letters. Every motive wave is followed
+by a corrective wave. Just as wave 2 corrects wave 1 in
+Figure 1, the sequence A, B, C corrects the sequence 1, 2,
+3, 4, 5 in Figure 2.
+
+
+
+
+                          Figure 2
+10                             The Basics of the Wave Principle
+
+
+
+
+                            Figure 3
+
+
+The Essential Design
+      Figure 3 not only illustrates a larger version of Figure
+2, it also illustrates Figure 2 itself, in greater detail. Waves
+(1) and (2) in Figure 3, if examined under a “microscope,”
+would take the same form as waves 1 and 2. Regardless
+of degree, the form is constant. We can use Figure 3 to
+illustrate two waves, eight waves or thirty-four waves, de-
+pending upon the degree to which we are referring.
+      Now observe that within the corrective pattern illus-
+trated as wave 2 in Figure 3, waves (A) and (C), which
+point downward, are each composed of five waves: 1, 2, 3,
+4 and 5. Similarly, wave (B), which points upward, is com-
+posed of three waves: A, B and C. This construction
+Robert R. Prechter, Jr.                                   11
+
+
+
+
+discloses a crucial point: Motive waves do not always point
+upward, and corrective waves do not always point down-
+ward. The mode of a wave is determined not by its absolute
+direction but primarily by its relative direction. Aside from
+four specific exceptions, which will be discussed later in
+this chapter, waves divide in motive mode (five waves) when
+trending in the same direction as the wave of one larger
+degree of which it is a part, and in corrective mode (three
+waves or a variation) when trending in the opposite direc-
+tion. Waves (A) and (C) are motive, trending in the same
+direction as wave 2. Wave (B) is corrective because it cor-
+rects wave (A) and is countertrend to wave 2. In summary,
+the essential underlying tendency of the Wave Principle is
+that action in the same direction as the one larger trend
+develops in five waves, while reaction against the one larger
+trend develops in three waves, at all degrees of trend.
+     Nor does Figure 3 imply finality. As before, this larger
+cycle automatically becomes two subdivisions of the wave
+of next higher degree. As long as progress continues, the
+process of building to greater degrees continues. The re-
+verse process of subdividing into lesser degrees apparently
+continues indefinitely as well. As far as we can determine,
+then, all waves both have and are component waves.
+
+Variations on the Basic Theme
+     The Wave Principle would be simple to apply if the
+basic theme described above were the complete descrip-
+tion of market behavior. However, the real world,
+fortunately or unfortunately, is not so simple. The rest of
+this section fills out the description of how the market be-
+haves in reality.
+12                            The Basics of the Wave Principle
+
+
+
+Wave Degree
+    All waves may be categorized by relative size, or de-
+gree. Elliott discerned nine degrees of waves, from the
+smallest wiggle on an hourly chart to the largest wave he
+could assume existed from the data then available. He
+chose the names listed below to label these degrees, from
+largest to smallest:
+                    Grand Supercycle
+                       Supercycle
+                          Cycle
+                        Primary
+                      Intermediate
+                         Minor
+                         Minute
+                        Minuette
+                      Subminuette
+
+     Cycle waves subdivide into Primary waves that sub-
+divide into Intermediate waves that in turn subdivide into
+Minor and sub-Minor waves. It is important to understand
+that these labels refer to specifically identifiable degrees
+of waves. By using this nomenclature, the analyst can iden-
+tify precisely the position of a wave in the overall
+progression of the market, much as longitude and latitude
+are used to identify a geographical location. To say, “the
+Dow Jones Industrial Average is in Minute wave 0 of
+Minor wave 1 of Intermediate wave (3) of Primary wave
+5 of Cycle wave I of Supercycle wave (V) of the current
+Grand Supercycle” is to identify a specific point along the
+progression of market history.
+     When numbering and lettering waves, some scheme
+such as the one shown at right is recommended to differen-
+tiate the degrees of waves in the stock market’s progression.
+We have standardized the labels as follows:
+ Robert R. Prechter, Jr.                                         13
+
+
+
+
+Wave Degree                 5s With the Trend        3s Against the
+                                                         Trend
+                      (↑ next is Arabic symbols)      (↑ next is caps)
+ Grand Supercycle          I &       *    ( )         a     b    c
+ Supercycle                (I) (II) (III) (IV) (V)    (a) (b)    (c)
+ Cycle                      I II III IV V              a   b      c
+ Primary                   1 2       3    4 5          A    B    C
+ Intermediate          (1) (2)      (3)   (4) (5)      (A) (B) (C)
+ Minor                  1 2          3     4 5          A   B     C
+ Minute                    6 7       8    9 0           a b c
+ Minuette              (i) (ii) (iii) (iv) (v)         (a) (b) (c)
+ Subminuette            i   ii    iii  iv v             a    b    c
+                      (↓ next is Arabic symbols)      (↓ next is caps)
+14                            The Basics of the Wave Principle
+
+
+
+                    MOTIVE WAVES
+      Motive waves subdivide into five waves and always move
+in the same direction as the trend of one larger degree.
+They are straightforward and relatively easy to recognize
+and interpret.
+      Within motive waves, wave 2 always retraces less than
+100% of wave 1, and wave 4 always retraces less than 100%
+of wave 3. Wave 3, moreover, always travels beyond the
+end of wave 1. The goal of a motive wave is to make
+progress, and these rules of formation assure that it will.
+      Elliott further discovered that in price terms, wave 3
+is often the longest and never the shortest among the three
+actionary waves (1, 3 and 5) of a motive wave. As long as
+wave 3 undergoes a greater percentage movement than
+either wave 1 or 5, this rule is satisfied. It almost always
+holds on an arithmetic basis as well. There are two types
+of motive waves: impulse and diagonal triangle.
+
+IMPULSE
+     The most common motive wave is an impulse. In an
+impulse, wave 4 does not enter the territory of (i.e., “over-
+lap”) wave 1. This rule holds for all non-leveraged “cash”
+markets. Futures markets, with their extreme leverage,
+can induce short term price extremes that would not occur
+in cash markets. Even so, overlapping is usually confined
+to daily and intraday price fluctuations and even then is
+rare. In addition, the actionary subwaves (1, 3 and 5) of an
+impulse are themselves motive, and subwave 3 is specifi-
+cally an impulse. Figures 2, 3 and 4 depict impulses in the
+1, 3, 5, A and C wave positions.
+     As detailed in the preceding three paragraphs, there
+are only a few simple rules for interpreting impulses prop-
+erly. A rule is so called because it governs all waves to
+which it applies. Typical, yet not inevitable, characteris-
+tics of waves are called guidelines. Guidelines of impulse
+formation, including extension, truncation, alternation,
+Robert R. Prechter, Jr.                                15
+
+
+
+
+                          Figure 4
+
+equality, channeling, personality and ratio relationships
+are discussed below. A rule should never be disregarded.
+In many years of practice with countless patterns, we have
+found but one instance above Subminuette degree when
+all other rules and guidelines combined to suggest that a
+16                           The Basics of the Wave Principle
+
+
+
+rule was broken. Analysts who routinely break any of the
+rules detailed in this section are practicing some form of
+analysis other than that guided by the Wave Principle.
+These rules have great practical utility in correct count-
+ing, which we will explore further in discussing extensions.
+
+Extension
+     Most impulses contain what Elliott called an exten-
+sion. Extensions are elongated impulses with exaggerated
+subdivisions. The vast majority of impulse waves do con-
+tain an extension in one and only one of their three motive
+subwaves (1, 3 or 5). The diagrams in Figure 4, illustrat-
+ing extensions, will clarify this point.
+     Often the third wave of an extended third wave is an
+extension, producing a profile such as shown in Figure 5.
+
+
+
+
+                          Figure 5
+Robert R. Prechter, Jr.                                  17
+
+
+
+
+Truncation
+     Elliott used the word “failure” to describe a situation
+in which the fifth wave does not move beyond the end of
+the third. We prefer the less connotative term, “trunca-
+tion,” or “truncated fifth.” A truncation can usually be
+verified by noting that the presumed fifth wave contains
+the necessary five subwaves, as illustrated in Figures 6
+and 7. Truncation often occurs following a particularly
+strong third wave.
+     Truncation gives warning of underlying weakness or
+strength in the market. In application, a truncated fifth
+wave will often cut short an expected target. This annoy-
+ance is counterbalanced by its clear implications for
+persistence in the new direction of trend.
+
+
+
+
+                          Figure 6
+
+
+
+
+                          Figure 7
+18                           The Basics of the Wave Principle
+
+
+
+DIAGONAL TRIANGLES (WEDGES)
+     A diagonal triangle is a special type of wave that oc-
+curs primarily in the fifth wave position at times when the
+preceding move has gone “too
+far too fast,” as Elliott put it. A
+diagonal triangle is a motive
+pattern, yet not an impulse, as
+it has one or two corrective
+characteristics. Diagonal tri-
+angles substitute for impulses
+at specific locations in the wave
+structure. They are the only
+five-wave structures in the di-
+rection of the main trend
+within which wave four almost
+always moves into the price ter-
+ritory of (i.e., overlaps) wave
+one. (See Figure 8.)
+                                           Figure 8
+Robert R. Prechter, Jr.                                    19
+
+
+
+
+                  CORRECTIVE WAVES
+
+     Markets move against the trend of one greater degree
+only with a seeming struggle. Resistance from the larger
+trend appears to prevent a correction from developing a
+full motive structure. The struggle between the two oppo-
+sitely trending degrees generally makes corrective waves
+less clearly identifiable than motive waves, which always
+flow with comparative ease in the direction of the one larger
+trend. As another result of the conflict between trends, cor-
+rective waves are quite a bit more varied than motive waves.
+     Corrective patterns fall into four main categories:
+     Zigzag (5-3-5; includes three types: single, double, and
+triple);
+     Flat (3-3-5; includes three types: regular, expanded,
+and running);
+     Triangle (3-3-3-3-3; four types: three of the contract-
+ing variety (ascending, descending, and symmetrical) and
+one of the expanding variety (reverse symmetrical);
+     Combination (two types: double three and triple three).
+
+
+ZIGZAGS (5-3-5)
+     A single zigzag in a bull market is a simple three-wave
+declining pattern labeled A-B-C and subdividing 5-3-5. The
+top of wave B is noticeably lower than the start of wave A,
+as illustrated in Figures 9 and 10.
+     Occasionally zigzags will occur twice, or at most, three
+times in succession, particularly when the first zigzag falls
+short of a normal target. In these cases, each zigzag is sepa-
+rated by an intervening “three” (labeled X), producing what
+is called a double zigzag (see Figure 11) or triple zigzag.
+The zigzags are labeled W and Y (and Z, if a triple).
+20                  The Basics of the Wave Principle
+
+
+
+
+     Figure 9                   Figure 10
+
+
+
+
+                Figure 11
+Robert R. Prechter, Jr.                                   21
+
+
+
+
+            Figure 12                       Figure 13
+
+
+FLATS (3-3-5)
+     A flat correction differs from a zigzag in that the sub-
+wave sequence is 3-3-5, as shown in Figures 12 and 13.
+Since wave A lacks sufficient downward force to unfold
+into a full five waves as it does in a zigzag, the B wave
+reaction seems to inherit this lack of countertrend pres-
+sure and terminates near the start of wave A. Wave C, in
+turn, generally terminates just slightly beyond the end of
+wave A rather than significantly beyond as in zigzags.
+     Flat corrections usually retrace less of preceding im-
+pulse waves than do zigzags. They participate in periods
+involving a strong larger trend and thus virtually always
+
+
+
+
+             Figure 14                      Figure 15
+22                            The Basics of the Wave Principle
+
+
+
+precede or follow extensions. The more powerful the un-
+derlying trend, the briefer the flat tends to be. Within
+impulses, fourth waves frequently sport flats, while second
+waves rarely do.
+     Three types of 3-3-5 corrections have been identified
+by differences in their overall shape. In a regular flat
+correction, wave B terminates about at the level of the
+beginning of wave A, and wave C terminates a slight bit
+past the end of wave A, as we have shown in Figures 12
+and 13. Far more common, however, is the variety called
+an expanded flat, which contains a price extreme beyond
+that of the preceding impulse wave. In expanded flats, wave
+B of the 3-3-5 pattern terminates beyond the starting level
+of wave A, and wave C ends more substantially beyond
+the ending level of wave A, as shown in Figures 14 and 15.
+     In a rare variation on the 3-3-5 pattern, which we call
+a running flat, wave B terminates well beyond the begin-
+ning of wave A as in an expanded flat, but wave C fails to
+travel its full distance, falling short of the level at which
+wave A ended. There are hardly any examples of this type
+of correction in the price record.
+
+HORIZONTAL TRIANGLES (TRIANGLES)
+     Triangles are overlapping five wave affairs that sub-
+divide 3-3-3-3-3. They appear to reflect a balance of forces,
+causing a sideways movement that is usually associated
+with decreasing volume and volatility. Triangles fall into
+four main categories as illustrated in Figure 16. These il-
+lustrations depict the first three types as taking place
+within the area of preceding price action, in what may be
+termed regular triangles. However, it is quite common,
+particularly in contracting triangles, for wave b to exceed
+the start of wave a in what may be termed a running tri-
+angle, as shown in Figure 17.
+Robert R. Prechter, Jr.               23
+
+
+
+
+                          Figure 16
+24                            The Basics of the Wave Principle
+
+
+
+
+                          Figure 17
+
+     Although upon extremely rare occasions a second wave
+in an impulse appears to take the form of a triangle, tri-
+angles nearly always occur in positions prior to the final
+actionary wave in the pattern of one larger degree, i.e., as
+wave four in an impulse, wave B in an A-B-C, or the final
+wave X in a double or triple zigzag or combination (see
+next section).
+
+COMBINATIONS (DOUBLE AND TRIPLE THREES)
+     Elliott called sideways combinations of corrective pat-
+terns “double threes” and “triple threes.” While a single
+three is any zigzag or flat, a triangle is an allowable final
+component of such combinations and in this context is
+called a “three.” A double or triple three, then, is a combi-
+nation of simpler types of corrections, including the various
+types of zigzags, flats and triangles. Their occurrence ap-
+pears to be the flat correction’s way of extending sideways
+action. As with double and triple zigzags, each simple cor-
+rective pattern is labeled W, Y and Z. The reactionary
+waves, labeled X, can take the shape of any corrective pat-
+tern but are most commonly zigzags. Figures 18 and 19
+show two examples of double threes.
+     For the most part, double threes and triple threes are
+horizontal in character. One reason for this trait is that
+Robert R. Prechter, Jr.                                  25
+
+
+
+
+                          Figure 18
+
+
+
+
+                          Figure 19
+
+
+there is never more than one zigzag in a combination. Nei-
+ther is there more than one triangle. Recall that triangles
+occurring alone precede the final movement of a larger
+trend. Combinations appear to recognize this character and
+sport triangles only as the final wave in a double or triple
+three.
+     All the patterns illustrated in this booklet take the
+same form whether within a larger rising or falling trend.
+In a falling trend, they are simply inverted.
+26                             The Basics of the Wave Principle
+
+
+
+     GUIDELINES OF WAVE FORMATION
+
+ALTERNATION
+     The guideline of alternation states that if wave two of
+an impulse is a sharp retracement, expect wave four to be
+a sideways correction, and vice versa. Figure 20 shows the
+most characteristic breakdowns of impulse waves, both up
+and down. Sharp corrections never include a new price ex-
+treme, i.e., one that lies beyond the orthodox end of the
+preceding impulse wave. They are almost always zigzags
+(single, double or triple); occasionally they are double threes
+that begin with a zigzag. Sideways corrections include flats,
+triangles, and double and triple corrections. They usually
+include a new price extreme, i.e., one that lies beyond the
+orthodox end of the preceding impulse wave.
+
+
+
+
+                           Figure 20
+
+
+DEPTH OF CORRECTIVE WAVES
+    No market approach other than the Wave Principle
+gives as satisfactory an answer to the question, “How far
+down can a bear market be expected to go?” The primary
+guideline is that corrections, especially when they them-
+Robert R. Prechter, Jr.                                  27
+
+
+
+
+selves are fourth waves, tend to register their maximum
+retracement within the span of travel of the previous fourth
+wave of one lesser degree, most commonly near the level of
+its terminus. Note in Figure 21, for instance, how wave 2
+ends at the level of wave four of 1, and how wave 4 ends at
+the level of wave four of 3.
+
+
+
+
+                          Figure 21
+
+CHANNELING TECHNIQUE
+     Elliott noted that parallel trend channels typically
+mark the upper and lower boundaries of impulse waves,
+often with dramatic precision. Analysts should draw them
+in advance to assist in determining wave targets and to
+provide clues to the future development of trends.
+28                            The Basics of the Wave Principle
+
+
+
+     To draw a proper channel, first connect the ends of
+waves two and four. If waves one and three are normal,
+the upper parallel most accurately forecasts the end of wave
+5 when drawn touching the peak of wave three, as in Fig-
+ure 21. If wave three is abnormally strong, almost vertical,
+then a parallel drawn from its top may be too high. Expe-
+rience has shown that a parallel to the baseline that
+touches the top of wave one is then more useful.
+     The question of whether to expect a parallel channel
+on arithmetic or semilog (percentage) scale is still unre-
+solved as far as developing a definite tenet on the subject.
+If the price development at any point does not fall neatly
+within two parallel lines on the scale (either arithmetic or
+semilog) you are using, switch to the other scale in order
+to observe the channel in correct perspective. To stay on
+top of all developments, the analyst should always use both.
+     Within parallel channels and the converging lines of
+diagonal triangles, if a fifth wave approaches its upper
+trendline on declining volume, it is an indication that the
+end of the wave will meet or fall short of it. If volume is
+heavy as the fifth wave approaches its upper trendline, it
+indicates a possible penetration of the upper line, which
+Elliott called “throw-over.” Throw-overs also occur, with
+the same characteristics, in declining markets.
+
+VOLUME
+     In normal fifth waves below Primary degree, volume
+tends to be less than in third waves. If volume in an ad-
+vancing fifth wave of less than Primary degree is equal to
+or greater than that in the third wave, an extension of the
+fifth is in force. While this outcome is often to be expected
+anyway if the first and third waves are about equal in
+length, it is an excellent warning of those rare times when
+both a third and a fifth wave are extended.
+Robert R. Prechter, Jr.                                    29
+
+
+
+
+     At Primary degree and greater, volume tends to be
+higher in an advancing fifth wave merely because of the
+natural long term growth in the number of participants in
+bull markets.
+
+
+LEARNING THE BASICS
+     The Wave Principle is unparalleled in providing an
+overall perspective on the position of the market most of
+the time. While this perspective is extremely comforting
+and useful, the more practical goal of any analytical method
+is to identify market lows suitable for entering positions
+on the long side and market highs offering the opportu-
+nity to take profits or enter the short side. The Elliott Wave
+Principle is especially well suited to these functions. Nev-
+ertheless, the Wave Principle does not provide certainty
+about any one market outcome. One must understand and
+accept that any approach that can identify high odds for a
+fairly specific outcome will produce a losing bet some of
+the time.
+     What the Wave Principle provides is an objective
+means of assessing the relative probabilities of possible
+future paths for the market. What’s more, competent ana-
+lysts applying the rules and guidelines of the Wave Principle
+objectively should usually agree on the order “of those prob-
+abilities.” At any time, two or more valid wave
+interpretations are usually acceptable by the rules of the
+Wave Principle. The rules are highly specific and keep the
+number of valid alternatives to a minimum. Among the
+valid alternatives, the analyst will generally regard as pre-
+ferred the interpretation that satisfies the largest number
+of guidelines and will accord top alternate status to the
+interpretation satisfying the next largest number of guide-
+lines, and so on.
+30                             The Basics of the Wave Principle
+
+
+
+     Alternate interpretations are extremely important.
+Your second-best “count” is an essential aspect of trading
+with the Wave Principle, because in the event that the
+market fails to follow the preferred scenario, your top al-
+ternate count becomes your backup plan.
+     The best approach is deductive reasoning. Knowing
+what Elliott rules will not allow, one can deduce that what-
+ever remains must be the most likely course for the market.
+By applying all the rules of extensions, alternation, over-
+lapping, channeling, volume and the rest, the analyst has
+a much more formidable arsenal than one might imagine
+at first glance.
+     Most other approaches to market analysis, whether
+fundamental, technical or cyclical, disallow other than ar-
+bitrarily chosen stop points, thus keeping either risk or
+frequency of stop-outs high. The Wave Principle, in con-
+trast, provides a built-in objective method for placing a
+loss-limiting stop. Since Elliott wave analysis is based upon
+price patterns, a pattern identified as having been com-
+pleted is either over or it isn’t. If the market changes
+direction, the analyst has caught the turn. If the market
+moves beyond what the apparently completed pattern al-
+lows, the conclusion is wrong, and any funds at risk can be
+reclaimed immediately.
+     Of course, there are often times when, despite a rigor-
+ous analysis, the question may arise as to how a developing
+move is to be counted or perhaps classified as to degree.
+When there is no clearly preferred interpretation, the ana-
+lyst must wait until the count resolves itself, in other words,
+to “sweep it under the rug until the air clears,” as Hamilton
+Bolton suggested. Almost always, subsequent moves will
+clarify the status of previous waves by revealing their po-
+sition in the pattern of the next higher degree. When
+subsequent waves clarify the picture, the probability that
+a turning point is at hand can suddenly and excitingly rise
+to nearly 100%.
+Robert R. Prechter, Jr.                                    31
+
+
+
+
+     The ability to identify junctures is remarkable enough,
+but the Wave Principle is the only method of analysis which
+also provides guidelines for forecasting. Many of these
+guidelines are specific and can occasionally yield results
+of stunning precision. If indeed markets are patterned, and
+if those patterns have a recognizable geometry, then re-
+gardless of the variations allowed, certain price and time
+relationships are likely to recur. In fact, real world experi-
+ence shows that they do. The next section addresses some
+additional guidelines that are helpful in the forecasting
+exercise.
+32                             The Basics of the Wave Principle
+
+
+
+          THE FIBONACCI SEQUENCE
+            AND ITS APPLICATION
+
+     Known for centuries by scientists, naturalists and
+mathematicians, the sequence of numbers 1, 1, 2, 3, 5, 8,
+13, 21, 34, 55, 89, 144, and so on to infinity is known today
+as the Fibonacci sequence. The sum of any two adjacent
+numbers in this sequence forms the next higher number
+in the sequence, viz., 1 plus 1 equals 2, 1 plus 2 equals 3, 2
+plus 3 equals 5, 3 plus 5 equals 8, and so on to infinity. The
+ratio of any two consecutive numbers in the sequence ap-
+proximates 1.618, or its inverse, .618, after the first several
+numbers. Refer to Figure 22 for a complete ratio table in-
+terlocking all Fibonacci numbers from 1 to 144.
+     1.618 (or .618) is known as the Golden Ratio or Golden
+Mean. Nature uses the Golden Ratio in its most intimate
+building blocks and in its most advanced patterns, in forms
+as minuscule as atomic structure and DNA molecules to
+those as large as planetary orbits and galaxies. It is
+involved in such diverse phenomena as quasi crystal
+arrangements, planetary distances and periods, reflections
+of light beams on glass, the brain and nervous system,
+musical arrangement, and the structures of plants and
+animals. Science is rapidly discovering that there is indeed
+a basic proportional principle of nature. The stock market
+has the very same mathematical base as do these natural
+phenomena.
+     At every degree of stock market activity, a bull mar-
+ket subdivides into five waves and a bear market
+subdivides into three waves, giving us the 5-3 relation-
+ship that is the mathematical basis of the Elliott Wave
+Principle. We can generate the complete Fibonacci se-
+quence by using Elliott’s concept of the progression of the
+market. If we start with the simplest expression of the con-
+cept of a bear swing, we get one straight line decline. A
+bull swing, in its simplest form, is one straight line advance.
+Robert R. Prechter, Jr.               33
+
+
+
+
+                          Figure 22
+34                           The Basics of the Wave Principle
+
+
+
+
+                         Figure 23
+
+
+
+A complete cycle is two lines. In the next degree of com-
+plexity, the corresponding numbers are 3, 5 and 8. As
+illustrated in Figure 23, this sequence can be taken to in-
+finity.
+     In its broadest sense, then, the Elliott Wave Principle
+proposes that the same law that shapes living creatures
+and galaxies is inherent in the spirit and attitudes of men
+en masse. The Elliott Wave Principle shows up clearly in
+Robert R. Prechter, Jr.                                   35
+
+
+
+
+the market because the stock market is the finest reflector
+of mass psychology in the world. It is a nearly perfect re-
+cording of man’s social psychological states and trends,
+reflecting the fluctuating valuation of his own productive
+enterprise, and making manifest its very real patterns of
+progress and regress. Whether our readers accept or reject
+this proposition makes no great difference, as the empirical
+evidence is available for study and observation. Order in
+life? Yes. Order in the stock market? Apparently.
+
+RATIO ANALYSIS
+     Ratio analysis has revealed a number of precise price
+relationships that occur often among waves. There are two
+categories of relationships: retracements and multiples.
+
+Retracements
+     Fairly often, a correction retraces a Fibonacci percent-
+age of the preceding wave. As illustrated in Figure 24, sharp
+corrections tend more often to retrace 61.8% or 50% of the
+previous wave, particularly when they occur as wave 2 of
+an impulse wave, wave B of a larger zigzag, or wave X in a
+multiple zigzag. Sideways corrections tend more often to
+retrace 38.2% of the previous impulse wave, particularly
+when they occur as wave 4, as shown in Figure 25.
+
+
+
+
+           Figure 24                     Figure 25
+36                            The Basics of the Wave Principle
+
+
+
+     Retracements are where most analysts place their fo-
+cus. Far more reliable, however, are relationships between
+alternate waves, or lengths unfolding in the same direc-
+tion, as explained in the next section.
+
+Motive Wave Multiples
+     When wave 3 is extended, waves 1 and 5 tend towards
+equality or a .618 relationship, as illustrated in Figure 26.
+Actually, all three motive waves tend to be related by Fi-
+bonacci mathematics, whether by equality, 1.618 or 2.618
+(whose inverses are .618 and .382). These impulse wave
+relationships usually occur in percentage terms. For in-
+stance, wave I in the Dow Jones Industrials from 1932 to
+1937 gained 371.6%, while wave III from 1942 to 1966
+gained 971.7%, or 2.618 times as much.
+
+
+
+
+     Figure 26           Figure 27              Figure 28
+Robert R. Prechter, Jr.                                   37
+
+
+
+
+      Wave 5’s length is sometimes related by the Fibonacci
+ratio to the length of wave 1 through wave 3, as illustrated
+in Figure 27. In those rare cases when wave 1 is extended,
+it is wave 2 that often subdivides the entire impulse wave
+into the Golden Section, as shown in Figure 28.
+      In a related observation, unless wave 1 is extended,
+wave 4 often divides the price range of an impulse wave
+into the Golden Section. In such cases, the latter portion is
+.382 of the total distance when wave 5 is not extended, as
+shown in Figure 29, and .618 when it is, as shown in
+Figure 30. This guideline explains why a retracement fol-
+lowing a fifth wave often has double resistance at the same
+level: the end of the preceding fourth wave and the .382
+retracement point.
+
+
+
+
+         Figure 29                          Figure 30
+
+
+Corrective Wave Multiples
+     In a zigzag, the length of wave C is usually equal to
+that of wave A, as shown in Figure 31, although it is not
+uncommonly 1.618 or .618 times the length of wave A.
+This same relationship applies to a second zigzag relative
+to the first in a double zigzag pattern, as shown in Figure
+32.
+38                           The Basics of the Wave Principle
+
+
+
+
+        Figure 31                        Figure 32
+
+     In a regular flat correction, waves A, B and C are, of
+course, approximately equal. In an expanded flat correc-
+tion, wave C is usually 1.618 times the length of wave A.
+Often wave C will terminate beyond the end of wave A by
+.618 times the length of wave A. Each of these tendencies
+
+
+
+
+                          Figure 33
+Robert R. Prechter, Jr.                                   39
+
+
+
+
+are illustrated in Figure 33. In rare cases, wave C is 2.618
+times the length of wave A. Wave B in an expanded flat is
+sometimes 1.236 or 1.382 times the length of wave A.
+      In a triangle, we have found that at least two of the
+alternate waves are typically related to each other by .618.
+I.e., in a contracting, ascending or descending triangle,
+wave e = .618c, wave c = .618a, or wave d = .618b. In an
+expanding triangle, the multiple is 1.618.
+      In double and triple corrections, the net travel of one
+simple pattern is sometimes related to another by equal-
+ity or, particularly if one of the threes is a triangle, by
+.618.
+      Finally, wave 4 quite commonly spans a gross or net
+price range that has an equality or Fibonacci relationship
+to its corresponding wave 2. As with impulse waves, these
+relationships usually occur in percentage terms.
+      These guidelines increase dramatically in utility when
+used together, as several are simultaneously applicable in
+almost every situation at the various degrees of trend.
+40                           The Basics of the Wave Principle
+
+
+
+                   PERSPECTIVE
+
+      What the Wave Principle says is that mankind’s
+progress (of which the stock market is a popularly deter-
+mined valuation) does not occur in a straight line, does
+not occur randomly, and does not occur cyclically. Rather,
+progress takes place in a “three steps forward, two steps
+back” fashion, a form that nature prefers. As a corollary,
+the Wave Principle reveals that periods of setback in fact
+are a requisite for social (and perhaps even individual)
+progress.
+      Until a few years ago, the idea that market movements
+are patterned was highly controversial, but recent scien-
+tific discoveries have established that pattern formation
+is a fundamental characteristic of complex systems, which
+include financial markets. Some such systems undergo
+“punctuated growth,” that is, periods of growth alternat-
+ing with phases of non-growth or decline, building fractally
+into similar patterns of increasing size. This is precisely
+the type of pattern identified in market movements by R.N.
+Elliott some sixty years ago.
+      Most important to individuals, portfolio managers and
+investment corporations is that the Wave Principle often
+indicates in advance the relative magnitude of the next
+period of market progress or regress. Living in harmony
+with those trends can make the difference between suc-
+cess and failure in financial affairs.
+      To obtain a full understanding of the Wave Principle,
+including the terms and patterns, please read Elliott Wave
+Principle by A.J. Frost and Robert Prechter. We wish you
+every success.
+Robert R. Prechter, Jr.                                   41
+
+
+
+
+                          GLOSSARY
+Alternation (guideline of) - If wave two is a sharp cor-
+rection, wave four will usually be a sideways correction,
+and vice versa.
+Apex - Intersection of the two boundary lines of a con-
+tracting triangle.
+Corrective Wave - A three-wave pattern, or combina-
+tion of three-wave patterns, that moves in the opposite
+direction of the trend of one larger degree.
+Diagonal Triangle (Ending) - A wedge-shaped pattern
+containing overlap that occurs only in fifth or C waves.
+Subdivides 3-3-3-3-3.
+Diagonal Triangle (Leading) - A wedge-shaped pat-
+tern containing overlap that occurs only in first or A waves.
+Subdivides 5-3-5-3-5.
+Double Three - Combination of two simple sideways cor-
+rective patterns, labeled W and Y, separated by a corrective
+wave labeled X.
+Double Zigzag - Combination of two zigzags, labeled W
+and Y, separated by a corrective wave labeled X.
+Equality (guideline of) - In a five-wave sequence, when
+wave three is the longest, waves five and one tend to be
+equal in price length.
+Expanded Flat - Flat correction in which wave B enters
+new price territory relative to the preceding impulse wave.
+Failure - See Truncated Fifth.
+Flat - Sideways correction labeled A-B-C. Subdivides 3-
+3-5.
+Impulse Wave - A five-wave pattern that subdivides 5-
+3-5-3-5 and contains no overlap.
+Motive Wave - A five-wave pattern that makes progress,
+i.e., any impulse or diagonal triangle.
+Irregular Flat - See Expanded Flat.
+42                          The Basics of the Wave Principle
+
+
+
+One-two, one-two - The initial development in a five-
+wave pattern, just prior to acceleration at the center of
+wave three.
+Overlap - The entrance by wave four into the price ter-
+ritory of wave one. Not permitted in impulse waves.
+Previous Fourth Wave - The fourth wave within the
+preceding impulse wave of the same degree. Corrective
+patterns typically terminate in this area.
+Sharp Correction - Any corrective pattern that does
+not contain a price extreme meeting or exceeding that of
+the ending level of the prior impulse wave; alternates
+with sideways correction.
+Sideways Correction - Any corrective pattern that con-
+tains a price extreme meeting or exceeding that of the
+prior impulse wave; alternates with sharp correction.
+Third of a Third - Powerful middle section within an
+impulse wave.
+Thrust - Motive wave following completion of a triangle.
+Triangle (contracting, ascending or descending) -
+Corrective pattern, subdividing 3-3-3-3-3 and labeled A-
+B-C-D-E. Occurs as a fourth, B, X or Y wave. Trendlines
+converge as pattern progresses.
+Triangle (expanding) - Same as other triangles but
+trendlines diverge as pattern progresses.
+Triple Three - Combination of three simple sideways
+corrective patterns labeled W, Y and Z, each separated by
+a corrective wave labeled X.
+Triple Zigzag - Combination of three zigzags, labeled
+W, Y and Z, each separated by a corrective wave labeled
+X.
+Truncated Fifth - The fifth wave in an motive pattern
+that fails to exceed the price extreme of the third wave.
+Zigzag - Sharp correction, labeled A-B-C. Subdivides 5-
+3-5.
+Elliott Wave Educational Video Series
+
+
+                                           “the finest
+                                               Elliott wave material
+                                             ever produced”
+                                                             – Commodity Traders Consumer Report
+
+
+
+                                            The Elliott Wave Educational Video Series is
+                                            the most valuable, most comprehensive Wave
+                                            Principle instruction available to date.
+
+                                    Hailed as “the finest Elliott wave material
+                                    ever produced” by the Commodity Traders
+ Consumer Report, these 10 discs will teach you principles every Elliott wave
+ practitioner should know, in an easy-to-grasp format.
+
+ The 10-volume series, recorded over 15 years ago, continues to be among our
+ most popular products.
+
+ The DVDs feature a new introduction from Bob Prechter and convenient, user-
+ friendly chapter selection menus to help you find what you need quickly– no
+ searching, no fast-forwarding. The new DVD format truly transforms this classic
+ series into the ultimate Wave Principle reference tool.
+
+
+
+
+                     10-volume set - $1199
+                            Order now at:
+                 www.elliottwave.com/wave/DVDbasics
+          Or, call customer service at 800-336-1618 or 770-536-0309 (from outside the U.S.)
+                                      Please mention code: BASICS.
+
+
+ We Guarantee Your Satisfaction.To ensure you’re satisfied with your Elliott Wave DVD(s),
+ we offer this guarantee: When you receive your DVD(s), you may unwrap and view any one DVD. If
+ you decide the DVD(s) are not for you, simply return them within 30 days. We’ll give you a cheerful,
+ 100% refund of the purchase price (minus S&H).
+            Now Available on DVD
+
+ The ultimate Wave Principle reference tool includes:
+ Volume 1. Introduction to the           Volume 6. Understanding the
+ Elliott Wave Principle. A clear,        Fibonacci Ratio in Financial
+ step-by-step explanation of how the     Markets. You'll grasp how to apply
+ psychological forces within markets     the Fibonacci sequence to market
+ construct the basic Elliott patterns.   analysis, and see that Elliott's
+ Bonus Feature: A Special Introduction   description of market behavior
+ from Bob Prechter. 140 min. $129        anticipated Mandelbrot's concept of
+                                         fractal geometry in natural structures.
+ Volume 2. Counting Waves                71 min. $129
+ Correctly. How to apply the Wave
+ Principle to every market, from         Volume 7. Calculating Fibonacci
+ stocks to cocoa - and how to apply      Ratios with the Precision Ratio
+ the three Elliott rules that will       Compass. Detailed instruction on
+ separate you from many who misuse       how to mark Elliott wave targets on
+ Elliott today. 42 min. $129             charts. Includes the Precision Ratio
+                                         Compass. 47 min. $249
+ Volume 3. Characteristics of
+ Impulse Waves. How you can              Volume 8. Real-Time Investing.
+ identify five-wave structures at all    The Wave Principle can signal you
+ degrees of trend — from decades to      when risk is low and help you decide
+ minutes in duration — as they           how to place a stop-loss at the most
+ unfold in real time. 53 min. $129       logical point. 90 min. $129
+
+ Volume 4. Characteristics of            Volume 9. Trading Options
+ Corrective Waves. The easy way to       Successfully. How to use one tactic
+ identify the two major families of      to master most of the variables at
+ corrections, and when to expect         once, and Robert Prechter's three
+ explosive price action after            "MUSTS" for success in options. 71
+ correction. 75 min. $129                min. $129
+
+ Volume 5. Rules, Guidelines, and        Volume 10. Questions and Answers
+ Wave Personalities. You'll learn how    with Bob Prechter and Dave
+ the "personalities" of each type of     Allman. A compilation of the most
+ wave can make pattern recognition       interesting questions and informative
+ crystal clear. 79 min. $129             answers on a variety of topics. 85
+                                         min. $129
+
+
+www.elliottwave.com/wave/DVDbasics
+

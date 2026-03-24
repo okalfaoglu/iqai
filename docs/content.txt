@@ -1,0 +1,3787 @@
+                     T.C.
+  İSTANBUL KÜLTÜR ÜNİVERSİTESİ
+   LİSANSÜSTÜ EĞİTİM ENSTİTÜSÜ
+
+
+
+
+     BITCOIN TREND OLUŞUMLARININ
+
+ELLIOTT DALGA PRENSİPLERİ İLE İLİŞKİLERİ
+
+
+
+
+            YÜKSEK LİSANS TEZİ
+
+
+
+
+            ONUR ERKAN YILDIZ
+
+                  1800005147
+
+
+
+
+             Anabilim Dalı: İktisat
+      Programı: Para ve Sermaye Piyasaları
+
+
+
+
+ Tez Danışmanı: Doç. Dr. Deniz DİLARA DERELİ
+
+
+
+
+                  OCAK 2023
+                     T.C.
+  İSTANBUL KÜLTÜR ÜNİVERSİTESİ
+   LİSANSÜSTÜ EĞİTİM ENSTİTÜSÜ
+
+
+
+
+     BITCOIN TREND OLUŞUMLARININ
+
+ELLIOTT DALGA PRENSİPLERİ İLE İLİŞKİLERİ
+
+
+
+
+            YÜKSEK LİSANS TEZİ
+
+
+
+
+            ONUR ERKAN YILDIZ
+
+                  1800005147
+
+
+
+
+             Anabilim Dalı: İktisat
+      Programı: Para ve Sermaye Piyasaları
+
+
+
+
+ Tez Danışmanı: Doç. Dr. Deniz DİLARA DERELİ
+                  Juri Üyeleri:
+         Dr. Öğr. Üyesi Derya BİLGİN
+               Doç. Dr. Elif AKİŞ
+
+
+
+
+                  OCAK 2023
+İçindekiler
+
+
+
+   İçindekiler .................................................................................................................. i
+   Kısaltmalar............................................................................................................... iv
+   Tablo Listesi ............................................................................................................ iv
+   Şekiller ..................................................................................................................... iv
+   Simge Listesi ........................................................................................................... vi
+Özet ............................................................................................................................ vii
+ABSTRACT .............................................................................................................. viii
+Giriş .............................................................................................................................. 1
+                                                   BİRİNCİ BÖLÜM
+
+      KRİPTO PARA BİRİMLERİNİN TEORİK ÇERÇEVESİ VE BITCOIN
+
+   1.1        Kripto Para Kavramı ..................................................................................... 3
+   1.2        Kripto Paraların Yapısı ve Temel Özellikleri ................................................ 8
+   1.3        BITCOIN Nedir? ........................................................................................... 9
+   1.4        Satoshi Nakamoto Tezi: .............................................................................. 10
+   1.5        BITCOIN’in Özellikleri .............................................................................. 11
+   1.6        BITCOIN Teknolojisi .................................................................................. 13
+   1.6.1 Kriptografik Algoritmalar ........................................................................... 13
+   1.6.2 Açık Anahtarlı Şifreleme ve Dijital İmza .................................................... 14
+   1.6.3 Eşten-Eşe (P2P) ........................................................................................... 16
+   1.6.4 İş İspatı (PoW)............................................................................................. 17
+   1.6.5 Merkezi Olmayan Kontrol Mekanizması .................................................... 18
+   1.7        Bitcoin İşleyiş Biçimi .................................................................................. 19
+   1.8        Yeni Bir Bitcoin Oluşturmak ...................................................................... 19
+   1.9        Bitcoin Alım İşlemi ..................................................................................... 21
+   1.10       Bitcoin Saklanması ...................................................................................... 21
+   1.11       Güvenlik ve Şifreleme ................................................................................. 21
+   1.12       Bitcoin Tercih Sebepleri .............................................................................. 22
+
+                                                                  i
+1.12.1 Ödemelerde Özgürlük ................................................................................. 22
+1.12.2 Ticari Faydaları ........................................................................................... 23
+1.12.3 Finansal Teknolojiye Teşvik ....................................................................... 24
+1.12.4 Fakirlik ve Baskı Mücadelesi ...................................................................... 26
+                                             İKİNCİ BÖLÜM
+
+          ELLİOTT DALGA PRENSİPLERİ VE TEKNİK ANALİZ
+2.1       Teknik Analiz .............................................................................................. 28
+2.2       Elliott Dalga Prensiplerine Giriş ................................................................. 29
+2.3       Elliott Dalga Prensipleri Temel İlkeler........................................................ 31
+2.4       Kaos Teorisi ve Fraktal Yapılar .................................................................. 32
+2.4.1 Kaos Teorisi ................................................................................................ 32
+2.4.2 Fraktal Yapılar ............................................................................................. 33
+2.4.3 Fraktal Yapıların Dalga Prensipleri ile İlişkileri ......................................... 37
+2.5       Elliott Dalga Prensipleri .............................................................................. 41
+2.5.1 Beş Dalgalı Model ve Elliott Döngüsü........................................................ 42
+2.5.2 Dalgaların Dereceleri................................................................................... 45
+2.5.3 İtki(İmpulse) Dalgaları ................................................................................ 46
+2.5.3.1 İtki İtici Dalga ............................................................................................. 46
+2.5.3.2 Uzatma......................................................................................................... 50
+2.5.3.3 Başarısız Beşinci Dalga ............................................................................... 52
+2.5.3.4 Diyagonal Üçgenler ..................................................................................... 53
+2.5.4 Düzeltme Dalgaları ...................................................................................... 58
+2.5.4.1 Yassı Düzeltmeler ....................................................................................... 59
+2.5.4.2 Zigzag Düzeltmeler (5-3-5) ......................................................................... 63
+2.5.4.3 Üçgen Düzeltmeler ...................................................................................... 67
+2.5.4.4 Kombinasyonlu Düzeltmeler ....................................................................... 70
+2.5.5 Almaşıklık İlkesi ......................................................................................... 70
+                                            ÜÇÜNCÜ BÖLÜM
+
+    ELLIOTT DALGA PRENSİPLERİ İLE FARKLI DÖNEM BİTCOİN
+                   TRENDLERİNİN ANALİZİ
+
+
+                                                          ii
+   3.1       Aylık Periyotta BTC/USD Paritesi Elliot Dalga Prensipleri Analizi .......... 72
+   3.1.1 BTC/USD Paritesi Aylık Grafik Elliot Dalga Prensipleri İnceleme Sonucu:
+         77
+   3.2       Haftalık Periyotta BTC/USD Paritesi Elliott Dalga Prensipleri Analizi ..... 79
+   3.2.1 BTC/USD Paritesi Haftalık Grafik Elliott Dalga Prensipleri İnceleme
+   Sonucu: ................................................................................................................... 89
+SONUÇ: ..................................................................................................................... 90
+KAYNAKÇA ............................................................................................................. 98
+
+
+
+
+                                                               iii
+Kısaltmalar
+
+BTCUSD: Bitcoin / Amerikan Doları paritesi
+
+Tablo Listesi
+
+Tablo 1: Kripto Paraların Temel Özellikleri ................................................................ 8
+Tablo 2: Bitcoin, İtibari Para, Dijital Para (Elektronik Para) ..................................... 12
+Tablo 3: Kriptografi Özet Mekanizması .................................................................... 14
+Tablo 4: Açık Anahtarlı Şifreleme ............................................................................. 15
+Tablo 5: Dijital İmza .................................................................................................. 16
+Tablo 6: İş İspatı (Pow) Algoritması Özet Hesabı ..................................................... 18
+
+
+Şekiller
+Şekil 1: Blokzincir Sistemi .......................................................................................... 4
+Şekil 2: Bitcoin Market Büyüklüğü Değişimi ............................................................ 11
+Şekil 3: Dünyada İnternet Alışverişlerinde Tercih Edilen Ödeme Yöntemleri ......... 24
+Şekil 4: 2014 Yılı İtibari Finansal Erişimi Yetersiz Veya Bulunmayan Bölgeler ..... 26
+Şekil 5: FinTech 2016/2022 Sektör Bazlı Potansiyel İşlem Değerleri ...................... 27
+Şekil 6: Mandelbrot Kümesi ...................................................................................... 36
+Şekil 7: Mandelbrot Kümesi yakınlaştırılmış haller .................................................. 36
+Şekil 8: Elliott Çizimleri ............................................................................................ 38
+Şekil 9: Mandelbrot Çizimleri.................................................................................... 40
+Şekil 10: Elliott ve Mandelbrot çizim karşılaştırmaları ............................................. 41
+Şekil 11: Beş Dalgalı Yapı(Kalıp) ............................................................................. 42
+Şekil 12: Elliott Döngüsü(Çevrimi) – (5+3) .............................................................. 43
+Şekil 13: Elliott Döngüsü(Çevrimi) ........................................................................... 44
+Şekil 14: Dalga Döngüleri.......................................................................................... 45
+Şekil 15: Dalga Dereceleri ......................................................................................... 46
+Şekil 16: İtki Dalgaları ............................................................................................... 47
+Şekil 17: İtki Dalgaları 5-3-5-3-5 ............................................................................... 47
+Şekil 18: Birinci Dalganın Uzatması ......................................................................... 51
+Şekil 19: Üçüncü Dalga Uzatması ............................................................................. 51
+Şekil 20: Beşinci Dalga Uzatması .............................................................................. 51
+Şekil 21: Başarısız 5. Dalga (Boğa Piyasası İçin) ...................................................... 52
+Şekil 22: Başarısız 5. Dalga (Ayı Piyasası İçin) ........................................................ 53
+Şekil 23: Sonlanan Diyagonaller ................................................................................ 54
+Şekil 24: İlerleyen Diyagonal..................................................................................... 56
+Şekil 25: Yassı Düzeltmeler ....................................................................................... 60
+
+                                                            iv
+Şekil 26: Genişleyen Yassı Düzeltme ........................................................................ 61
+Şekil 27: Hareketli Yassı Düzeltme ........................................................................... 62
+Şekil 28: Boğa ve Ayı Marketlerinde Zigzag Düzeltmeler ........................................ 64
+Şekil 29: İkili Zigzag Düzeltme ................................................................................. 65
+Şekil 30: Üçlü Zigzag Düzeltme ................................................................................ 66
+Şekil 31: Simetrik Üçgenler ....................................................................................... 67
+Şekil 32: Alçalan Üçgenler ........................................................................................ 68
+Şekil 33: Yükselen Üçgenler ...................................................................................... 68
+Şekil 34: Genişleyen Üçgenler ................................................................................... 68
+Şekil 35: Hareketli Üçgenler ...................................................................................... 69
+Şekil 36: Kombinasyonlu Düzeltmeler ...................................................................... 70
+Şekil 37: Aylık Periyotta BTC/USD Paritesi Elliott Dalga Analizi ........................... 72
+Şekil 38: Aylık Periyot 1 Numaralı Dalga ................................................................. 73
+Şekil 39: Aylık Periyot 2 Numaralı Dalga ................................................................. 73
+Şekil 40: Aylık Periyot 3 Numaralı Dalga ................................................................. 74
+Şekil 41: Aylık Periyot 4 Numaralı Dalga ................................................................. 75
+Şekil 42: Aylık Periyot 5 Numaralı Dalga ................................................................. 75
+Şekil 43: Aylık Periyot B Dalgasının Sonlanabileceği Seviyeler .............................. 76
+Şekil 44: Aylık Periyot A Dalgası Görünümü ........................................................... 77
+Şekil 45: Aylık Periyot B Dalgası Olası Hedefler ..................................................... 78
+Şekil 46: A ve 4 Numaralı Dalga Dipleri ................................................................... 78
+Şekil 47: Haftalık Periyotta BTC/USD Elliot Dalga Prensipleri Analizi .................. 79
+Şekil 48: Haftalık Periyotta 1 Numaralı Dalga .......................................................... 80
+Şekil 49: 1 Numaralı Dalganın Kapsadığı 5’li Dalga Modeli .................................... 81
+Şekil 50: 1. Dalganın Kapsadığı 1 Numaralı Dalga ................................................... 81
+Şekil 51: Dalganın Kapsadığı 2 Numaralı Dalga ....................................................... 82
+Şekil 52: Dalganın Kapsadığı 3 Numaralı Dalga ....................................................... 82
+Şekil 53: 1. Dalganın Kapsadığı 4 Numaralı Dalga ................................................... 83
+Şekil 54: 1. Dalganın Kapsadığı 5 Numaralı Dalga ................................................... 83
+Şekil 55: Haftalık Periyot 2 Numaralı Dalga ............................................................. 84
+Şekil 56: Haftalık Periyot 3 Numaralı Dalga ............................................................. 85
+Şekil 57: Haftalık Periyot 4 Numaralı Dalga ............................................................. 85
+Şekil 58: Haftalık Periyot 5 Numaralı Dalga ............................................................. 86
+Şekil 59: Haftalık Periyot A-B-C Düzeltme Dalgası ................................................. 87
+Şekil 60: Haftalık Periyot A Dalgası .......................................................................... 88
+Şekil 61: Haftalık Periyot B Dalgası .......................................................................... 88
+Şekil 62: Haftalık Periyot C Dalgası .......................................................................... 89
+Şekil 63: Haftalık Periyot C Dalgası Olası Dip Bölgesi ............................................ 90
+
+
+                                                          v
+Simge Listesi
+
+$ : Amerikan Doları
+
+
+
+
+                      vi
+ÖZET
+
+
+
+        Finansal piyasalar tarihi boyunca insanlar tasarrufları ile yatırımlar
+gerçekleştirip, tasarruflarını değerlendirme çabası göstermişlerdir. İtibari para
+sisteminin ve mevcut finansal işleyiş yapısının buna çok uygun olduğu
+söylenebilmektedir. Jeopolitik şartlara göre sermaye akışı belirli finansal araçlar içinde
+sürekli hareketlidir ve sık olarak yön değiştirmek ister. Bunun temel sebebi, sermaye
+sürekli olarak kazançlı ve güvenli olabileceği bir yer aramaktadır. Bu sebepten dolayı
+yatırımcılar farklı analitik metotlarla, farklı periyotlar ve farklı finansal enstrümanlar
+için analizler gerçekleştirmiş ve yatırımlarını gerçekleştirebilecekleri finansal
+enstrümanları seçmeye çalışmışlardır. Bu özellikle günümüz ve günümüze yakın
+finans tarihi boyunca popülaritesini oldukça artıran bir durumdur.
+
+        Finansal enstrümanlar üzerinde analiz çalışması denince akla ilk olarak temel
+analiz ve teknik analiz metotları gelmektedir. Teknik analiz geçmiş fiyat hareketlerini
+genel kitle tarafından kabul görmüş metotlarla inceleyip, gelecek fiyat hareketli
+hakkında tahminde bulunmaya yarar. Burada ‘tahmin’ vurgusu önemlidir çünkü hiçbir
+analitik çalışma kesin sonuçlar vermemektedir. Gelecek vadeler için tahminlerde
+bulunmaya yarayan araçlardır.
+
+         Çalışma amacı; Bir teknik analiz metodu olan Elliott Dalga Prensipleri ile yeni
+bir finansal enstrüman olarak sayabileceğimiz Bitcoin’in incelenmesiydi. Bitcoin’i
+seçme sebebim temel olarak yeni bir ürün olması ve üzerine literatür olarak analitik
+çalışmaların fazlaca yapılmamış olmasıdır. Elliott Dalga Prensipleri’ni analitik metot
+olarak seçme sebebim ise ileri vade trendler ve geçmiş trendleri inceleme konusunda
+iyi bir yapıya sahip olmasıdır.
+
+       Bitcoin’in özellikle 2010 yılından bu yana ciddi bir yükseliş gerçekleştirdiğini
+görülmektedir. Burada oluşan trendlerin anlamlı bir yapıda olup olmadığı büyük
+merak konusudur. Trendler denince teknik analizde özellikle Elliott Dalga Prensipleri
+ön plana çıkan analitik metotların ilk sıralarında yer alır.
+
+       Elliott Dalga Prensipleri ile 2010 yılından başlayan Bitcoin yükseliş
+hareketinin geçmiş trendlerini incelenecek ve prensiplere uygun dalga modelleri olup
+olmadığını kontrol edilecektir. Akabinde ise, yine Elliott Dalga Prensipleri ile gelecek
+dönemlere ilişkin fiyat tahminlerinde bulunulacaktır.
+
+
+
+
+                                           vii
+ABSTRACT
+
+        Throughout history, people have sought to invest and make the most of their
+savings through financial markets. We can say that the current financial system and
+structure is well suited for this purpose. The flow of capital moves constantly among
+certain financial instruments according to geopolitical conditions, and often changes
+direction, seeking a place where it can be profitable and safe. For this reason, investors
+have used various analytical methods to analyze different periods and financial
+instruments, and have tried to select financial instruments for investment. This is
+particularly true in recent and contemporary financial history, where popularity has
+greatly increased.
+
+When it comes to analyzing financial instruments, the first methods that come to mind
+are fundamental analysis and technical analysis. Technical analysis examines past
+price movements using widely accepted methods and tries to predict future price
+movements. The emphasis on "prediction" is important here because no analytical
+study provides definite results. They are tools for making predictions for future
+periods.
+
+My goal in this study was to examine Bitcoin, a new financial instrument that can be
+considered, using Elliott Wave Principles, a technical analysis method. The reason for
+choosing Bitcoin is primarily its novelty as a product and the fact that there are not
+many analytical studies on it in the literature. The reason for selecting Elliott Wave
+Principles as an analytical method is its good structure for examining future trends and
+past trends.
+
+We see that Bitcoin has experienced a significant increase, especially since 2010. One
+of the major questions here is whether the trends that have emerged have a meaningful
+structure. Among the analytical methods that particularly stand out in technical
+analysis when it comes to trends, Elliott Wave Principles are among the first. We will
+examine the past trends of Bitcoin's upward movement starting in 2010 using Elliott
+Wave Principles, and check whether the wave models are consistent with the
+principles.
+
+
+
+
+                                           viii
+GİRİŞ
+
+
+        İnsanlığın bilinen tarihi boyunca ticari ve ekonomik faaliyetler var olmuştur.
+İnsanlığın sürekli gelişim gösteren sosyo – kültürel yapısı, ticari ve ekonomik
+faaliyetlerinin de gelişmesini desteklemiştir. Lakin burada önemli bir husus vardır,
+tüm bu çabaların sebebi ihtiyaçlara dayanmaktadır. Toplumlar ihtiyaçlarını
+giderebilmek adına, ortak bir kitle halinde hareket edebilmeyi benimsemiş ve bunu
+zaman faktörüyle birlikte sürdürülebilir bir hale getirmişlerdir. Günümüze yaklaştıkça
+bu sürdürülebilir kitle faaliyetlerinin daha düzenli ve disiplinli bir hal aldığı
+görülmektedir. Benzer şekilde, bu gelişim sürecinde ticari ve ekonomik faaliyetler de
+düzen ve disiplin kazanmıştır.
+
+        Teknolojik gelişim günümüze yaklaştıkça hareket hızını artırmış ve internet
+denilen bir olgu, insanlık hizmetine faaliyete başlamıştır. İnternetin yaygın
+kullanımının hızlıca artması, finans alanında devasa hacimlerin hızlı bir biçimde
+ortaya çıkmasına sebep olmuştur. Finans sektöründe aracı şirketler internet alt
+yapılarına entegrasyonları hızlı bir biçimde gerçekleştirmiş ve özellikle 20. yüzyıl
+itibarıyla internet üzerinden yatırım basit bir hal almaya başlamıştır. Kitlelerin yatırım
+araçlarına bu kadar kolay ulaşabilmesi, bir tuş ile alım satım gerçekleştirilmesi, finans
+sektöründe büyük bir hacmi de beraberinde getirmiştir. Kitlesel alım satım işlemlerinin
+hızlı ve hacimli gerçekleşmesi bu alanda yapılan bilimsel çalışmaları da
+hızlandırmıştır.
+
+       Finans sektöründe kitlesel alım satım hacimlerinin artması ile oluşan fiyat
+hareketlerinde bir düzen olduğuna dair teoriler popüler olmaya başlamıştır. Bu alanda
+en önemli ve ünlü teori sahiplerinden biri ise Ralph Nelson Elliott’dur. Elliott Dalga
+Prensipleri olarak adlandırılan bu teori temelini Dow teorisinden almaktadır. Elliott
+Dalga Prensipleri, insanların finans alanında gerçekleştirdiği kitlesel alım satım
+işlemlerinin belirli kalıplara dayandığı ve bu kalıpların insanlık varolduğu sürece
+devam edeceği görüşünü benimsemektedir. Elliott Dalga Prensipleri ilk olarak Robert
+Prechter tarafından üretilen Sosyonomi kavramı ile desteklenmiştir. Bu dönemde pek
+de popüler olamayan Elliott Dalga Prensipleri, finans teknolojilerinin güçlenmesi ile
+yakın geçmişte ve günümüzde daha popüler hale gelmiştir.
+
+   2008 yılında ortaya çıkan sanal para kavramı hızlı popülaritesini artırmaya devam
+etmektedir. Sanal para ya da kripto para denince akla ilk olarak Bitcoin gelmektedir.
+Gerçekleştirdiği hızlı fiyat artışı ve oluşturduğu güçlü ve keskin trendler büyük bir
+kitlenin ilgisinin üzerine çekilmesini sağlamıştır.
+
+                                            1
+   Çalışmamda amaç olarak; Bitcoin fiyatlarında 2008 yılından bu yana oluşan trend
+hareketlerinde, Elliott Dalga Prensipleri’nin iddia ettiği üzere bir kural, bir kalıp olup
+olmadığını test edilmesidir.
+
+
+
+
+                                            2
+                                BİRİNCİ BÖLÜM
+
+    KRİPTO PARA BİRİMLERİNİN TEORİK ÇERÇEVESİ VE
+                      BITCOIN
+
+
+       1.1 Kripto Para Kavramı
+
+
+   Son yıllarda literatüre giren kripto para kavramı insanlar için alternatif bir takas ya
+da bir yatırım aracı olarak görülmeye başlanmıştır. Paranın bir değişim aracı olarak
+kullanılmasının aksine dijital para birimleri kitlelerin ilgilerini üzerine çekmeye
+başlamıştır. Özellikle son dönemlerde gerçekleştirdiği hızlı fiyat artışları bu kitlesel
+yönelimde önemli olmuştur. Son yıllarda kripto yatırımları yapanlar ve kripto borç
+verenlerin yüksek getiri elde etmesi popülarite artış hızını da yükseltmiştir. Lakin
+kripto para kavramına ilişkin önemli bir risk vardır. Kripto para kavramı 2008 yılından
+bu yana aktif kullanılıyor ve bu kullanım oranı da her geçen yıl artıyor. Buna rağmen,
+birçok ülkede kripto para birimlerine ilişkin etkili bir düzenleme halen getirilmemiştir
+ve kontrol mekanizmaları çok zayıftır. Bundan kaynaklı olarak kripto para
+yatırımcılarında büyük oranda bir güven problemi bulunmaktadır (Kesebir
+ve Günceler, 2019:606).
+
+   2008 yılı global ekonomik krizi ile birlikte merkezi para birimleri güçlü bir
+baskılanma yaşamış ve kitlesel yatırımcılar yeni bir yatırım aracı arayışına geçmiştir.
+Finansal kurumlara olan güven kaybı bu dönemde etkili olmuş ve alternatif para birimi
+arayışları yatırımcı ve tüccar kitlelerini kripto paralara yönlendirmiştir. Kriptografik
+araçlara dayanan ve merkezi olmayan dijital(sanal) para birimleri bu süreçte
+yaygınlaşmaya başlamıştır. Kriptografik kullanıcıları dijital para birimlerini ticari
+faaliyet sürdürdükleri diğer kullanıcılara hızlı ve kolay bir şekilde aktarabilmekte,
+böylece mal ve hizmetleri kolaylıkla satabilmekte ya da satın alabilmektedirler. Buna
+ek olarak, kripto para birimlerinde yaşanan yükseliş, varlıklarını kripto para
+birimlerinde tutan tüccarlar için getiri de elde ettirmektedir. Ayrıca aktarım
+maliyetlerinin ucuz olması kripto para birimlerinin banka ve kredi kartlarına
+uygulanabilir bir alternatif olarak da tanıtmaktadır (Morisse, 2015:2).
+
+
+
+   Kripto para birimleri İngilizce “ Crypto “ ve “ Currency “ kelimelerinden
+türetilmiştir. Kripto paralar internet alt yapısını kullanan, herhangi bir merkezi otorite
+veya aracı kurumla bağlantısı olmayan sanal para birimleri olarak tanımlanmaktadır.
+
+
+                                            3
+Herhangi bir regülasyonu bulunmayan ülke ve bölgelerde, insanlar kripto para
+birimleriyle ödeme yapabilmekte ve bu araçları para birimi olarak
+kullanabilmektedirler (Kenger ve Tokmak, 2018:4701).
+
+   Kripto para birimi, kriptografi (şifre bilimi) sistemlerini kullanan, sanal para
+birimleri olarak tanımlanmaktadır. Kriptoloji, para oluşturma ve sonrasında devam
+eden transfer uygulamalarının güvenilirliğini sağlamakta kullanılmaktadır. Kripto para
+birimlerinin teorik alt yapısı 1998 yılında Wei Dai tarafından oluşturulmuştur.
+Piyasada mevcut olan bütün kripto para birimlerinin teknik anlamda alt yapısı 2008
+yılında Satoshi Nakamoto isimli bir kişi veya bir grup tarafından oluşturulmuştur.
+Satoshi Nakamoto kimdir, nedir, tek kişi midir, nerede ve nasıl yaşar gibi soruların
+cevapları ise halen yanıtsız kalmaktadır (Gültekin ve Bulut, 2016:84).
+
+    Kripto para sistemleri merkezi bir otoriteye bağlı olmaksızın, dağınık çalışan
+sistemlerdir. Bütün kripto para sistemlerinin mantığını benzerdir. Tüm işlemleri
+kontrol altında tutmak, arzı artırmak ve olası hileleri önlemek adına kriptografi
+kullanılmaktadır. İnternet alt yapısı ile işlemler tasdik edildikten sonra, işlemler dijital
+alt yapıda saklanmaktadır. Aşağıda paylaşılan şekil 1’de belirtiği üzere işlemler kayıt
+defteri tipinde bir muhasebe sistemi olarak değerlendirilmekte ve “ blok zincir “
+içerisinde kayıt edilmektedir. Blok zinciri gerçekleşen tüm işlemleri kapsar ve herkese
+açık, erişilebilir bir yapıdadır. Ödemeler ağ düğümleri ile doğrulama almaktadır
+(Karaoğlan vd. 2018:16).
+
+
+
+
+                               Şekil 1: Blokzincir Sistemi
+
+
+   Yukarıda paylaşılan şekil 1’de kripto paraların nasıl kullanıldıkları
+gösterilmektedir. İlgili kripto para birimi üzerinde gerçekleşen her işlem bu bloklar
+aracılığıyla yapılmaktadır. Tüm bu işlemlerin bir tasdik alması süreci ise madencilik
+
+
+                                             4
+   yani mining olarak ifade edilmektedir. Bütün kripto paraların çalışma mantığı, yeni bir
+   teknolojik faaliyet sürdürülmedikçe hemen hemen benzerdir.
+
+      Blok zincir kayıtları kriptografik fonksiyonlar ile birbirine bağlanır ve sürekli
+   genişleyen dağınık bir veri tabanıdır. Burada merkezi bir sistem bulunmamakta ancak
+   tüm veriler sisteme entegre olan kullanıcılar tarafından saklanmaktadır. Hash olarak
+   nitelendirilen kodlarla işlem takibi sağlayan, dağınık veri tabanı olan Blok Zincir,
+   dağıtılmış muhasebe teknolojisi (DLT) olarak tanımlanmaktadır. Blok zincir
+   teknolojisi ile kripto para birimleri, alıcı ve satıcı iki tarafın ihtiyaç duyduğu aracıyı
+   ortadan kaldırmaktadır. Aracılar yerine güvenlik ve kayıt işlemlerini matematiksel bir
+   algoritma ile gerçekleştirmektedir. Kripto paraların alt yapısal olarak işlev görmesini
+   sağlayan Blok zincir teknolojisi her hangi bir alet gerektirmez ve şeffaf, saydam
+   olmasından kaynaklı güven duygusunu ön plana geçirir. Blok zincir teknolojisi
+   kullanıcıların transfer işlemlerinde, maliyetlerini düşürmesini, güvenliğin
+   geliştirilmesini ve operasyonel çalışmaların basitleşmesini sağlamaktadır. Kripto
+   paraların yayılması sonucunda üçüncü taraflara duyulan ihtiyacı ortadan kaldıran,
+   merkezi olmayan blokaj teknolojisi, finansal sistemde anonim ve çok düşük bir
+   maliyetle transfer gerçekleştirirken önemli bir değişiklik veya yıkıcı etkiye neden
+   olabilmektedir (Dilek, 2018:11).
+
+      Başka bir ifadeyle, blok zincir, şifreli işlem takibine olanak veren, her bir bilginin
+   bloklarda ve gelişmiş şifreleme algoritmaları ile işlenmesini ve bir merkeze
+   bağlanmadan birbirine bağlanmasını sağlayan dağıtılmış bir veri tabanıdır. Bir Blok
+   zincir, her hesap hareketini kaydını temsil eden veri yapısı olarak ifade edilebilir.
+   Güvenli ve sanal bir biçimde imzalanan sanal kodlardır. Bu hesap işlemleri bir internet
+   ağı üzerinden gerçekleşmektedir ve ağ üzerinde sürekli güncellemeler olmaktadır.
+   Sistem tek bir merkezden denetlenmeye gerek kalmadan, merkezi ve karmaşık bir
+   güvenlik ağı ile güvenli ve hızlı bir biçimde işleyişini sürdürmektedir. Blok zincir
+   teknolojisi sadece para akışlarında değil, birçok farklı sistemde de kullanılmaktadır.
+   Tercih edilmesinin en önemli sebepleri aşağıda üç madde halinde sıralanmaktadır
+   (Çetiner, 2018:3-4):
+
+1. Blok zincir hiçbir aracıya ihtiyaç duymadan düşük maliyet ve hızlı işleme
+   gerçekleştirir.
+2. Merkezi bir kontrol mekanizması, tek el kontrol mekanizması bulunmadığından
+   yolsuzluk ihtimali çok düşüktür.
+3. Tüm varlıkların transferinde takip ve kontrol kolaylığı üst düzeyde olmaktadır.
+
+
+
+
+                                               5
+     Blok zincir teknolojisi sadece kripto paralar ile ilişkili değildir. Birçok alanda,
+   özellikle yüksek güvenilirlik sebebiyle bankacılık alanlarında kullanılmaktadır.
+   (Çetiner, 2018: 3-4)
+
+      Blok zincirleri esasen, tüm dijital olayların veya işlemlerin bütün sistem
+   katılımcıları tarafından depolandığı ve dağıtıldığı bir veri tabanıdır. Blok zincirleri,
+   işlem takibi sağlayan şifreli olarak dağıtılmıştır. Tüm kullanıcılar ağa bağlanmak, yeni
+   işlemler göndermek, işlemleri doğrulamak ve yeni bloklar oluşturmak gibi işlemleri
+   gerçekleştirmektedirler. Kümeleme yani blok zinciri teknolojisi, ademi merkeziyetçi
+   paraların oluşturulması, yürürlükteki dijital sözleşmeler (akıllı sözleşmeler) ve Internet
+   üzerinden kontrol edilebilen akıllı varlıklar (akıllı mülkiyet), bunu mümkün kılan bir
+   teknolojik bir dehadır. Blok zincirleri, bir bilgisayar ağı üzerinden binlerce kez
+   kopyalanan bir elektronik tablodur. Bir bloktaki bilgi ortak ve sürekli bir şekilde
+   mutabakata varılan bir veri tabanında tutulmaktadır. Blok zincirlerinin veri tabanı tek
+   bir merkezi noktada depolanmamakta ve halka açıktır. İnternet'teki herkes aynı anda
+   milyonlarca bilgisayarda barındırılan verilere erişebilmektedir. Blok zincirleri, farklı
+   kuruluşlar tarafından kontrol edilen çoklu bilgisayar sisteminde bire bir kopyaları olan
+   dijital dağıtılmış işlem günlüğüdür. Blok zincirlerine katılan herkes kayıtlarını
+   görebilmektedir. Blok zincir teknolojisinin temelini oluşturan on ana özellik söz
+   konusudur. Bunları özetlemek gerekirse (Serçemeli, 2018:40-41):
+
+
+
+Dağıtılmış Veri Tabanı:
+
+   Blok zincirlerindeki her bir kullanıcı bütün veri tabanına ve geçmişine
+   ulaşabilmektedir. Hiçbir kullanıcı yalnızca veri veya bilgileri denetlememektedir.
+   Bütün kullanıcılar, aracı olmadan işlem ortaklarının kayıtlarını direkt olarak
+   doğrulayabilmektedir.
+
+
+Eşler Arası İletim:
+
+   İletişim merkezi doğrudan bir ağ yerine eşler arasında olmaktadır. Her ağ, bilgileri
+   diğer bütün ağlara depolamakta ve iletmektedir.
+
+Şeffaflık:
+
+   Her işlem ve ilgili değerler sisteme ulaşımı olan herkes tarafından görülebilmektedir.
+   Bir blok zincirindeki hem düğüm hem de kullanıcı, onu ifade eden 30'dan fazla
+   karakterden oluşan alfa nümerik bir adresleri söz konusudur. Kullanıcılar isimsiz
+   kalmayı veya kimliklerini başkalarına ifşa etmesi kendi tercihlerine bırakılmıştır.
+   İşlemler blok zinciri adresleri arasında olmaktadır.
+
+                                               6
+Kayıtların İadesi Olmayanlar:
+
+   Veri tabanına bir işlem girildikten ve hesaplar güncellendikten sonra kayıtlar
+   değiştirilememektedir. Bu işlem onlardan önce gelen tüm işlem kayıtlarına bağlı
+   olduğu için "zincir" terimi de buradan türetilmiştir. Veri tabanındaki kayıtların yerleşik
+   bir şekilde kronolojik olarak düzenlenmesi ve ağdaki diğer kişilerin kullanımına
+   takdim edilmesi için muhtelif hesaplama algoritmaları ve yaklaşımları
+   kullanılmaktadır.
+
+
+Hesaplamalı Mantık:
+
+   Ana kayıtların dijital niteliği, blok zincir işlemlerinin hesaplama mantığını
+   programlayabilme becerisinde yatmaktadır. Bu nedenle, kullanıcılar düğümler
+   arasındaki işlemleri otomatik olarak tetikleyen algoritmalar ve kurallar
+   oluşturabilmektedir.
+
+
+Güvenilir ve Erişilebilir:
+
+   Çok sayıda katılımcı tarafından kullanıldığından herhangi bir arıza noktası
+   içermemektedir. Kesinti ve saldırılara karşı koymak üzere tasarlanmıştır.
+
+
+Şeffaf:
+
+   Blok zinciri işlemleri, tüm katılımcıların görebileceği şekilde kontrol edilir ve bu da
+   kontrol ve güveni arttırmaktadır.
+
+
+Değişmez:
+
+   Blok zincirlerini tespit etmeden değişiklik yapmak neredeyse imkansızdır. Bu durum,
+   taşınan bilgilerin güvenilirliğini arttırmakta ve dolandırıcılık olasılığını azaltmaktadır.
+
+
+Geri alınamaz:
+
+   İdari işlemleri kolaylaştıracak ve kayıtların doğruluğunu artıracak işlemleri geri
+   alınamaz bir şekilde yapmak mümkündür.
+
+
+Dijital:
+
+
+
+                                               7
+Varlıkların ve belgelerin hemen hepsi şifrelenebilir ve kısıtlanabilir veya bir kitap
+kaydı olarak görüntülenebilir (Serçemeli, 2018: 40-41).
+
+
+       1.2 Kripto Paraların Yapısı ve Temel Özellikleri
+
+
+   Kripto paralar en yalın haliyle elektronik paraların eşten eşe olan biçimidir.
+Hergangi bir finansal aracı kurum katılımı olmadan çevrimiçi ödemelerin herhangi bir
+taraftan bir diğer tarafa iletimine olanak sağlar.
+Kripto para dijital paranın bir alt sınıfıdır. Havayollarınca verilen mil puanlar,
+bilgisayar oyunlarındaki simgesel oyun paraları, bahis sitelerinin verdiği puanlar ve
+benzeri bir çoğu kapalı sistemde sanal ve gerçek eşyalar ve açık sistemde dolaşımdaki
+para ile takas edilebilen dijital paraya örnektir (J.Moller, 2014:10).
+
+Uygulanabilir dağıtık sistemli bir kripto paranın en temel özelliği simgesel parasının
+kısıtlanmaya dirençli bir dijital “hamiline” varlık sağlamasıdır. (Tablo 1). Kendi özel
+anahtarını elinde bulunduran kişinin o anahtarın uyumlu olduğu genel anahtara
+ilişkilendirilmiş belirli miktardaki kripto parayı idare etmesi bakımından hamiline
+varlıktır. Teoride kimsenin kripto para fonlarını bloke edememesi, haczedememesi ya
+da tümleştirilmiş ödeme ağında gerçekleştirilen işlemleri kısıtlayamaması bakımından
+kısıtlanmaya dirençlidir.
+
+
+
+
+                     Tablo 1: Kripto Paraların Temel Özellikleri
+
+
+
+
+                                          8
+   Kripto para sistemleri belirli bir bölge ya da merkeze bağlı olmadıkları için
+tümleştirilmiş ödeme ağının küresel bir erişimi bulunmaktadır. Bu özellik varolan
+fonların dünyanın her yerinden kısa sürede transferine olanak sağlamaktadır. İşlem
+ücretleri genel itibariyle, diğer geleneksel finansal ödeme sistemlerine oranla çok daha
+düşüktür. Ücretler transfer edilen tutara göre değil, işlemin bayt olarak ölçülen
+büyüklüğüne göre belirlenmektedir. Özetle, milyon dolarlık bir transfer, sadece bir
+dolarlık başka bir transferle aynı masraflarla yapılabilir. Bunun sonucu olarak da kripto
+para sistemleri uygun maliyetler ile makro ödemeler için kullanılabilir. Burada önemli
+husus, ödemeler fonların transferinden ve ağ tarafından onaylandıktan sonra geri
+alınmamasıdır. Bu durumların hepsi düşük iletim masraflarından kar sağlayan ve
+iadelerden kaçınan ticari işletmeler için oldukça büyük avantajlar sağlar. Ayrıca tüm
+kullanıcılar sadece genel anahtardan oluşan (1.1. bölümünde HASH olarak anlatılan)
+kripto para adreslerinden belirlendiği için iletişim, kredi kart numarası ve şifresi gibi
+kişisel bilgilerin, güvenlik ihlallerine açık olan sunucularda saklanmasına gerek
+kalmamaktadır. Bu da her iki taraf için büyük avantajlar sağlamaktadır (G.Hileman,
+2017:151).
+
+
+
+       1.3 BITCOIN Nedir?
+
+   Bitcoin, dijital para birimi kavramını Dünya gündemine getiren önemli bir
+kavramdır. Bitcoin blok zincir teknoloji üzerinde çalışan bir sanal transfer yöntemidir.
+Dijital ödeme sistemlerinde birçok avantajı beraberinde getirmiştir. Bitcoin ayrıca ilk
+kripto para birimi olma özelliğini taşımaktadır. İlk sanal para birimi olma özelliğini
+üstlenen ve en fazla kabul görmüş sanal para birimi olan Bitcoin’in çalışma prensibi,
+birinci bölümde de detaylıca bahsettiğimiz üzere kriptografi (şifreleme bilimi)
+yöntemine dayanmaktadır (Yüksel, 2015: 199).
+
+   Bitcoin’de para transferi hiçbir merkezi otorite tarafından yapılmamakla beraber
+merkezi otorite tarafından takip de edilememektedir. Para transfer işlemi, merkezi bir
+sunucu olmadan bilgisayar sistemleri arasında dosya paylaşımına dayanmaktadır. Bu
+prensibin adı denkler arası/eşitler arası (peer to peer) elektronik para transferidir
+(www.ab.org.tr).
+
+   Bitcoin herhangi bir gerçek para birimine bağlı olmayıp arz ve talebe göre kuru
+değişmektedir. Ayrıca Mt. Gox, Bitstamp ve BTCN gibi platformlarda gerçek paranın
+ve Bitcoin’in birbiri ile değişimi yapılabilmektedir. 2018 yılı itibariyle global çapta ve
+Türkiye’de büyük kripto para borsaları kurulmuştur. Bu borsalar aracılığıyla alım
+satımlar çok daha kolay ve şahsa özel hale gelmiştir. Borsaların kurulması ve alım
+
+
+
+                                            9
+    satımların kolaylaşması ile kripto para piyasalarında hacimler güçlü bir biçimde artış
+    göstermiştir (Yüksel, 2015: 199).
+
+       Bitcoin kullanabilmek için açık kaynak yazılımına ihtiyaç vardır. Yazılımlar
+    dizüstü bilgisayarı ve akıllı cep telefonları dâhil geniş bir alanda işlemcilerde
+    çalışabilmektedirler. Satın alınan Bitcoin’ler dijital cüzdanda saklanır. Bu cüzdanlar
+    soğuk cüzdan olarak da adlandırılır. Dijital imza zincirinden oluşan Bitcoin’i
+    kullanabilmek için sahibi bir açık anahtar ve bir de özel anahtar dosyasına sahip
+    olmalıdır. Eğer bu dosya silinirse otomatikman Bitcoin’lerde kaybedilmiş olur. Bu
+    cüzdanlar kişisel isimlere ve öznel kayıtlara ait cüzdanlar olmadığı için, koruması ve
+    yedeklenmesi büyük önem taşır (Ateş, 2016:356).
+
+
+
+
+           1.4 Satoshi Nakamoto Tezi:
+
+        İkinci bölümde bu çalışmanın ana konularından biri olan Bitcoin hakkında detaylı
+    bilgiler verilecektir. Blok Zincir teknolojisinin ortaya çıkmasını ve yaygınlaşmasını
+    sağlayan Bitcoin, 2008 yılında Satoshi Nakamoto ile gündeme gelmiştir. 2008 Kasım
+    ayı sonlarında Satoshi Nakamoto isimli bir kişi ya da grup tarafından kriptografi
+    bilimcilerinin yoğun bir şekilde bilgi paylaşımında bulunduğu bir Amerikan e-posta
+    listesi grubuna bir tez gönderilmiştir. Bu tezin kriptografi çalışmacılarına ulaşması
+    “Bitcoin’in başlangıcı” olarak kabul edilmiştir. Kimliği halen belli olmayan
+    Nakamoto, “Bitcoin: Eşten Eşe Elektronik Nakit Sistemi” başlıklı tezinde, aşağıdaki
+    özellikle Bitcoin’in genel özellikleri olarak nitelendirmiştir (Satoshi Nakamoto, 2008).
+
+
+
+   Güvenilir ve üçüncü bir tarafa ihtiyaç duymadan doğrudan işlemi mümkün kılma.
+   Geri alınamayan işlemleri sağlama.
+   Günlük küçük işlemlerde maliyet azaltma.
+   İşlem masraflarını azaltma.
+   Çifte harcamaları önleme.
+
+
+
+       Tezin posta listesine ulaşması sonrası tartışmalar bir süre daha devam etse de 2009
+    yılı ocak ayında ilk blok oluşmuş ve kayıt zinciri başlamıştır. Bu da Bitcoin’in oluşumu
+    demektir. O günden günümüze kadar Bitcoin hiç aksaklık yaşamadan çalışmaktadır
+    (bitcoin.org, 2021).
+
+
+
+                                              10
+                     Şekil 2: Bitcoin Market Büyüklüğü Değişimi
+
+                             Kaynak: Coin Market Cap
+
+
+
+
+       1.5 BITCOIN’in Özellikleri
+
+
+      Bitcoin kripto para sınıfındadır. Bir yazılım programı içeriğindeki verilerin iç
+değerlerini ortaya çıkarma yoluyla dağıtımı yapılır. Kriptografi yöntemiyle oluşturulan
+bu sistem para birimi olarak kullanılmayı amaç edinmiştir.
+
+
+
+
+                                          11
+               Tablo 2: Bitcoin, İtibari Para, Dijital Para (Elektronik Para)
+
+
+
+
+                                       Kaynak: METI, 2016:5
+
+
+
+
+   Tablo 2 Bitcoin, itibari para ve dijital para(elektronik para) arasındaki kıyaslamaları
+göstermektedir. İhraç edenin belirsiz olduğun Bitcoin’de itimat, Bitcoin değerini güçlü
+bir biçimde desteklemektedir. Ayrıca tüm kullanıcıların gerçek kimlik bilgilerinin gizli
+olsa da tüm işlem kayıtlarını Blok zincir üzerinden görebilmesi ve kayıtların herkes
+tarafından izlenebilir olması Bitcoin’in ana talep unsuru özellikleri olarak ön plana
+çıkmaktadır. Tablo 2’ de de dahil olmak üzere birçok sebep Bitcoin talebinin
+oluşumundan günümüze kadar hep artarak devam etmesine büyük olanak sağlamıştır
+(METI, 2016:5).
+
+
+                                            12
+       1.6 BITCOIN Teknolojisi
+
+   Genel fikir sunanların büyük bir çoğunluğu, Bitcoin’in varolan teknolojileri
+kullanarak yeni uygulamalar yarattığını öne sürmektedir. Bitcoin çalışmamızın birinci
+bölümünde “1.1. Kripto Para Kavramı” başlığı altında, kripto para birimleri hakkında
+detaylandırılan tüm özellikleri kapsamaktadır. Çünkü Bitcoin kripto para kavramının
+oluşturucusudur. Geçmişten günümüze geldikçe daha önemli teknolojiler üretilip
+kripto para varlıklarının üretiminde kullanılsa da Bitcoin halen market payının büyük
+bir bölümünü elinde bulundurmaktadır. Hiçbir merkezi otorite olmadan, örneğin
+elektronik paradaki gibi bir sistemi işletebilmek için, verinin sahtesinin yapılmasını
+veya mükerrer ödemeleri önlemek için ölçüler koymak ve yine aynı zamanda sistemin
+kötü niyetli girişimlere maruz kalmasını engellemek için bir mekanizma oluşturmak
+şart değildir. Bitcoin’i oluşturan temel teknolojiler; kripto grafik algoritmalar, açık
+anahtarlı şifreleme ve dijital imza, eşten eşe, iş ispatı aşağıda anlatılmaktadır (METI,
+2016:5).
+
+
+
+               1.6.1   Kriptografik Algoritmalar
+
+Varolan veriyi bir özet fonksiyonuna giriş yapabilmek için belirli bir basamakta
+sayılardan oluşan bir özet değer gerekmektedir. Çalışacak bu mekanizmanın temel
+özelliği, aynı özet değerin sadece aynı veriden elde edilmesi ve asıl varolan verideki
+sadece küçük bir farklılığın tamamen farklı bir özet değer vermesidir. Özet değerden
+ana veriye ulaşmak çok zor ve vakit alabilir. İşte bu temel özellik mekanizması,
+verilerin sahtesinin tespitinde, Bitcoin kayıt zinciri sisteminde verileri doğrulama,
+verileri teyit etme ve özet değerlerin hesaplanması yoluyla yapılan iş ispati ile kayıt
+zincirlerinin yaratılmasında kullanılır (METI, 2016:6).
+
+
+
+
+                                          13
+                       Tablo 3: Kriptografi Özet Mekanizması
+
+
+
+
+                                 Kaynak: METI, 2016:9
+
+
+
+
+               1.6.2   Açık Anahtarlı Şifreleme ve Dijital İmza
+
+Açık anahtarlı şifreleme, şifreleme işlemlerini gerçekleştirmek ve varolan şifreleri
+çözmek için farklı anahtarların kullanıldığı bir kriptografi yöntemidir. Burada anahtar
+teslimi mekanizmasında bir takım sorunlar oluşsa da, anahtarın biri özel kullanım ve
+diğeri herkesin kullanımına açık olacak şekilde ikiye bölerek mevcut sorunu
+çözmüştür. Bunlar özel ve açık anahtarlar olarak isimlendirilmektedir. Şifreleme ve
+şifre çözme için aynı anahtarı kullanan simetrik anahtarlı şifrelemede anahtarı sadece
+ilgili tarafa teslim etmek için çok çeşitli güvenlik önleminin alınması gerekmektedir.
+Bunun aksine açık anahtarlı şifreleme dosyaların güvenli bir şekilde gönderilmesini ve
+teslim alınmasını sadece alıcının biri özel diğeri açık bir anahtar çifti hazırlaması ve
+açık anahtarı önden göndericiye yollaması ile mümkün kılmaktadır. Diğer tüm kişiler
+açık anahtar kullansa dahi, alıcılar kendi özel anahtarlarını korudukları müddetçe
+güvenlik sağlanabilmektedir. Bu durum soğuk cüzdan sisteminde önemli bir güven
+mekanizması sağlamaktadır.
+
+
+
+                                          14
+                           Tablo 4: Açık Anahtarlı Şifreleme
+
+
+
+
+                                  Kaynak: METI, 2016:9
+
+
+
+
+Dijital imza bir internet ağı üzerinden her verinin gerçekliklerini ispat eden bir
+mekanizmadır. Açık anahtar şifreleme tiplerinde kullanılan anahtar çiftleri burada da
+kullanılmaktadır. Dijital imza alıcıya gönderilecek olan dosyanın özet değerinin,
+gönderinin özel imzasıyla şifrelenmesi ile üretilmektedir. Üretilen dijital imza ve
+dosya alıcıya transfer edilir, Alıcı gönderenin yaptığı aynı özet fonksiyonla, dosyanın
+özet değerini hesaplar ve bulduğu özet değeri gönderenin açık anahtarıyla çözdüğü
+dijital imzadaki özet değerle karşılaştırır. Bu şekilde dijital imzanın doğru olduğu teyit
+edilir. Burada önemli bir ayrıntı vardır. Dijital imza özet değer içerdiği ve gönderilen
+dosya içeriğindeki en küçük bir değişiklik özet değeri de değiştireceği için verinin
+doğruluğu, dijital imzayı çifti açık anahtardan başka bir anahtar çözemeyeceği için de
+imzanın gönderene aitliği ispatlanmış olmaktadır (METI, 2016:10).
+
+
+
+
+                                           15
+                                 Tablo 5: Dijital İmza
+
+
+
+
+                                 Kaynak: METI, 2016:10
+
+   Bitcoin transfer sisteminde açık anahtarlı şifreleme ve dijital imza, işlem verisinin
+kimin tarafından oluşturduğunu belirlemek için kullanılmaktadır. Ayrıca bu bir
+Bitcoin cüzdan görevi görmektedir. Bitcoin cüzdanı demek, Bitcoin transferlerinin
+yapılacağı bir adres anlamına gelmektedir (METI, 2016:10).
+
+
+
+               1.6.3   Eşten-Eşe (P2P)
+
+
+
+    Genel işleyiş mekanizmasında, istemci-sunucu ağında, sunucular verinin taşınması
+ve sağlanması işleyişini gerçekleştirirken, istemciler sunuculardan verileri ister ve bu
+verilere erişir. Bu sayede roller değişmez. Bu işleyişin aksine, eşten eşe (P2P) ağında
+tüm katılımcı bağlantı noktaları verileri her biri ayrı ayrı tutar ve talep edilen ve
+sağlanan verilerin bu bağlantı noktalarında eşit olduğu kendiliğinden bir ağ
+oluştururlar. P2P ağında her bir bağlantı noktasının rolü, işleve göre sunucu veya
+istemci olarak değişim gösterebilir. Eşten eşe ağlarını uygulamaya alırken arama ve
+veri transfer yöntemlerini dikkate almak önemlidir. Arama yöntemleri, bağlantı
+noktalarının yerleri ve verilerin yönetimi için kullanılan yöntemlerdir. Veri iletim
+yöntemleri bağlantı noktaları arasında veriyi iletme şekilleridir. Bağlantı noktaları
+arasında “doğrudan iletim” ve başka bir bağlantı noktası aracılığıyla “aktarılmış
+iletim” olmak üzere ikiye ayrılmaktadır. Bitcoin’de kullanılan eşten eşe (P2P) ağda,
+arama yöntemi olarak eşten eşe kullanılırken veri iletimi, ilgili bağlantı noktalarına
+aktarma yoluyla yapılmaktadır (METI, 2016:10).
+
+
+
+
+                                          16
+               1.6.4   İş İspatı (PoW)
+
+   İş ispatı denilen olay, genellikle işi üstlenen, işi gerçekleştiren tarafın suçsuz ya da
+iş ile ilgili kalan sorumluluk sahibi olmadığını doğrulamak için gerçekleştiren
+uygulamalar bütünüdür. Temelinde basit ancak yapılması zahmetli ve bittiğinde
+doğrulanması kolay bir iş mekanizmasıdır.
+
+   Bitcoin için iş ispatı olayı (PoW), çalışmamın birinci bölümünde de bahsi geçen
+madencilik (mining) işidir. Eğer Bitcoin transferinde bulunacak tarafsak, işlem verisi
+tüm eşten eşe ağa gönderilmektedir. Tam da bu sebeple, her bir bağlantı noktasına
+ulaşan “işlem verisi” eşten eşe ağın o anki durumuna bağlı olarak belirli bir zamanlarda
+farklı olabilmektedir. Ağa katılım sağlayanlara iletilen işlem verilerine tek sefere
+mahsus bir sayı (nonce) ekleyerek bir özet değeri hesaplanır. Bu özet değerin belirli
+bir değerden daha küçük olması gerekir ve katılımcı bağlantı noktaları hedeflenen özet
+fonksiyon değerine ulaşana dek farklı farklı tek seferlik sayılar kullanarak
+hesaplamaya devam etmelidir. Hedeflenen özet fonksiyon değeri bulunduğunda ağ
+katılımcıları hep birlikte bu özet fonksiyon değerinin doğruluğunu tasdik etmekte ve
+hesaplamada kullanılan işlem verileri yeni bir blok içindeki resmi işlem sonuçları
+olarak kabul edilmektedir. Bitcoin'de özet değeri bulma zorluğu doğru değere ulaşmak
+için harcanan zamanın ortalama on dakika kadar sürmesi olacak şekilde tasarlanmıştır.
+Hesaplamalar sonrası doğru değeri bulmada başarılı olan kişiye ödül olarak Bitcoin
+verilmektedir. Kazanılan miktar 12,5 Bitcoin ve ilgili bloktaki işlemlerden gelen
+ücretlerdir. Verilen ödül her 210 bin blok oluşumda bir, yani ortalama 4 yılda bir yarıya
+düşürülmektedir. Bu ödül 2020 yılı yaz döneminde 6,25 Bitcoin, 2021 yıl sonunda ise
+6 Bitcoin altına çekilmiştir.
+
+
+
+   Bitcoin iş ispatını (PoW) merkezi bir otorite olmadan verinin bozulmasını, çifte
+ödemeyi önleyen ve sistemi kötü niyetli kullanıcılardan koruyan bir mekanizma
+oluşturmak için kullanır (METI, 2016: 12).
+
+
+
+
+                                            17
+                  Tablo 6: İş İspatı (Pow) Algoritması Özet Hesabı
+
+
+
+
+                                  Kaynak: METI, 2016:12
+
+
+
+               1.6.5   Merkezi Olmayan Kontrol Mekanizması
+
+        Bitcoin ilk olarak 2009 yılında Satoshi Nakamoto tarafından, merkezi bir
+otoriteye güven yerine şifreleme bilimine dayanan bir para kavramı ispatını anlatan bir
+yazının internet ortamında yayınlanmasının ardından gündeme gelmiş ve
+oluşturulmuştur. Satoshi Nakamoto Bitcoin projesini 2010 yılında terketmiştir ve
+kimliği halen bilinmemektedir. Bu konuda birçok spekülatif yaklaşım mevcuttur. Buna
+rağmen, Bitcoin yazılım protokol bilgilerinin açık kaynak kodlu olması, diğer yazılım
+üreticilerinin protokol üzerinde çalışmasını ve Bitcoin benzeri birçok kripto para
+biriminin geliştirilmesini sağlamıştır. Bu sayede topluluk sürekli olarak büyümeyi
+sürdürmüştür (Satoshi Nakamoto, 2008).
+
+
+                                          18
+       1.7 Bitcoin İşleyiş Biçimi
+
+       Bitcoin elektronik ortamda, alfabetik sayılar ve rakamlardan oluşturulmuş
+(alfanümerik) bir dijital para birimidir. Bitcoin’ler elektronik ortamlarda ya da fiziki
+kodlanmış soğuk cüzdanlar ile taşınabilir ve transfer işlemleri gerçekleştirilebilir.
+Cüzdan numaraları, işlem yani transfer numaraları alfanümerik kodlarla
+kaydedilmektedir. Bitcoin’i iyi anlamak için öncelikle “çifte harcama sorunu” terimini
+çok iyi algılamak gerekmektedir. Çifte harcama sorunu bilgisayar bilimlerinde, aynı
+dijital paranın kolay bir biçimde, bir defadan daha fazla harcanılabilmesi,
+kullanılabilmesi anlamını taşımaktadır. Bitcoin “üçüncü bir tarafa ihtiyaç duymadan
+çifte harcama” sorununu çözebildiği için, üçüncü taraf görevini üstlenen kurumların
+iyileştirilmesi, yeniden iyi sistemlere sahip olabilmesi ya da üçüncü taraflardan
+gerçekleşebilecek olası bir köklü değişimi başlatabilecek icat olarak
+nitelendirilmektedir. Bunu bir örnekle açıklamak gerekirse; bilgisayar dosyasının
+dijital tıpkı bir belge gibi dijital para olduğunu varsayalım. Alice Bob’ a elektronik
+posta ile içinde 10 dolar olan dijital dosyayı kolayca gönderebilir. Ancak, bir dosyayı
+elektronik posta ile göndermek aslında o dosyanın bir kopyasını göndermek demektir,
+çünkü gönderildikten sonra bilgisayardaki dosya silinmez. Alice, Bob’a yolladığı
+elektronik posta ekine bu dijital dosyayı ekleyip Bob’a gönderdiğinde 10 doları
+harcamış olsa bile kopyası hala bilgisayarındadır. Güvenilir bir üçüncü taraf aracı
+kuruluşu engel olmadığı sürece Alice kolayca aynı dijital dosyayı bir başkasına
+göndererek 10 doları tekrar harcayabilir.
+
+        Bitcoin çifte harcama sorununu, tek bir güvenilir üçüncü tarafın kontrolünü
+gerektirmeyen, sorumluluğu tüm ağa dağıtan bir kayıt defteri sağlayarak çözmektedir.
+Bitcoin için üretilen blok zincir ağı, kayıt zinciri adı verilen herkese açık bir defterde
+tüm işlemleri kaydetmektedir. Kayıt zinciri, Bitcoin yazılımını kullanan herkesin bir
+işlemin geçerliliğini doğrulamasına izin veren ve daha önceden işlenmiş tüm
+işlemlerin herkesin erişebildiği güvenilir kaydıdır. Bitcoin ile yapılan tüm işlemler ve
+cüzdanlar bu kayıt defteri, yani ağ üzerinde herkese açık bir biçimde kaydedilmektedir
+(David LEE Kuo Chuen, 2015:16-18).
+
+       1.8 Yeni Bir Bitcoin Oluşturmak
+
+      Bitcoin dijital bir para birimi amacıyla üretilirken 2040 yılına kadar
+tamamlanması beklenen 21 milyon adet net arz ile üretilmiştir. Bitcoin arzı kesinlikle
+21 milyon adet üzerine çıkamaz. Bitcoin’ler üretiminden bu yana online madencilik
+(çıkarma işi) yoluyla üretilmektedir. Bitcoin madenciliği yapan kişiler, özel
+
+                                           19
+donanımlara sahip bilgisayarlarında özel bir yazılım çalıştırmaktadır. Madenciler ağın
+devam etmesini ve güçlenmesini sağlamaktadır. Bundan dolayı değişken olarak bir
+miktar Bitcoin ile ödüllendirilirler. Madencilik sadece yeni Bitcoin’lerin oluşturulması
+için değil aynı zamanda işlemlerin kayıt zincirine eklenmesi ve hemen ardından da
+onaylanması için gerekli bir süreç olduğu için önemlidir. Kayıt zincirinde doğrulama
+süreci sadece geçerli işlemlerin doğrulanmasını sağlamak ve bunların kayıt zincirine
+kaydedilmesini sağlayan hesaplama açısından oldukça ayrıntılı ve zor olan bir süreçtir.
+Madencilik yani çıkarma işi aslında matematiksel ilerleyen bir süreçtir.
+
+        Bitcoin protokolü yeni Bitcoinleri, tahmin edilebilir ama azalan bir oranda
+dereceli olarak oluşturacak şekilde tasarlanmıştır. Yeni Bitcoin’lerde sürekli büyümeyi
+temin etmek amacıyla, her bir bloğu çözmenin ödülü kendiliğinden olmak suretiyle
+her 4 yılda bir yarıya indirilmekte ve çözme zorluğu ise zaman geçtikçe artmaktadır.
+Bu iki önemli etki, zaman faktörüyle birlikte yeni Bitcoin’lerin çıkarılma oranının,
+altın benzeri bir malın üretilme oranına yakın olacağı etkisi yaratacak biçimde birlikte
+işlemektedir. Gelecekte Bitcoin kesin arz sınırı olan 21 milyon adete ulaşacak ve
+madencilerin kazancı sadece transfer ücretleri olacaktır. Bu durum, ödemeleri
+Bitcoin’e dayanan ve işlem ücreti ödemek zorunda kalacak olan insanlar ve işletmeler
+için en son istenecek bir durum olsa da son Bitcoin çıkarıldıktan sonra bile
+madencilerin ağı hala çalışır ve işler tutmalarını özendirecek bir teşviğe sahip olmasını
+sağlamaktadır (Ken Tindell, 2013:4).
+
+        Kayıt zincirinde her yeni blok, bir önceki blok için bir iş ispatıdır. Kayıt
+zincirinde her yeni bloğun bir önceki blok ile ilişkili olması, bloklarda işlemlerin
+geriye alınmasını oldukça zor kılmaktadır. Çünkü kayıt zinciri üzerinde bir blok
+değiştirmek demek o bloktan sonra gelecek tüm blokların yeniden hesaplanması
+manasına gelmektedir. Art niyetli kişiler için adına birçok blok eklenen bir bloğu
+değiştirmeye çalışmak hemen hemen imkansızdır. Bu sebepten dolayı Bitcoin
+protokolü birbirini takip eden uzun zincirler halinde tasarlanmıştır. Burada madenciler
+kayıt zincirlerinin değiştirilerek bozulmasını engelleyen önemli faktörlerdir.
+Madenciler işlemleri doğrularken, kayıt zincirlerinin de güvenliğini sağlamış olurlar
+(Chris Pacia, 2013:2).
+
+       Bitcoin’e ilişkin işlemler kayıt zinciri üzerinde hemen yayınlanmasına rağmen
+uygulama da bir işlemin onaylanması için 10 dakika gecikme olmaktadır. 10 dakika
+süren bu gecikme bir bloğun oluşturulması ve kayıt zincirine eklenmesinin sonucudur.
+Onaya sahip olmak ise, madencilerin Bitcoin’lerin geçerli ve daha önce harcanmamış
+olduğunu doğrulaması demektir. Birçok kullanıcı, bir işlemin onaylanmış olarak kabul
+edilmesi için genellikle 6 adet onay yani yaklaşık olarak bir saat beklemektedir. Buna
+
+
+
+                                           20
+binaen, her kullanıcı işleminin onaylandığını düşünmek için ne kadar süre
+bekleyeceğine karar vermekte serbesttir (Chris Pacia, 2013:2).
+
+
+
+       1.9 Bitcoin Alım İşlemi
+
+        Bitcoin mal ve hizmet karşılığı ödeme aracı olarak kullanılabilmek için
+üretilmiş, kolay bir dijital para birimidir. Bitcoin ile ödemeleri kabul eden firma sayısı
+yıllar geçtikçe artmakta ve kullanım yaygınlaşmaktadır. Fiziksel olarak satış yapan ve
+daha geleneksel işleri konu alan işletmelerde Bitcoin ile ticaret daha az olsa da, internet
+üzerinden online olarak ticaret gerçekleştiren firmalarda ticaret oranı oldukça
+yükselmiştir ve yükselmeye devam etmektedir. Ürünlerin ya da hizmetlerin itibari para
+karşılıklarının, Bitcoin fiyatıyla oluşan kuruna göre ticaret işlemleri kolaylıkla
+yapılabilmektedir.
+
+    Elinde bulunan Bitcoin’lerini harcamak isteyenler kolay bir biçimde itibari para
+birimlerini Bitcoin’ler ile takas etmektedir. Takas işlemleri gelişen ve yaygınlaşan
+teknolojiler ile birlikte takasa aracı web siteleri, kripto para döviz takas firmaları ve
+son yıllarda popülaritesi artan merkeziyetli kripto para borsaları ile yapılabilmektir.
+Ayrıca takas koşullarında anlaşma tamamsa, direkt olarak itibari para ile Bitcoin
+arasında transfer işlemi olarak da bu takas yapılabilir (Bulut, 2019:51).
+
+       1.10    Bitcoin Saklanması
+
+Bitcoin’lerin saklandığı cüzdanlar, temelde bir özel anahtardır. Bu anahtarlar
+Bitcoin’lere erişim için kullanıldığından güvenli ve dikkatli bir biçimde saklanmalıdır.
+Donanım ve internet üzerinden kullanılan cüzdan tipleri bulunmaktadır. Cüzdan tipleri
+içerisinde en kullanışlı olanı, cihaz ya da alet ne olursa olsun internet erişimi olan
+herhangi bir tarayıcı ile heryerden ulaşımı sağlanabilen çevrimiçi cüzdanlardır.
+Kullanıcıların Bitcoin adreslerinin özel anahtarları çevrimiçi cüzdanın hizmet
+sağlayıcıları tarafından saklanmakta ve depolanmaktadır. Bu durum eğer güvenlik
+sistemleri yeterli derecede güçlü değilse, hizmet sağlayıcısının ya da üçüncü bir tarafın
+Bitcoin’leri çalabilmesi riskini beraberinde getirmektedir. Bu tip cüzdanlara örnek
+olarak Metamask ve TrustWallet gibi firmaları örnek olarak gösterebiliriz. WEB3.0
+tabanlı en bilinen ve en yaygın olan cüzdan tipleri bunlardır (Bulut, 2019:53 ).
+
+       1.11    Güvenlik ve Şifreleme
+
+Bitcoin protokolü açık kaynak kodludur ve tüm madencilerin onayına bağlı olarak
+geliştiriciler ve algoritmalar tarafından sürekli olarak güncellenir. Bitcoin’de
+kullanılan özet fonksiyon çoğunlukla SHA-256’dır. Kullanılan teknolojilerin
+güvenliği güven sağlamış algoritmalar ile desteklenmektedir. SHA-256 algoritması
+
+                                            21
+Amerika Birleşik Devletleri’nde NSA tarafından tesadüfen bulunmuştur.
+Algoritmanın NSA tarafından tasarlanması, kamuya açık bir yazılımın parçası olması
+ve güçlü güvenlik önlemlerine sahip olması için ayrıntılı bir biçimde incelenmiş
+olması bu algoritmayı oldukça güvenli kılmaktadır. SHA-256, SHA-1 serisinin bir üst
+versiyonudur ve Bitcoin’de işlemleri ile kayıt zincirini dijital imzalarda
+kullanılmaktadır (Bulut, 2019:55-56).
+
+
+         Bitcoin teknolojisinin ana yapıtaşı açık anahtarlı şifreleme yöntemidir. Açık
+anahtarlı bu şifreleme yönteminde SHA-256 özet fonksiyonu Bitcoin adreslerinin
+oluşmasında, ödemeleri doğrulamada ve işlemlerin imzalanmasında kullanılır. Açık
+anahtarlı şifreleme sistemi, dijital imzaları kullanan Bitcoin işlemlerinin gerçekliliğine
+güvenilir bir biçimde karar vermede en iyi tekniktir. Açık anahtarları şifreleme sistemi
+asimetrik olarak birbirilerine bağlı açık anahtar ve özel anahtar adında iki ayrı anahtar
+oluşturan yine asimetrik olan algoritmayı kullanmaktadır. Anahtarların asimetrik
+olmasının ana sebebi, açık anahtarın özel anahtardan oluşturulmasıdır. Ancak, açık
+anahtardan özel anahtarın bulunabilmesi matematiksel olarak imkansızdır. Bu
+sistemde, açık anahtar işlemlerdeki dijital imzaların doğrulanmasında özel anahtar ise
+dijital imzaları oluşturan işlemleri imzalamakta kullanılmaktadır. Açık anahtar herkes
+tarafından görülebilir ve bilinebilir. Bitcoin transferlerinin yapıldığı ya da ödemelerin
+alındığı cüzdan adresi olarak kullanılır. Özel anahtar ise güvenli bir biçimde, dikkatlice
+saklanmalıdır. Özel anahtar Bitcoin cüzdanlarına direkt olarak erişim sağlatabilir.
+Bundan kaynaklı olarak kimseyle paylaşılmamalıdır (Bulut, 2019:55-56).
+
+       1.12    Bitcoin Tercih Sebepleri
+
+Bitcoin üretildiği dönemden itibaren bir kesimde kafa karışıklığı meydana getirmiştir.
+Genel olarak akıllarda bulunan soru, “itibari paralar mevcutken, neden Bitcoin
+kullanmalıyım?” olmuştur. Olayı daha derinlemesine algılayabilmek adına Bitcoin’i
+itibari paraların yerine geçebilecek bir teknoloji olarak değil de alternatif bir sistem
+olarak düşünmek doğru olacaktır. Bitcoin bir ödeme aracı olduğunda sağladığı birçok
+fayda bulunmaktadır. Üçüncü bir aracı taraf bulunmayan bu ödeme sisteminde
+işlemler çok daha hızlı ve ucuz gerçekleşmektedir. İşlemler ucuz ve para olarak
+Bitcoin sekiz haneye kadar bölünme gerçekleştirebildiği için mikro ödemelerde fayda
+artmaktadır. Bitcoin’in en fazla bilinen faydaları aşağıdaki gibi özetlenebilmektedir
+(Satoshi Nakamoto, 2008).
+
+               1.12.1 Ödemelerde Özgürlük
+
+Bitcoin ödemelerin hızlı ve düşük maliyetle gerçekleşmesi için tasarlanmıştır.
+Ödemeler göndericinin onayı daha hızlı vermesi için işlem masrafı ekleme seçeneğine
+
+
+                                           22
+bağlı olarak çok az bir masrafla ya da masrafsız gerçekleşebilmektedir. Üçüncü tarafta
+farklı bir aracı kuruluş olmadığı için düşük bir işlem maliyeti ortaya çıkmaktadır.
+Merkezi bir kontrol mekanizması ve kısıtlamalar olmaması dolayısıyla kullanıcılar
+tüm Bitcoin’lerini kendi kontrolünde tutmakta ve istedikleri zaman istedikleri yere
+gönderme ya da bir yerden alma özgürlüklerine sahiptirler (Satoshi Nakamoto, 2008).
+
+               1.12.2 Ticari Faydaları
+
+
+
+Bitcoin’in ticari faydaları denince akla ilk gelen seçenek, ticaretle uğraşan ve işletme
+maliyetlerini düşürmek isteyen firmalardır. Kredi kartı ve benzeri online ödeme
+sistemleri ticari işlemleri kolaylaştırmış olsa da maliyetler işletmeciler için pek cazip
+değildir.Kart kuruluşuna göre değişen sözleşme şartlarına göre işletmelerin sonrasında
+yetkilendirme ücreti, işlem ücreti, değişim ücreti, müşteri hizmet ücreti gibi çeşitli
+masrafları karşılamaları gerekmektedir (Rizzo, 2014:1).
+
+
+
+Bitcoin günümüzde de birçok işletme tarafından kabul edilen diğer elektronik ödeme
+yöntemlerine ciddi bir alternatif olmuştur. Ayrıca Bitcoin ile ödeme sistemlerinde
+üçüncü bir aracı bulunmadığı için doğrudan ödeme olanağı vardır. Bu da üçüncü taraf
+riski ve maliyetini ortadan kaldırır.
+
+
+
+Diğer önemli bir konu ise kredi kartı ödeme sistemlerinde işletmeleri oldukça zor
+durumda bırakabilen geri ibraz hilesidir.(chargeback fraud) Geri ibraz hilesi bir ürünün
+teslim edilmediğine dair müşteri tarafından yalan beyanda bulunulması ve kredi kartı
+ile gerçekleşen ödemenin müşteriye iade edilmesidir. İşletmeler sırf bu sebeple
+sattıkları ürünün ödemesini geri iade etmekle birlikte, ibraz masrafını da
+ödemektedirler. Bu da işletmeler için ciddi bir zarar riski oluşturmaktadır (Bulut,
+2019:62).
+
+
+
+Bitcoin ile gerçekleşen işlemler sağlamlığı geçici olabilen, taklit edilebilir imzaları
+bulunan kredi kartı ödemelerinin aksine güvenlidir. Bu işlemlerde gerçekleşen düşük
+maliyet unsuru, mikro ödemelerin kabul edilmesi gibi unsurlar Bitcoin’in kabul
+edilmesine olanak sağlamaktadır.
+
+
+
+Aşağıda yer alan tablo istatistik Mart 2017 itibari olarak dünya çapında gerçekleşen
+internet alışverişlerinde en fazla tercih edilen ödeme yöntemlerini bizlere
+
+                                           23
+göstermektedir. Araştırmaya göre bu tarihlerde internet alışverişi yapanların yaklaşık
+%42’sinin kredi kartı ile ödeme tercih ettiği görülmektedir (Bulut, 2019:61-63).
+
+
+
+
+     Şekil 3: Dünyada İnternet Alışverişlerinde Tercih Edilen Ödeme Yöntemleri
+
+
+
+
+               1.12.3 Finansal Teknolojiye Teşvik
+
+Bitcoin için ana fayda unsurlarından biridir. Bitcoin protokolü yazılımcı ve
+programcıların kolayca geliştirebileceği finansal hizmetler için yararlı sayısız dijital
+plan içermektedir. Bitcoinler yazılım temeline bakılacak olursa veri kümeleri olduğu
+için sadece para transferi ve ödeme değil aynı zamanda menkul kıymetler, hassas
+bilgilerin transferi ve belki gelecekte mülk kaydı gibi bilgilerin transferinde de
+kullanılabilmektedir.
+
+        Bitcoin protokolü yapısında bulunan özelliklerden bazıları mikro ödemeler,
+anlaşmazlık aracılığı, güvence sözleşmeleri ve akıllı mülkiyettir. Anlaşmazlık aracılığı
+(dispute mediations) işlem yapan tarafın birbirine güvenmediği durumlarda alan veya
+satanın 3.bir tarafı işleme dahil etmesidir. Örneğin kitap alan birinin bitcoinlerini
+3.birine (escrow) göndermesi ve kitap satanın kargo makbuzunu 3.kişiye (escrow)
+yollaması durumunda, 3.kişinin kitap alanın parasını, kitabı satana iletmesi gibi
+birbirine güvenmeyen iki tarafın 3.tarafın arabuluculuğu hizmetiyle (escrow service)
+işlemlerini tamamlamasıdır. Güvence sözleşmeleri (assurance contracts) bir kamu
+malının yapılabilmesi için yapılan fonlama yöntemidir. Fonlama sonu elde edilen para
+ile yapılan kamu malını herkes bedava kullanabilmektedir. Bu model Bitoin’de şöyle
+işlemektedir: Bir gişimci örneğin yeni bir adres oluşturur ve herkese en az 1000BTC
+toplanırsa bu malın yapılacağını duyurur. Katılmak isteyen herkes kendi katılımını
+içeren bir işlem oluşturur ve bu adrese gönderir ama bunu (ağın onaylaması için ağa
+
+                                          24
+duyurmazlar) adreste toplanan tüm işlemler 1000BTC olduğunda birleştirilip tek işlem
+olarak ağa onaylanması için duyurulur. Kitle oyunu (Crowdacting) olarak da
+adlandırılmaktadır. Akıllı mülkiyet (Smart property) sahipliği sözleşmeler yoluyla
+Bitcoin kayıt zinciri tarafından kontrol edilen araba, telefon veya ev gibi fiziksel
+varlıklardır. Akıllı mülkiyet bir şirketin hisse senedi, uzaktan bir bilgisayara erişim
+hakları gibi fiziksel olmayan hakları da içermektedir. Mülkiyetin akıllı yapılması
+ticaretinin tamamıyla daha az güvenle yapılabilmesine olanak vermektedir. Bu
+sahteciliği, aracılık masraflarını azaltmakla beraber aksi halde olması mümkün
+olmayan işlemlerin gerçekleşmesine olanak vermektedir. Örnek olarak internet
+üzerinden hiç tanımadığınız bir kişi size ödünç verebilir. Bu borç verme hizmeti ise
+finansman sağlama hizmetinin daha fazla rekabetçi ve daha ucuz olmasını sağlar
+(Bulut, 2019:68-69).
+
+        Konuyla alakalı diğer bir kavram ise akıllı kontratlardır(smart contracts). Akıllı
+kontrat ya da diğer bir ismi ile akıllı sözleşme, bir sözleşme ile anlaşmanın yerine
+getirilmesini ya da iştirasını dijital ortamda ve dijital olarak sağlayan, kanıtlayan veya
+bu işlemi yaptıran bir bilgisayar tabanlı protokoldür. Akıllı kontratlar üçüncü bir tarafa
+ihtiyaç duymadan, mal ya da hizmetin sahipliğinin takasını belirli bir şartın yerine
+getirilmesi koşuluyla sağlamaktadır. Bu sözleşmeler herkese açıktır ve izlenebilir. Bu
+sözleşmeler gerçekleştiği takdirde bir merkez tarafından geri alınamazlar.
+
+       Bitcoin cinsinden hisse senedi paylarının alınıp satıldığı internet siteleri
+bulunmaktadır. Bazı girişimci firmalar bu siteleri bitcoin karşılığında sermayelerini
+arttırmak ve hisse senetlerini satmak için kullanmaktadır. Bu tipteki takas bürolarının
+listelerinde yer alan firmalar ve fon kuruluşları örneğin çıkarma işi (madencilik) için
+gerekli ekipmanı sağlayan üretici firmaları gibi genellikle bitcoin ile alakalı işlerle
+ilgili faaliyette bulunan firmalardır. Söz konusu ofisler aynı zamanda Satoshi Dice ve
+BitBet gibi bitcoinle çalışan bahis sitelerini de içermektedir. Bitcoin hisse senetleri
+piyasasının bu karışık yapısı yatırımcılara tazmin hakkının çok az olduğu sahtecilik ve
+dolandırıcılık girişimlerine sebebiyet verebilmektedir. Buna örnek bir durum artık
+bulunmayan Global Bitcoin Stock Exchange (GLBSE) borsasında yer alan firmalardan
+biri olan Bitcoin Savings and Trust (BTCST) fon kuruluşunda yaşanmıştır. ABD
+Menkul Kıymetler ve Borsa Komisyonu (SEC) tarafından açılan bir federal davada
+BTCST kuruluşunun Ponzi sahtekarlığı yaptığına karar verilmiştir. Bundan farklı
+olarak MPEx menkul kıymetler borsası gibi platformlar aktif bir şekilde yeni başlayan
+yatırımcıları karmaşık arayüze sahip sitelerde işlem yapmaktan caydırmakta ve
+dönemsel hissedar raporları ile şeffaflığı desteklemektedir. Kendi kendini düzenleyen
+piyasa olarak sınıflandırılan bitcoin tabanlı türev ürün ve hisse senedi piyasaları ilgili
+yargı kuruluşları tarafından yapılacak yasal incelemelerle karşılaşmaya devam
+edecektir (Securities and Exchange Commission, 2014:14-16).
+
+                                           25
+               1.12.4 Fakirlik ve Baskı Mücadelesi
+
+        Bitcoin yeni bir teknoloji olarak nitelendirilmekte ve dünyanın fakir
+kesimlerinde yaşayanlar için potansiyel oluşturmaktadır. Bölgelerin temel finansal
+hizmetlere erişim yollarını geliştirebilmek ümit ve heyecan verici bir fakirlikle
+mücadele yöntemidir. Şekil 5, 2014 yılında itibari dünyada finansal erişimi olmayan
+veya yetersiz bulunan bölgeleri göstermektedir. Gelişmekte olan ülkelerde finansal
+erişimin yetersiz olmasının sebeplerinden biri geleneksel finansal kuruluşlar için fakir
+ve kırsal alanda yaşayanlara hizmet vermenin maliyetli bulunmasından kaynaklıdır.
+
+
+
+
+    Şekil 4: 2014 Yılı İtibari Finansal Erişimi Yetersiz Veya Bulunmayan Bölgeler
+
+
+
+       Alışılagelmiş şube bankacılığının daha fakir bölgelerde gelişiminin önündeki
+engellerden kaynaklı olarak, gelişmekte olan ya da az gelişmiş ülkelerde yaşayan
+insanlar daha fazla mobil bankacılık hizmetlerini kullanmaktadır. Kapalı bir sistem
+(sadece üyelerinin erişebildiği) mobil ödeme hizmeti olan M-Pesa özellikle Kenya,
+Tanzanya ve Afganistan gibi ülkelerde başarı göstermiştir. Gelişmekte olan ülkelerde
+ise mobil bankacılık hizmetleri Bitcoin ile transfer ve ödeme sistemlerinin
+benimsenmesiyle daha da gelişebilir (Bulut, 2019:64).
+
+
+
+
+                                          26
+         Şekil 5: FinTech 2016/2022 Sektör Bazlı Potansiyel İşlem Değerleri
+
+
+
+        FinTech’in 2018 raporundaki 2016/2022 yılları arasında seçili finans
+sektörlerinin potansiyel işlem değerleri gösterilmektedir. Piyasadaki en geniş sektörün
+2018 yılında $3,265,209 milyon dolar ile dijital ödemeler olduğu görülmektedir
+(Bulut, 2019:66).
+
+        Bitcoin toplam arz miktarının sabit olması ve bunun protokolde değiştirilemez
+olması katı sermaye kontrolleri bulunan ülkelerde yaşayan insanlar için finansal
+işlemlerde rahatlama sağlatabilmektedir. Ayrıca ülkeler arasında Bitcoin ile işlemleri
+geri çevirebilecek veya Bitcoin takaslarını engelleyebilecek bir merkezi yönetim ya da
+teknoloji bulunmamaktadır. Bu sebepten dolayı Bitcoin ülkelerin sürekli enflasyon ile
+değer kaybeden para birimlerine alternatif arayan insanlar için bir çıkış
+sağlayabilmektedir. Sermaye piyasalarının ve sermaye kontrollerinin, merkez
+bankalarının hatalı uygulamalarının zarar verebilen etkilerinden kaçmak isteyen
+insanlar için Bitcoin iyi bir tercih olabilmektedir. Buna bir örnek Arjantin’den
+verebiliriz. Arjantinliler, 2013 yılında devletin aldığı kararla yüklenen %25’lik
+enflasyon ve katı sermaye kontrollerine tepki olarak Bitcoin kullanmaya başlamıştır.
+Aynı dönem Arjantin’de tüketici güven endeksi de düşmeye başlamıştır. Bugün
+Arjantin’de Bitcoin yasal para birimi olarak görülmese de kullanımı yasaldır. Aralık
+2017’de vergi yasalarında yaptıkları değişiklikle bitcoin herhangi bir mal veya hizmet
+olarak görülmekte ve bitcoin alımından ve satımından elde edilen gelir vergiye tabi
+tutulmaktadır (Bulut, 2019:67).
+
+
+
+
+                                          27
+                                    İKİNCİ BÖLÜM
+
+         ELLİOTT DALGA PRENSİPLERİ VE TEKNİK ANALİZ
+   2.1 Teknik Analiz
+
+          Teknik analiz geçmişteki fiyat hareketlerini dünyaca kabul görmüş metotlar ile
+   inceleyerek gelecekte oluşabilecek fiyat hareketlerini tahmin etmeye ya da öngörmeye
+   yönelik bir kuramdır. Buna göre, teknik analiz ekonomik araştırmalarla değil,
+   matematiksel temeli bulunan hesaplamalara dayanarak bir menkul kıymetin gelecekte
+   oluşabilecek fiyat hareketlerini tahmin eder.
+
+           Teknik analizde kullanılan en yaygın yöntemsel araç, menkul kıymetin fiyat
+   hareketleri ile oluşturulmuş grafiklerdir. Bu grafikler ve dünyaca kabul görmüş birçok
+   analitik ve matematiksel yöntemlerle menkul kıymetin fiyat trendine ve trendin
+   gelecekte evrilebileceği yöne ilişkin tahminler gerçekleştirilir.
+
+          Teknik analiz temelde 3 varsayıma dayanır. Bunlar aşağıdaki gibidir (Bulut,
+   2019: s.64):
+
+a) Fiyat kendisine etki edebilen her faktörü içine alır ve yansıtır; Bir menkul kıymet
+   ya da finansal aracın fiyatına etki edebilecek birçok faktör vardır. Bunlara örnek olarak
+   siyasi, ekonomik ve psikolojik etkenleri gösterebiliriz. Tüm bu faktörler bu varsayıma
+   göre önceden dikkate alınmış ve fiyatlara yansımıştır.
+b) Fiyatlar belirli zaman periyotları içinde anlamlı trendler üzerinde hareketlerini
+   gerçekleştirirler; Menkul kıymet ya da finansal araç fiyatları arz ve talebin
+   değişimiyle belirli trendler oluştururlar ve bu trendler belirli zaman periyotlarında
+   devam ederler. Arz ve talep dengesinde oluşan değişimler ile fiyatlar değişir ancak bu
+   değişimin piyasaya yansıması yatırımcıların faktör bilgilerine ulaşması ve bu bilgiyi
+   kullanması zaman alır. Bu da trendlerin periyodik olarak süresini belirler.
+c) Tarih tekerrür eder; Fiyatların oluşturduğu hareketler ve bunlarla oluşan trendlerin
+   insanların psikolojik durumlarıyla yakın bir ilişkisi vardır. Fiyatların hareketleri ile
+   grafikler oluşur ve incelenen bu grafiklerde anlamlı ve belirli formasyonlar mevcuttur.
+   Oluşan bu formasyonlar piyasanın(marketin) o periyotta bulunan psikolojik durumunu
+   gösterir. Satıcı baskısının yüksek olduğu bir piyasa var ise buna ayı piyasası, alıcı
+   baskısının yüksek olduğu piyasa tiplerine ise boğa piyasası denir. Geçmişte ayı ya da
+   boğa piyasaları için iyi sonuçlar vermiş formasyonların gelecekte de iyi sonuçlar
+   vermesi beklenir. Çünkü bu formasyonlar değişmeme eğiliminde olan insan
+   psikolojisiyle oluşmaktadır (Yaşar Erdinç, 2004: s.177-181).
+
+
+
+                                              28
+2.2 Elliott Dalga Prensiplerine Giriş
+
+
+
+    Finansal varlıkların alınıp satılmaya başlandığı günden bu yana gelecekteki fiyat
+hareketlerini açıklayabilmek amacıyla çeşitli çalışmalar yapılmıştır. Yapılan birçok
+çalışma, piyasa dışı kuvvetler olarak kabul edilen politik ve ekonomik gelişmelere ait
+haber akışının düzensizliği nedeniyle menkul kıymet piyasalarındaki fiyat
+hareketlerinin, kaotik bir yapıya sahip olduğunu iddia etmiştir. Bu bağlamda menkul
+kıymet fiyatlarının gelecekteki seyrini tahmin etmemin mümkün olmadığı görüşü
+savunulmuştur.
+
+    Ralph Nelson Elliott 1871 yılında Amerika Birleşik Devletleri’nde dünyaya
+gelmiştir. Rutin iş hayatında demiryolları sektöründe başlamıştır. Elliott, hat
+teknisyeni, telgraf operatörü, stenograf, tren memuru, istasyon memuru olarak görev
+yapmıştır İlerleyen yıllarda farklı sektör ve kuruluşlarda yönetici olarak görev almıştır.
+Bu görevleri ise muhasebe ve yapılanma üzerinedir. Farklı sektör ve farklı
+pozisyonlarda iş tecrübelerinin sağladığı gözlemleme ve analiz etme yetenekleri ile
+avantajlar yakalamıştır.
+
+
+
+    Tarih 1927 yılını gösterdiğinde Guatemala’da yakalandığı hastalığı sebebiyle
+emekliye ayrılmak zorunda kalmıştır. Hastalık ve emeklilik sebepleriyle Elliott
+ABD’ye dönme kararı almıştır ve burada istirahate çekilmiştir. 1929 Ekonomik
+Burhan’ı öncesi toplumu etkisi altına alan hisse senedi çılgınlığı çığ gibi
+büyümektedir. Elliott’ta buna şahit olmuş ve ilgisini çekmiştir. Ev istirahatinde
+bulunan Elliott zihnini meşgul etmek amacıyla sosyal trendlerinin özelliklerini
+araştırma kararı almıştır (M.Ü Öneri Dergisi, 2016:211-233).
+
+
+
+    Teknik analize büyük ilgi duyan Elliott farklı sektörlerden farklı şirketlere ait hisse
+senetlerinin fiyat-zaman grafiklerini incelemiştir. Elliott bu incelemeler ve analitik
+çalışmaları sonucunda fiyatın döngüsel bir hareket izlediğini tespit etmiştir. Elliott’un
+gerçekleştirdiği incelemelere göre fiyatın döngüsel hareketinde, döngü büyüklüğü ve
+döngü süresi ne olursa olsun, döngünün takip ettiği adımlar bir önce döngüler ile
+benzerlik göstermiştir. Ralph Nelson Elliott, burada varolan döngüsel hareketleri
+‘dalga’ kelimesi ile ifade etmiş ve hisse senetleri fiyat grafiklerinde tespit ettiği
+döngüsel        hareketleri      aşağıdaki       ifadeleri       ile     açıklamıştır
+(MajorWorkOfR.N.Elliott,1990:7-9):
+
+
+
+
+                                            29
+        “Uygarlık değişime dayanır. Bu değişim kökeni ve yapısı gereği döngüseldir. Aşırı
+değişimlerin ritmik toplamı bir döngüyü oluşturur. Bir döngü tamamlandığında başka bir
+döngü başlar. Büyüklüğü ve süresi ne olursa olsun yeni döngünün ritmi de öncekinin aynısı
+olacaktır. Döngü, hareketin doğa yasası ile ilişkili olarak ilerleyecektir.”
+
+
+
+       Ralph Nelson Elliott hisse senedi fiyat grafiklerinde oluşan ve süreklilik arz
+eden fiyat dalgalarının piyasaları etkisinde bulunduran bir doğa yasasının etkisiyle
+oluştuğu kanısına varmıştır. Ralph Nelson Elliott piyasalarda var olduğunu düşündüğü
+bu doğa yasası hakkında fikirlerini aşağıdaki cümleleriyle ifade etmiştir
+(MajorWorkOfR.N.Elliott, 1990:S.7-9):
+
+         “Hiçbir gerçek, evrenin yasaya tabi olduğu gerçeği kadar genel kabul görmez. Yasa
+olmasaydı, açıktır ki kaos olurdu ve kaosun olduğu yerde de hiçbir şey olmazdı. Yasanın en tipik
+karakteri düzen ya da sürekliliktir. Şimdiye kadar olan her şey tekrarlara dayalıdır ve yasayı
+biliyorsak bu tekrarlar önceden tahmin edilebilir.”
+
+          “Evrendeki tüm diğer şeylerin olduğu gibi piyasanın da bir yasası vardır. Yasa olmasaydı
+fiyatların etrafında hareket ettiği bir merkez, dolayısıyla bir piyasa da olmazdı. Bunun yerine
+herhangi bir yerde ipuçlarını bulamayacağımız bir neden ve bir düzene tabi olmayan günlük
+düzensiz, karmaşık fiyat dalgalanmaları olurdu. Piyasanın dikkatle incelenmesi aşama aşama
+ortaya çıkartmaktadır ki durum bu değildir. Algılanacak olan ritimdir, başka bir ifade ile düzenli,
+ölçülebilir ve armonik harekettir. Piyasanın gerisindeki bu yasa, sadece doğru bakış açısıyla
+bakıldığında ve bu yaklaşıma göre çözümlendiğinde ölçülebilir.”
+
+
+
+        Ralph Nelson Elliott hisse senetlerinin fiyat grafiklerinde gerçekleştirdiği
+analitik tespitleri, yaşamı boyunca tecrübe ettiği ve ilgi duyduğu matematik, dinamik,
+fizik, felsefe ve botanik gibi konularda elde ettiği bilgiler ile harmanlamıştır. Dalga
+prensibine göre insan davranışları, iyimser ve kötümser duygular arasında belirli bir
+ritim ile dalgalanmaktadır. Ralph Nelson Elliott insan duygularında yaşanan değişim
+ile hisse senedi fiyat grafikleri arasındaki ilişkiyi aşağıdaki cümleler ile ifade etmiştir
+(Elliott’sMasterwork,1994:192):
+
+                 “İnsan duyguları ritmiktir. Belirli bir yönde ve belirli rakamsal ilişkiler içinde,
+dalgalar halinde hareket ederler. Bu durum tüm insan etkinliklerinde böyledir: İşte, politikada,
+sanatta. Bu, geniş kitlelerin fiyatları belirlediği serbest piyasalarda, özellikle belirgindir.”
+
+        “İnsan davranışları, hisse senedi, bono, altın ve emtia fiyatları, nüfus artışı, göç, devlet
+harcamaları, üretim, benzin tüketimi, işten atılmalar, salgın hastalıklar gibi farklı olayları içerir.
+Fiyat hareketine kitlesel katılımının yaygın olduğu serbest piyasalarda bu daha da belirgindir”
+
+       Klasik finans teorisi siyasal ve ekonomik hayata dair haber akışının
+düzensizliği nedeniyle piyasadaki fiyat hareketlerinin kaotik yapıya sahip olduğunu
+
+                                                 30
+   varsaymaktadır. Çünkü Dalga Prensibine göre haber akışı, mevcut trendin geç farkına
+   varmış yatırımcıları heyecanlandırarak, piyasada etkili olmaktadır. Ancak haber akışı
+   yeni bir trend yaratmaktan çok süregelen trend içerisinde uzatma olduğu
+   savunulmaktadır.
+
+           R.N. Elliott’un 1948 yılında ölmesi sonrasında Dalga Prensipleri bir süre
+   unutulmuştur. Teknik analist Robert Prechter, Dalga Prensibi ile gerçekleştirdiği
+   analizlerin, boğa ve ayı piyasa döngülerini tahmin etmekteki başarısına paralel olarak
+   yeniden popüler hale gelmiştir (M.Ü Öneri Dergisi, 2016:211-233).
+
+   2.3 Elliott Dalga Prensipleri Temel İlkeler
+
+   Ralph Nelson Elliott’a göre dalga prensiplerinin ilkeli bir biçimde
+
+   uygulanabilmesi için marketin(piyasanın) aşağıdaki koşulları taşıması gerekmektedir:
+
+
+a) Piyasada gerçekleşen fiyatlamaların tamamen alıcılar tarafından serbest olarak
+   belirlenmesi gerekmektedir.
+b) Piyasada düzenli ve ölçülebilir parametrelerin olması gerekmektedir.
+c) Piyasada istatistiksel olarak anlamlı sayıda satıcı ve alıcının olması gerekmektedir.
+
+          Elliott Dalga Prensipleri’ne göre markette gerçekleşen her alış ya da satış
+   kararının ya da bunlara ilişkin toplu emirlerin bir sebebi vardır. Markette gerçekleşen
+   işlem kararları doğrudan olarak bir şirketin finansal yapısıyla alakalı değildir. İnsanın
+   doğası gereği, piyasayı oluşturan diğer insanların alış ya da satış yönündeki
+   hareketlerinden etkilenilerek işlem kararı verir ve bu durum belli modeller içinde
+   gelişerek tekrar eder.
+
+          Dışsal etki olarak adlandırılan sosyal olaylar, politik gelişmeler, psikolojik
+   gelişmeler gibi etkenler marketi bir süre etkisi altına alabilir. Bu dış etkenler piyasanın
+   genel hareket yönünü sadece geçici bir süreliğine durdurabilecek veya geri
+   döndürebilecektir. Market yasaları gereği, piyasanın hareket yönündeki ana dinamik
+   değişmediği sürece model tamamlanana kadar hareket devam edecektir. Elliott Dalga
+   Prensipleri’ne göre, dalganın yönünü, olaylar, bilgiler veya duyumlar değil, bunları
+   kullanarak alım veya satım kararı veren insanlar belirlemektedir (Şengöz, 2002:26-
+   28).
+
+
+
+           Elliott Dalga Prensipleri’nin en temel varsayımı verimsiz ve dengesiz bir
+   piyasanın varlığıdır. Bu varsayıma göre, piyasalarda fiyat trendlerini belirleyen
+   kitlelerin ruh halleri ve sosyolojik davranışlarıdır. İnsanların genellikle duyum
+   aldıklarına değil de duyum almak istediklerine inanmaları sonucu fiyatlar kimi zaman
+
+                                               31
+alınan bilgilerin tersi yönünde, kimi zaman ise alınan bilgilerden bağımsız olarak
+hareket etme eğilimindedir. Ralph Nelson Elliott, ‘Nature’s Law - the Secret of the
+Universe’ kitabında haberlerin piyasalar üzerindeki etkisini şu sözlerle açıklamıştır:
+
+         En iyimser yaklaşımla haberler, bir süredir ağırlığını hissettirmekte olan kuvvetlerin
+gecikmiş olarak farkına varılmasıyla, trendden haber olmayanların harekete geçmesine neden
+olur. Herhangi bir haberin hisse senedi piyasalarına etkisinin tahmin edilebileceği varsayımının
+yararsızlığı, deneyimli ve başarılı yatırımcılar tarafından uzunca bir süre önce keşfedilmiş bir
+gerçekliktir. Herhangi bir haber, ilerlemekte olan bir trendin sebebi değildir. Aslında, uzun bir
+süredir, aynı olaylar, birbirinden çok farklı trendlere farklı etkilerde bulunmaktadır.
+
+       Piyasa trendlerini, haberlerin sonucu olarak değerlendirenler, haberlerin önemini doğru
+tahmin etme yeteneklerine güvenmektense, at yarışlarında daha fazla şanslarının olacağını
+düşünmelidirler. Bu nedenle, ormanı görebilmek için, çevredeki ağaçlardan daha yüksekte olmak
+gerekir (Şengöz, 2002:26-28).
+
+
+
+2.4 Kaos Teorisi ve Fraktal Yapılar
+
+
+
+2.4.1   Kaos Teorisi
+
+   Uzun süre boyunca doğada var olan sistemlerin lineer yani doğrusal olduğunu
+kabul eden bilim insanları doğada var olan sistemleri lineer yöntemlerle anlamaya ve
+bu sistemleri yine lineer olarak açıklamaya çalışmışlardır. Burada fark edilemeyen
+önemli konu ise sistemlerin lineer olmamasıdır. Lineer yöntemlerle lineer olmayan
+doğa sistemlerinin anlaşılmaya çalışılması bilim insanlarını yeni bir çözüm arayışına
+sürüklemiştir. Bu çözüm arayışı ile birlikte yeni bir bilimsel yaklaşım gündeme
+gelmiştir. Bu yaklaşım Kaos Teorisi’dir.
+
+        Kaos, insanların diğer insanlar ile ilişkilerinden oluşan algı sınırlılıktan dolayı
+vardır. Sistemler hem başlangıçtaki parametrelere hem de sisteme sonradan etki eden
+parametrelere hassas ve kuvvetli şekilde bağımlıdır. Bu sistem bu düzen içinde işler
+ve bu şekilde devam eder. Lakin insanların bu kadar fazla parametreyi kapsayabilecek
+gözlem ve analiz metotlarına sahip olmaması ve bu metotların bilimsel tahmin
+yeteneklerinin çok üzerinde olmasından dolayı sistem hakkında tahminler ve
+öngörülerde bulunamazlar yahut öngörüler hatalı sonuçlar verir. Örnek olarak bir
+dumanın havada yaptığı şekiller normal bir insan için gayet düzensiz ve bağımsız
+rastlantılar sonucu meydana geliyor gibi görünebilir fakat teorik fizikçilerin gözüyle
+bakacak olursak dumanın bu dinamiğinin aslında ortamdaki birçok parametre ve
+değişkenden etkilendiğini düşünmemiz gerekmektedir. Bu parametreler o kadar
+
+
+
+                                               32
+fazladır ki bunların kesin kaydının tutulması imkansızdır ve tüm parametrelerin
+bilindiğine dair kesin kanıtlar kesinlikle yoktur (Baştaş, 2014:45).
+
+        Parametrelerin bu kadar değişken olması onların da aslında bir takım
+olaylardan etkilenerek meydana gelen çıktılar olmalarından kaynaklanmaktadır.
+Örneğin, sigara dumanının hareket etmesine neden olan hava akımı, odanın bir başka
+köşesindeki bir sıcaklık değişimi ve basınç farkının sonucunda meydana gelir.
+Dumanın hareketini etkileyen tek nedenin sıcaklık değişimi sonucu meydana gelen
+basınç farkı olduğu farz edildiğinde (ki sadece bu değildir), bunun sonucu oluşan hava
+akımı da oda sıcaklığında değişime neden olmaktadır. Böylece farklı girdiler yeni bir
+fonksiyon oluşturur ve böylece sonsuza kadar bir döngüye girilmiş olur.
+
+   Birçok farklı girdinin sürekli değişerek fiziksel değişimler ve farklı düzenler
+yaratması ve bu düzenlerin yine kendisini etkilemesi, günümüzdeki gözlem ve bilimsel
+tahmin yeteneklerinin çok üzerinde olmasından dolayı “kaos” olarak
+adlandırılmaktadır. Oysa tek tek bakıldığında tüm bu değişimlere sebep olan fiziksel
+yasalara ve matematiksel açıklamalara hakim oldunduğu görülmektedir. Fakat bunlar
+bir araya geldiğinde meydana getirecekleri olası durumları açıklamakta yetersiz
+kalınmaktadır. Kaos teoremi, günlük yaşamda tanımlanabilen kaotik olayların
+arkasında yatan dinamikler olduğunu ve bunların lineer olmayan denklem sistemleri
+ile belli bir yere kadar tahmin edilebileceğini savunan matematiğin teoremidir.
+
+   Teorinin temelini oluşturan matematiksel ve bilimsel bulgular 18. Yüzyıla
+dayanmaktadır. Son dönem araştırmaları ile antik çağlarda bile bu konu üzerine
+yapılmış çalışmalara rastlamak mümkündür. Yine de teorinin temel kavramları
+Hausdorff Poincare, Von Koch, Peano, Weierstrass gibi matematikçiler tarafından
+oluşturulmuştur (Baysal, 2011:75-76).
+
+2.4.2   Fraktal Yapılar
+
+
+“Fraktal” kelimesi Latince “fraktus (kırık taş)” kelimesinden türetilmiştir. Fraktal
+kelimesi ilk olarak 1975 yılında Polonya asıllı matematikçi Benoit Mandelbrot
+tarafından ortaya atıldığı varsayılır ancak bu kesin ve net bilgi değildir. Mandelbrot,
+kendi kendini tekrar eden ama sonsuza kadar küçülen şekilleri inceler. Düzensiz
+ayrıntılar ya da desenler giderek küçülen ölçeklerde yinelenir ve tümüyle soyut
+nesnelerde sonsuza kadar sürebilir. Bunun tam tersi de her parçanın her bir parçası
+büyütüldüğünde, yine cismin bütününe benzemesi olayıdır (Benoit, 2005:140).
+
+      Bilinen tarih boyunca bilim insanları pürüzlülüğü görmeden gelmek
+konusunda hem fikir olmuşlardır. Dünyanın en eski tezi olan Elements’in sahibi Yunan
+
+
+                                          33
+asıllı geometrici Öklid’in de düzgün şekiller üzerine yoğunlaştığını görmekteyiz.
+Okullarda bize öğretilen doğrular ve düzlemler hep Öklit geometrisinin elemanlarıdır.
+Kendi çevremize baktığımızda ise neredeyse hiçbir nesnenin bu şablona uymadığı
+görülmektedir. Doğal oluşumların bir çoğu pek de düzgün değildir (Benoit, 2005:140).
+
+        Matematikçi Benoit Mandelbrot Fraktal yapılar için kritik bir çalışma
+gerçekleştirmiştir. 1960’larda IBM’in Watson araştırma merkezinde İngiltere’nin
+sahillerinin uzunluğunu hesaplamak üzerine çalışmalar yapıyormuş. Sonsuz sayıda
+girinti ve çıkıntıya sahip böylesi zor bir problemde uzunluğun elimizdeki cetvelin
+uzunluğuna bağlı olduğunu fark etmiş ve ölçek küçüldükçe ölçülen uzunluğun arttığını
+görmüştü. Gerçekten de sahil boyunca ellerinde farklı büyüklükte cetveller bulunan
+iki kişiden küçük cetvele sahip olan daha bıktırıcı bir iş yapmasının karşılığı olarak
+diğer kişiye göre daha büyük bir uzunluk elde etmiştir (Baysal, 2011:78).
+
+
+       Tam da bu mantıkla yola çıkan Mandelbrot, İngiltere’nin sahil şeridinin sonsuz
+olması gerektiği şeklinde şaşırtıcı bir sonuca ulaşmıştır. Buna sahil şeridinin sonsuz
+olmasının yanı sıra, sürekli olarak aşındığı için aynı zamanda bunun sürekli olarak
+değişen bir sonsuzluk olmasını da ekleyebiliriz. Mandelbrot ayrıca en küçük ıssız
+adadan tutun da Kuzey ve Güney Amerika’nın kendisine kadar bütün sahil şeritlerinin
+sonsuz uzunluğa sahip olduğunu da ortaya çıkartmıştır (Baysal, 2011:79).
+
+        Bir sahil şeridi dalgaların ya da farklı jeolojik güçlerin kaotik hareketi ya da
+etkileriyle meydana gelmektedir. Bu hareket biçimleri her ölçekte bir öncekine kaba
+taslak benzeyen daha küçük ölçekte bir görüntüyü tekrar eden biçimler(şekiller)
+üretmektedir. Daha başka bir ifade ile, kaotik şekiller, biçimler ortaya çıkartır ve kaos
+bilimcilerinin “farklı bir çok ölçekte kendiliğinden benzerlik(self-similarity)” olarak
+nitelendirdikleri biçime sahip olan izlerini ardında bırakmaktadır.
+
+         Klasik Öklid geometrisinde süreksizliğe (Lineer olmayan) yer yoktur.
+Platon’un İdealar(fikirler) dünyasının sonucu olarak doğa, soyut, gerçekte var olmayan
+doğru, düzlem, daire, üçgen, küre gibi şekillerle ifade edilmiştir. Doğada var olan
+nesneleri bu soyut şekillerle anlamlandırmak doğayı sınıflandırıp daha kolay anlaşılır
+hale getirmiştir belki ama bu kolay anlaşılırlık durumu doğadaki karmaşıklık ve
+çeşitlilik durumlarının gözden kaçmasına yol açmıştır (Maldenbrot, 2005:153).
+
+       Mandelbrot, 1982 yılında yayınlanan “Doğanın Fraktal Geometrisi – Fractal
+Geometry of Nature” isimli manifestosunda “Bulutlar küre, dağlar koni, kıyı şeridi
+daire değildir. Ne ağaç kabuğu düzgündür ne de yıldırım düz bir hat üzerinde ilerler.”
+demiştir (Maldenbrot, 2005:147).
+
+                                           34
+        Mandelbrot’un geliştirmiş olduğu fraktal yapıya sahip matematik basit ve
+sadece bir adet denklemden başlayarak, sürekli olarak kendini tekrar ederken ve
+gittikçe karmaşık hale dönüşen fakat temel benzeşimini koruyan geometrik yapıları
+ortaya çıkarmıştır. Matematik fraktalları inceleyen fizikçi Mitchell Feigenbaum ise
+fraktallar ile kaos arasında yakın bir ilişki bulunduğunu göstermiştir. Doğadaki
+karmaşık ve kaotik yapının ortaya çıkmasını sağlayan, bir noktada “çatallaşma” olarak
+da adlandırabilecek bu mekanizma ile sistemin yeni dallara bölünmesi ve farklı
+yönlere doğru gelişimin devam etmesi olarak nitelendirilebilir.
+
+        Örnek olarak, bir ağaç büyürken bir anda belli bir noktadan yeni bir dal verir
+ve bu dal yeni bir büyümenin oluşumunu başlatır. Dal büyürken yine belli bir anda
+olay tekrarlanır ve yeni bir daldan yeni bir kol oluşur. Bu dalların ortaya çıkışı zaman
+içinde yavaş bir şekilde oluştuğundan herkesin gözlemlediği bir örnek olarak
+kavranması nispeten kolay bir olgudur. Aynı oluşum hızlandırıldığında ‘çatallaşma’
+olayı sayesinde anlaşılması ve kavranması çok daha güç olan karmaşık olayların ve
+yapıların da temeline inilmiş olur (Baysal, 2011:80).
+
+         Mandelbrot kümeleri şimdiye kadar görülmüş en karmaşık yapıda
+matematiksel nesne veya model olarak tanımlanmıştı. Buna rağmen, kendi yapısı
+içerisinde hala desenler mevcuttu. Ölçek defalarca büyütülerek daha ince ayrıntılara
+inilmiş ancak farklı ölçeklerde düzenli tekrarların var olduğu görülmüştür. Buradaki
+kritik olay ise, düzensizliğin derecesinin farklı ölçeklerde yine aynı olmasıydı.
+Mandelbrot düzensizliğin içinde açıkça belli olan desenleri tanımlamak için “fraktal”
+ifadesini kullanmıştır. Matematiksel kurallar üzerinde ufak çaplı değişiklikler yaparak
+çeşitli fraktal şekiller yapmayı başarmıştır. Böylece herhangi bir ölçekte her zaman
+aynı dereceden düzensizliği veya kıvrımlaşmayı sergileyen bir kıyı şeridini
+bilgisayarında simüle etmeyi başarmıştır (Baysal, 2011:80-81).
+
+
+
+
+                                          35
+                               Şekil 6: Mandelbrot Kümesi
+           Kaynak: https://www.fractalus.com/kerry/articles/area/mandelbrot-area.html
+
+
+
+
+                  Şekil 7: Mandelbrot Kümesi yakınlaştırılmış haller
+           Kaynak: https://www.fractalus.com/kerry/articles/area/mandelbrot-area.html
+
+
+
+       Mandelbrot Kümesi’ni çeşitli boyutlarda büyütüldüğünde şeklin sürekli
+olarak kendisini tekrar ettiği açıkça görülmektedir.
+
+        Doğada var olan geometrik örnekler neredeyse sınırsızdır. “Doğanın Fraktal
+Geometrisi” kitabında Mandelbrot bu olayı kanıtlamak istemiştir. Örnek olarak; Rutin
+seyreden bir kalp atışı spektrumunun, kalp kaslarında bulunan sinir liflerinin fraktal
+düzenlenişinden ötürü fraktal yasalar izlediği düşünülmüştür. Farklı bir örnek olarak,
+bir şizofreni özelliği olan gözün hızlı hareketleri için de var olabilir. Bu yüzden fraktal
+
+
+                                              36
+matematik, fizyoloji ve deprem çalışmalarından metalürjiye kadar uzanan disiplinleri
+içeren çeşitli bilim alanlarında bugün rutin bir biçimde kullanılmaktadır.
+
+2.4.3   Fraktal Yapıların Dalga Prensipleri ile İlişkileri
+
+       Ralph Nelson Elliott 1938 yılında oldukça önemli bir fikir üretmiştir. Elliot’a
+göre finansal piyasalarda fiyatlar belirli bir kalıp içinde hareket eder ve bir düzen
+oluşturur. Daha basit bir biçimde özetlersek her bir formasyon kendisinden daha büyük
+formasyonun bir parçası olarak ilerlemektedir.
+      Ralph Nelson Elliott “The Wave Principle” isimli kitabında şu ifadelere yer
+vermektedir:
+
+
+         Yapılan araştırmalar göstermektedir ki toplumun sosyo-ekonomik
+faaliyetlerinden doğan tüm insan davranışları, onların belirli aralıklarla ve belli
+kurallara uygun biçimde yeniden ortaya çıkmasını sağlayan kanunlar çerçevesinde
+ortaya çıkmaktadır. Belirli dalga ve kalıplar halinde ortaya çıkan bu değişimler,
+belirli zaman aralıklarında birbirleriyle ilişki arz etmektedirler.
+        Burada sözü edilen insan davranışları terimi hisse senedi, bono ve altın
+fiyatları, emtia fiyatları, nüfus artışı, göçler, hayat sigortası satışları, benzin tüketimi,
+salgınlar gibi birçok farklı olayı kapsamaktadır.
+       Piyasa davranışlarını anlamaya çalışan birçok kişi, piyasanın psikolojik bir
+fenomen olduğu gerçeğinin farkına varamamıştır. Piyasa dalgalanmalarının belirli
+bir düzen teşkil ettiğini idrak edememiştir. Yıldan yıla, aydan aya veya günden güne
+çok ani ve kontrol edilebilmesi imkansız biçimde değişen fiyatlar, aslında belli
+kurallar çerçevesinde hareket eden ritmik dalga kalıplarına bağlıdır. Aynı kural bono,
+kahve, pamuk fiyatı gibi diğer tüm insan davranışları için de geçerlidir.
+       Bilinmelidir ki, çevrimler daha küçük çevrimlerden meydana gelmektedir.
+Büyük dalgalar, daha küçük boyutlu dalgalara bölünmekte, onlar da daha küçük
+dalgalardan oluşmaktadırlar. Burada sözü geçen dalga prensipleri insan faktörünün
+olduğu her alan için geçerlidir (PretcheJr, Robert, 1994:34-35).
+
+
+
+        Ralph Nelson Elliott’a göre uzun süreli(vadeli) yükseliş hareketleri ile kısa
+süreli oluşan fiyat ralli hareketleri şekil olarak pek de farklı değil, hatta birbirilerine
+benzerlerdir. Kısa vadede oluşan tepki düşüşleri ile büyük ayı piyasaları da
+birbirilerinden farklı değildir. Burada iki farklı hareketi ayıran en önemli özellik
+boyutlardır ve daha az ya da fazla meydana gelmeye olayıdır. Buna bir örnek verilmek
+istediğinde, herhangi bir finansal piyasanın çöküşü olarak nitelendirilebilecek bir
+düşüş hareketi, her daim sıklıkla fakat daha küçük ölçeklerde meydana gelen bir fiyat
+hareketinin büyütülmüş halinden başka bir şey değildir. Ralp Nelson Elliott dalgaları
+tam da böyle açıklamaktadır (PrechterJr, Robert, 2002:38).
+
+
+                                             37
+        Benoit Mandelbrot’un 1999 yılında Scientific American Dergisi’nde
+yayınlanan “A Multifractal Walk Down Wall Street” isimli makalesi ile Ralph Nelson
+Elliott’un yaklaşık olarak 60 yıl önce gerçekleştirdiği çalışmaların sonuçları büyük
+benzerlikler içermektedir (MandelBrot, 2005:70).
+
+
+
+
+                              Şekil 8: Elliott Çizimleri
+
+
+
+
+                                         38
+Yukarıda belirtilen şekil Ralph Nelson Elliott’un piyasaların fraktal doğasına yönelik
+gerçekleştirdiği çizimlerdir. Aşağıdaki şekilde ise Mandelbrot’un 1999 yılında
+gerçekleştirdiği çizimleri yer almaktadır.
+
+
+
+
+                                         39
+Şekil 9: Mandelbrot Çizimleri
+
+
+
+
+             40
+                Şekil 10: Elliott ve Mandelbrot çizim karşılaştırmaları
+                                Kaynak: Baysal, 2011:89
+
+
+
+
+2.5 Elliott Dalga Prensipleri
+
+    Finansal piyasalar ve ekonomilerde fiyat hareketlerini anlamlı bir biçimde
+açıklayabilmek için birçok teori üretilmiştir ancak bu teorilerin bir çoğu ya unutulmuş
+ya da kendilerine yeteri kadar destekçi(kullanıcı) bulamamışlardır. Bu teorilerin daha
+az bir kesmi ise ortaya çıkışından itibaren günümüze kadar destekçiler bulmuş ve
+gelişerek gelmiştir. Bu teorilerin bir çoğu halen kullanılmaktadır.
+
+
+
+                                          41
+2.5.1   Beş Dalgalı Model ve Elliott Döngüsü
+
+        Öncelikle dalga kavramını bilinmesi gerektir. Dalga kavramı, fiyat kalıbını
+oluşturan, piyasanın ilerlemekte olduğu yöne doğru ilerleyen harekettir. Ralph Nelson
+Elliot’a göre piyasa fiyatları beş dalgalık bir yapı içerisinde farklı yönlere hareketler
+ederler, ilerlerler. Piyasa fiyatları herhangi bir zaman diliminde bu dalga yapısının
+belirli bir noktasında bulunmaktadır. Bu dalga yapısına göre tek sayılarla
+numaralandırılan üç dalga hareketin ana yönünü, çift sayılarla gösterilen iki dalga ise
+hareketin tersi yönünde gerçekleşen düzeltme hareketlerini göstermektedir (Baştaş,
+2014:53).
+
+
+
+
+                           Şekil 11: Beş Dalgalı Yapı(Kalıp)
+
+
+
+        Yukarıdaki şekilde de görüldüğü üzere tek sayılardan oluşan 1, 3 ve 5
+numaralarıyla adlandırılan dalgalar hareketin ana yönünü belirtmektedir. İşte hareketin
+ana yönünde ilerleyen bu dalgalara itki dalgaları adı verilmektedir. Hareketin tam tersi
+yönünde, çift sayılarla adlandırılan 2 ve 4 numaralı dalgalar ise fiyatın düzeltme
+gerçekleştirdiği bölgelerdir. Ana fiyat yönünün tersine hareket ederek varolan trendi
+geçici bir süre durdurulmaktadırlar. 2 ve 4 numaralarıyla adlandırılan bu dalgalara da
+düzeltme dalgaları denilmektedir.
+
+
+
+        Doğa incelendiğinde, hiçbir ilerleme kesintisiz ve sürekli olarak aynı yönde
+olmadığı izlenmektedir. Her bir ilerlemenin kısa veya uzun süreli olmak üzere mutlaka
+bir geri dönüşü olacaktır. Tam da bu düşünceden yola çıkarak Elliott dalgalarının
+çevrimi(döngüsü) “5+3” dalgalık bir yapıdan oluşmaktadır. Toplamda 5 dalgadan
+oluşan bir itki dalgası ve de bunun düzeltmesini gerçekleştiren bir düzeltme dalgası
+meydana gelmektedir (Baştaş, 2014:53-54).
+
+                                           42
+                      Şekil 12: Elliott Döngüsü(Çevrimi) – (5+3)
+
+
+
+       Ralph Nelson Elliot gerçekleştirdiği tüm çalışmalarda piyasa fiyat
+hareketlerinde beş dalgalık bir yapı ve (5+3) dalga kalıbında bir çevrim olduğunu
+ortaya koymuştur ancak bu yapıların neden bu biçimde ilerlediğine dair bir net
+açıklama yapmamıştır. Bu konuya “Elliott Dalga Prensipleri” kitabıyla yeniden
+gündeme ve getiren ve açıklamalarda bulunan isimler Frost ve Prechter olmuştur.
+
+
+
+        Frost ve Prechter’a göre, (5+3) dalgalık form dalgalanma ve ilerleme
+koşullarını sağlayan minimum ve en verimli koşuldur. Piyasada dalgalanma olabilmesi
+için gerekli olan minimum dalga sayısının 3 olduğunu, tek bir dalganın dalgalanma
+yaratmayacağını söylemişlerdir. İlerleme sağlanabilmesi için, hareketin arada bir
+sonlanması ve geri çekilmesi gerekir. Ancak her iki yönde de oluşan 3 dalga ilerlemeye
+neden olmaz. Bu nedenle ana trendin yönü doğrultusunda 5 dalga olmalıdır. Böylece
+zıt yönde oluşan düzeltme dalgalarından daha fazla yer kaplayacak ve ilerleme
+gerçekleşecektir. Daha farklı formlar da bu ilerleme koşullarını sağlayabileceğini fakat
+içlerinde en verimlisi (5+3) dalgalık çevrim 56 olduğunu söyleyen Frost ve Prechter,
+doğanın her zaman en verimli yolu takip ettiğini bu nedenle (5+3) dalgalık yapının
+önemini belirtmişlerdir (Baştaş, 2014:55).
+
+
+
+
+                                          43
+                          Şekil 13: Elliott Döngüsü(Çevrimi)
+                                     Kaynak: Baştaş, 2014:56
+
+
+
+
+       Elliott dalgaları iç içe geçmiş, birbirilerini kapsayan kalıplardır. Her bir dalga,
+kendinden daha büyük bir dalganın elemanıdır ve o dalgayı oluşturur. Yukarıdaki şekil
+de bunun bir örneğidir. (5+3) dalgalık bir hareket, kendinden daha büyük bir (5+3)
+dalgalık döngü oluşturur. Şekilden de anlaşılacağı üzere trend yönünde 21, düzeltme
+yönünde ise 13 dalga, toplam 34 dalgalık bir yapı oluşturarak, (21+13) dalgalık bir
+döngü gerçekleştirir. Yine aynı şekilde bu dalgalar da birleşerek aşağıda gösterilen,
+toplam 144 dalgadan oluşan, (89+55) dalgalık tam piyasa döngüsü oluşur.
+
+
+
+
+                                            44
+                              Şekil 14: Dalga Döngüleri
+
+
+
+
+2.5.2   Dalgaların Dereceleri
+
+        Ralp Nelson Elliot’a göre meydana gelen her bir fiyat dalga kalıbı, kendi içinde
+ve kendinden büyük kümeler şeklinde sonsuza kadar devam etmektedir. Buna bir
+örnek olarak gün içinde saniyelik ve dakikalık dalga kalıpları olduğu gibi, bunları
+kapsayan saatlik dalga kalıpları, bunları kapsayan günlük dalga kalıpları, bunları
+kapsayan haftalık dalga kalıpları vardır. Özetle, her bir periyotsal dalga kalıbı
+kendinden bir büyük zaman periyodundaki dalga kalıbının içinde farklı bir dalgadır.
+Elliott Dalga Prensipleri’nde bu kalıplar aşağıdaki şekilde de görüldüğü gibi değişik
+dalga derecelerine ayrılmıştır (Baysal, 2011:90).
+
+
+
+
+                                          45
+                                Şekil 15: Dalga Dereceleri
+
+
+
+        Elliot dalga derecelerine göre, birkaç yüzyıl süren dalgalar “Grand Supercycle”
+olarak, birkaç saat süren dalgalar ise “Subminuette” olarak adlandırılmıştır.
+Günümüzde teknolojideki ilerleme ve bilgisayarların gelişimi ile birlikte daha küçük
+fiyat hareketlerinin incelenmesi de mümkün olabilmektedir. Micro ve Submicro adı
+verilen bu dalgalarla dakikalık fiyat hareketleri de gözlenebilmektedir.
+
+
+
+        Yüzyıllık bir dalga kendisinden daha küçük 25 - 35 yıllık dalgalardan meydana
+gelebilir. 25 - 35 yıllık dalgalar ise yine kendilerinden daha küçük olan 5 - 15 yıllık
+dalgalardan; onlar da 3 - 5 yıllık dalgalardan meydana gelebilir. Dolayısıyla her büyük
+dereceli dalganın içerisinde, kendisinden küçük dereceli dalgalar bulunmaktadır ve bu
+dalgalar da sürekli ileri yönlü hareket ederek kendi içlerinde ve birbirileriyle uyum
+içerisinde daha büyük dereceli dalgaların hareketlerini oluşturmaktadırlar.
+
+2.5.3   İtki(İmpulse) Dalgaları
+
+
+
+2.5.3.1 İtki İtici Dalga
+
+        İtki yani itici dalga olarak Türkçe karşılık bulan bu kavram, yeni bir dalganın
+hareketine başlamasını sağlayan, ona itki veren anlamını taşımaktadır. İtki dalgaları
+fiyatın yeni bir tepe ya da yeni bir dip gerçekleştirmesini sağlayan ve toplamda beş
+dalgadan oluşan yapılardır. İtki dalgalarının ana özellikleri fiyat trendinin ana yönünü
+belirliyor olmasıdır. İtki dalgaları 1,2,3,4,5 rakamları ile etiketlenir ve beş dalganın bir
+araya gelmesiyle döngüsünü tamamlamış olurlar.
+
+                                            46
+       Burada 1,3 ve 5. dalgalar itki dalgalarıdır ve ana hareketin yönünü belirlerler.
+2 ve 4 numaralı dalgalar ise ana hareketin tam tersi yönünde oluşan düzeltme
+dalgalarıdır (Şengöz, 2002:41-42).
+
+
+
+
+                                Şekil 16: İtki Dalgaları
+
+
+
+       İtki dalgalarının ana yapıları 5-3-5-3-5 şeklindedir ve bu biçimde ilerlerler. 5
+dalgalık bir trend oluştuktan sonra 3 dalgalık bir düzeltme gerçekleşir. İdeal bir itki
+dalgası aşağıda bulunan şekle benzer biçimde görülmelidir:
+
+
+
+
+                           Şekil 17: İtki Dalgaları 5-3-5-3-5
+
+
+
+       Bir itki dalgası kendisinden sonra daha da büyük bir itki oluşturamıyorsa
+düzeltme dalgası olarak kalır ve bir itki dalgasından sonra meydana gelen bir düzeltme
+
+
+                                          47
+    dalgası olarak ilerleyişini sürdürür. Büyük dereceye sahip bir itki dalgası, küçük
+    dereceli üç itki dalgasının birleşiminden oluşur.
+
+             Elliott Dalga Prensipleri’nde uygulamanın doğru bir biçimde yapılabilmesi
+    için her bir kalıbın (pattern) doğru bir biçimde öğrenilmesi büyük bir önem arz
+    etmektedir. Fiyat analizlerinde dalga kalıpları doğru bir biçimde belirlenebilirse
+    fiyatların sadece olası hedefleri değil, aynı zamanda hangi yolu izleyerek hangi şekilde
+    oluşabileceği hakkında tahminleri ön görmek mümkün olur.
+
+           Elliott Dalga Prensipleri teorisine göre kurallar ve rehber ilkeler yol gösterici
+    görevi üstlenmektedir (Baysal, 2011:97-99):
+
+
+
+
+           Kurallar:
+
+
+
+   Kalıpta fiyat olarak 2. Dalga asla 1. İtki dalgasından daha uzun olamaz. Ayrıca, 2.
+    dalga 1. dalganın başlangıç noktasını asla aşamaz. Bu kuralın aynısı 4. Dalga içinde
+    geçerlidir. Kalıpta 4. dalga asla 3. dalgadan daha uzun olamaz ve 3. dalganın başlangıç
+    noktasını aşamaz.
+
+
+
+   Kalıpta 3. dalga asla tüm dalgalar arasında en kısa dalga olamaz.
+
+
+
+
+   Kalıpta 3. Dalga hiçbir zaman 1. dalganın bitiş fiyatının altında bir fiyatta bulunamaz.
+
+
+
+   Kalıpta 4. dalga hiçbir zaman 1. dalganın oluşturduğu fiyat alanına giremez.
+
+
+
+
+    Rehber İlkeler:
+
+
+
+   İtki dalgaları kendilerinden daha önce oluşan itki dalgalarının eğer fiyat yükseliş
+    hareketinde ise tepe, eğer fiyat düşüş hareketinde ise dip noktalarını geçer. Eğer
+
+
+
+                                              48
+    geçemiyorsa bu dalganın daha küçük bir dereceye sahip olma olasılığı gözden
+    geçirilmelidir.
+
+
+
+   2. dalga bir önceki dalganın alt dereceli 4. dalgasına kadar ilerler ve 5. dalgasının
+    tamamını geri almalıdır.
+
+
+
+
+   2. ve 4. dalgaların düzeltme yani fiyatı geri alış seviyeleri genellikle %38.2, %50.0 ya
+    da %61.8’dir. Uzunluk olarak daha kısa süren bir düzeltme dalgasının ardından daha
+    güçlü bir itici dalga oluşması beklenir.
+
+
+
+   2. ve 4. dalgalar arasından 2. dalganın genellikle daha büyük, daha keskin bir düzeltme
+    gerçekleştirmesi, 4. dalganın ise daha yatay bir düzeltme gerçekleştirmesi
+    beklenmektedir.
+
+
+
+
+   2. ve 4. dalgalar birbirlerinin almaşığıdır. Almaşıklık ilkesini ilerleyen konularda
+    anlatacağız ancak burada kısaca özetleyelim. 2. dalga zigzag modelinde bir düzeltme
+    gerçekleştiriyorsa, 4. dalganın daha yatay bir düzeltme gerçekleştirmesi beklenir. Aynı
+    durum tersi ihtimal için de geçerlidir. 2. Dalga %38 bir düzeltme yani geri alım
+    gerçekleştirdiyse, 4. Dalganın %62’lik bir geri alım yapması beklenir. Bu olay
+    dalganın yapısı ve süresi için de geçerli bir haldir. Eğer 2. Dalga karmaşık bir düzeltme
+    modeli oluşturuyorsa 4. Dalganın basit bir yapıda olması beklenmektedir. Süre
+    bakımından da 2. Dalga kısa sürede düzeltme yapmış ise, 4. Dalga düzeltmesinin daha
+    uzun bir süre alması beklenir.
+
+
+
+   Kalıpta 3. Dalganın fiyat uzunluğu 1. Dalganın %161.8’i ya da %261.8’i kadar devam
+    eder. Eğer ki bu koşul kalıpta sağlanıyorsa, 1. ve 5. dalgaların eşit uzunlukta olması
+    beklenir. Eğer 1. ve 3. dalgalar yaklaşık olarak birbirilerine eşit uzunlukta oluştuysa,
+    5. dalganın uzatma dalgası olması beklenir. 5. dalga uzatmasının da 1. dalganın
+    başlangıç notasından ve 3. dalganın bitiş noktasına kadar olan uzunluğunun %162’si
+    kadar olması beklenir.
+
+
+
+
+                                               49
+   Kalıpta bir itki döngüsünde trend yönünde ilerleyen dalgalar, yani 1, 3, veya 5
+    numaralı dalgalardan birinin çoğunlukla uzatma yapması beklenir. Bir dalga uzatma
+    yaptığında diğer iki dalganın birbirlerine eşit ya da yakın eşitlikte olması beklenir.
+
+
+
+   5. dalganın bitiş seviyesi, 1. dalganın %61.8, %100 veya %161.8 olabilir.
+
+
+
+
+   3. dalgayı oluşturan bir alt dereceli döngüde 5. dalga başarısız 5. dalga olamaz.
+
+
+
+   Kalıpta 5. dalga 4. dalganın minimum %61.8’i kadar hareketinin yönünde yükselir ya
+    da düşer.
+
+
+
+    2.5.3.2 Uzatma
+
+            Elliott Dalga Prensipleri’ne göre uzatma kavramı, ana trend yönünde hareket
+    eden itici dalgalardan birinin kendi içinde belirgin bir şekilde bölünerek hareket etmesi
+    ve diğerlerinden ana trend yönünde daha uzun olmasıdır. Bir dalga kalıbı içinde 1, 3
+    ya da 5 numaralı dalgalardan biri genellikle uzatma hareketini yapmaktadırlar (Frost
+    ve Pretcher, 2000:31)
+
+            İtki dalga kalıplarında daha önce de bahsedildiği üzere 3. dalga hiçbir zaman
+    en kısa dalga olamaz ve 4. dalga hiçbir zaman 1. dalganın fiyat bölgesine giremez. Bu
+    sebeplerden dolayı itki dalgaları içinde uzatma yapma ihtimali en yüksek olan dalga
+    3. dalgadır. Tabii bu konudan yola çıkarak, uzatmayı yapan dalganın 1. dalga olduğu
+    görüldüğünde trendin uzun süreceği kanısına da varılmaktadır. Eğer uzatmayı yapan
+    dalga 5. dalga ise döngü tamamlandıktan sonra oluşacak düzeltme dalgasının uzun
+    süreceğine işaret edebilmtekdir. 3. dalganın uzatma yapması durumunda ise, 5. dalga
+    uzamamakta ve 1. dalgaya benzeme eğiliminde hareket etmektedir.
+
+
+
+
+                                               50
+Şekil 18: Birinci Dalganın Uzatması
+
+
+
+
+ Şekil 19: Üçüncü Dalga Uzatması
+
+
+
+
+ Şekil 20: Beşinci Dalga Uzatması
+
+
+
+                51
+        Uzatma yapan dalganın alt dereceli dalgaları, itkinin diğer 4 büyük dalgası ile
+neredeyse aynı büyüklük ve süreye sahiptir. Bundan dolayı birbirine yakın 9 dalgalık
+bir hareketmiş gibi görülürler. Birbirinden ayrılması pek de kolay olmayan bu 9
+dalgalık hareketi incelendiğinde, ilk bakışta hangi dalganın uzatma yaptığını
+söyleyebilmek cidden çok zordur. Burada önemli olan Ralph Nelson Elliott’a göre 5
+dalgalık hareketin 9 dalgalık hareketten teknik olarak pek de farklı olmadığı
+gerçeğidir. Aşağıdaki şekillerde de bu durum açıkça görülmektedir. İlk 3 şekilde ayı
+ve boğa piyasalarında uzatma yapan birinci, üçüncü ve beşinci dalgalara dair örnekler
+yer alırken son şekilde birbirine çok benzer dalga yapılarında oluşan bir itkinin hangi
+dalgasının uzatma yaptığının belli olmadığı toplam 9 dalgalık bir hareket
+görülmektedir. Ancak tekrar etmek gerekirse, teknik analizde iki durum arasında pek
+de önemli bir fark bulunmamaktadır (Baysal, 2011:101).
+
+
+
+2.5.3.3 Başarısız Beşinci Dalga
+
+        Elliott Dalga Prensipleri’ ne göre başarısız olan 5. dalga, 5. dalganın 3. dalganın
+yaptığı tepe veya dibi geçememesi durumunda oluşmaktadır. Bu duruma genel olarak
+3. dalganın sert ve keskin bir biçimde ilerlediği dönemlerde rast gelinmektedir. Eğer
+5. dalga başarısız olduysa genellikle uzun süren derin düzeltme hareketleri
+görülmektedir. Eğer başarısızlıkla sonuçlanan bir 5. dalga şüphesi var ise markete çok
+dikkatli yaklaşılmalı ve derin bir düzeltme için belirli şartların oluşabileceği
+düşünülmelidir (Baştaş, 2014:66).
+
+
+
+
+                    Şekil 21: Başarısız 5. Dalga (Boğa Piyasası İçin)
+
+
+
+
+                                            52
+                    Şekil 22: Başarısız 5. Dalga (Ayı Piyasası İçin)
+
+
+
+
+2.5.3.4 Diyagonal Üçgenler
+
+         Diyagonal üçgenler fiyatı yeni tepelere ve yeni diplere taşımalarına rağmen
+birer itki dalgası özelliği taşımazlar. Diyagonal üçgenler trend dalgaları özelliği
+taşırlar. Çünkü diyagonal üçgenlerin birtakım düzeltici özellikleri vardır. Diyagonal
+üçgenler genel olarak son yani 5. dalgalarda oluşurlar ve aynı itki dalgalarında olduğu
+gibi diyagonal üçgenlerde de düzeltme dalgaları kendinden önce oluşan dalgayı tam
+boyu kadar geri alamaz ve 3. dalga 1. ve 5. dalgaya oranla en kısa dalga olamaz. Bir
+diyagonal üçgen ile bir itki dalgası arasındaki en temel fark, diyagonal üçgenlerde 4.
+dalganın birçok durumda 1. dalganın bölgesine sarkma gerçekleştirmesidir.
+
+        İki farklı diyagonal üçgen türü vardır: Sonlanan diyagonal üçgenler ve
+İlerleyen diyagonal üçgenler (Frost ve Prechter, 2000:35-36).
+
+       Sonlanan Diyagonal (3-3-3-3-3)
+
+        Ralph Nelson Elliot’a göre sonlanan diyagonal üçgenler, önceki dalganın çok
+büyük bir fiyat mesafesini çok hızlı bir biçimde katetmesi durumunda 5. dalga
+içerisinde görülürler. Eğer 3. dalga sert ve uzun bir dalga ise, 5. dalgada sonlanan
+diyagonal üçgenlerin ortaya çıkma ihtimali daha da yükselir. Sonlanan diyagonaller
+her zaman mevcut dalgada son dalganın oluşturduğu formasyonun son aşamasında
+oluşarak piyasa trendinin yakın zamanda yön değiştireceğinin sinyalini verirler.
+
+      Sonlanan diyagonaller genel olarak alçalan ya da yükselen bir takoz(kama)
+formasyonu görünümü oluştururlar. Buna ek olarak, beş dalgayı oluşturan küçük
+
+
+                                          53
+    dereceli dalgaların her biri üç farklı dalgadan oluşur. Tam da bu sebeple, 3-3-3-3-3
+    sayımıyla ifade edilirler (Frost ve Prechter, 2000:36).
+
+
+
+
+                               Şekil 23: Sonlanan Diyagonaller
+
+
+
+
+           Eğer fiyat yükselen trend hareketini devam ettirirken sonlanan diyagonaller
+    oluştuysa, piyasa fiyatı üzerinde ayıların giderek hakim olduğuna dair bir sinyal
+    üretilmiş olur. Bu durumda fiyat trendini aşağı doğru kırdığında fiyatlar formasyon
+    başlangıcına kadar geri dönebilir. Tam tersi olarak, eğer fiyat düşen trend hareketini
+    devam ettirirken bir sonlanan diyagonal oluştuysa, piyasaya boğaların hakim olmaya
+    başladığı sinyalini alırız. Bu durumda düşen trend yukarı doğru kırıldığında kuvvetli
+    bir yön değişimi beklenir. Fiyat formasyon başlangıcına kadar yükselebilir. Kuralları
+    ve rehber ilkeleri inceleyim (Frost ve Prechter, 2000:36):
+
+
+
+
+           Kurallar:
+
+
+
+   1 ve 3 numaralı dalgalar üçgen dışında bulunan birer düzeltme dalgalarıdır.
+
+
+
+   2, 4 ve 5 numaralı dalgalar birer düzeltme dalgalarıdır.
+
+
+
+
+                                              54
+   2 numaralı dalga 1 numaralı dalganın, 4 numaralı dalga da 3 numaralı dalganın altına
+    sarkmaz.
+
+
+
+   3 numaralı dalganın oluşturduğu fiyat alanı daima 2 numaralı dalganın oluşturduğu
+    fiyat alanından fazladır. Fiyat alanı bakımından bir kıyaslama yapıldığında 3 numaralı
+    dalga, 1 ve 5 numaralı dalgalara kıyasla en kısa dalga asla olamaz. Aynı zamanda 5
+    numaralı dalga 1 ve 3 numaralı dalgalara oranla en uzun dalga asla olamaz.
+
+
+
+
+   4 numaralı dalga 1 numaralı dalgaya sarkma yapabilir.
+
+
+
+
+    Rehber İlkeler
+
+
+
+   2 ve 4 numaralı dalgalar birbirilerinin almaşıdır. Eğer 2. dalga zigzag bir modelde
+    düzeltme gerçekleştiriyorsa, 4. dalganın daha yatay biçimde bir düzeltme
+    gerçekleştirmesi beklenir. Aynı durum tam tersi ihtimal için de geçerlidir. Genel
+    olarak, 2. dalga daha keskin, 4. dalga ise daha yatay bir düzeltme yapar.
+
+
+
+   2 numaralı dalga 1 numaralı dalgayı en az %23.6 oranında geri alır. Bu durum 4
+    numaralı dalga içinde geçerlidir.
+
+
+
+
+   Fiyat paralel bir kanal içinde ilerlemez. Genel olarak daralan bir kanal içinde ilerleme
+    kaydedilir. Çok nadir de olsa, genişleyen kanal yapısı görülebilir.
+
+
+
+   Formasyonun bitişi kanal bantlarının birbiriyle kesişmemesi öncesi olmalıdır.
+
+
+
+
+                                              55
+   5 numaralı dalga 4 numaralı dalganın en az %61.8 oranı kadardır ve genel olarak kanal
+    içinde ilerler. Bazı durumlarda ise kanal bandından %15 oranına yakın bir oranda
+    sarkma meydana getirebilir.
+
+
+
+   2 numaralı dalganın bir üçgen oluşturması çok az görülen bir durumdur. Aynı şekilde,
+    4 ve 5 numaraları dalgalar da nadir bir biçimde üçgen olabilirler.
+
+
+
+    İlerleyen Diyagonaller (5-3-5-3-5)
+
+
+
+            İlerleyen diyagonallerin en kritik özelliği ve sonlanan diyagonallerden ayıran
+    özelliği, trend ile aynı yönde bulunan dalgaların, yani 1 numaralı, 3 numaralı ve 5
+    numaralı dalgaların 5 ayrı dalgadan oluşmasıdır. Bu sebepten dolayı (5-3-5-3-5)
+    sayımıyla ifade edilirler. Sonlanan diyagonallerden farklı olarak ilerleyen diyagonaller
+    daha fazla 1 numaralı dalgada ya da A-B-C formasyon görünümünün A dalgasında
+    oluşurlar. Bu diyagonallerde formasyon hareketini ilerlettikçe genel olarak trend daha
+    zayıflar. Ayrıca, 5. dalganın fiyat değişim oranı 3. dalgaya oranla çok daha yavaş
+    gerçekleşir. Kurallar ve rehber ilkeleri incelendiğinde (Baysal, 2011:113-115):
+
+
+
+
+                                 Şekil 24: İlerleyen Diyagonal
+
+
+                                              56
+           Kurallar
+
+
+
+   3 numaralı dalga 1 ve 5 numaralı dalgalara oranla en kısa dalga olamaz.
+
+
+
+   4 numaralı dalga 2 numaralı dalganın fiyat bölgesine girer.
+
+
+
+
+   5 numaralı dalganın uzunluğu 4 numaralı dalganın en az 1,38 katı olmalıdır.
+
+
+
+   3 numaralı dalganın fiyat uzunluğu 2 numaralı dalganın fiyat uzunluğundan daha fazla
+    olmalıdır.
+
+
+
+   2 ve 4 numaralı dalgalar kendilerinden önce gelen dalgaların tamamını asla örtemezler.
+
+
+
+   5 numaralı dalga olan itki dalgası ilerleyen veya sonlanan diyagonal bir yapı
+    oluşturabilir. Buna benzer olarak, 2 ve 5 numaralı dalgalarda herhangi bir düzeltme
+    dalgası görevi üstlenebilir. Benzer durum 1 ve 3 numaralı dalgalar için geçerli değildir.
+    1 ve 3 numaralı dalgalar bariz itki dalgaları olmalıdır (Baştaş, 2014: s.69-70).
+
+
+
+
+    Rehber İlkeler
+
+
+
+
+   2 ve 4 numaralı dalgalar birbirilerinin almaşığıdır. Eğer 2. dalga zigzag modelinde bir
+    düzeltme gerçekleştiriyorsa 4 numaralı dalganın daha yatay bir biçimde düzeltme
+    gerçekleştirmesi beklenir. Benzer durum tam tersi için de geçerli olmaktadır.
+    Genellikle 2 numaralı dalga çok keskin, 4 numaralı dalga ise daha yatay bir düzeltmeye
+    yatkınlık gösterir.
+
+                                               57
+   5 numaralı dalga çok fazla sık olmasa da bazı durumlarda kanalın üst bandından dışarı
+    doğru sarkabilir. Bu sarkma oranı en fazla %15 olmalıdır.
+
+
+
+
+   5 numaralı dalganın boyu kendinden önce oluşan 4 numaralı dalganın en az 1.618 katı
+    kadar olmalıdır.
+
+
+
+   2 numaralı dalga 1 numaralı dalganın çoğunlukla en az %23.6 oranını geri alır. Aynı
+    durum 4 numaralı dalga için de geçerlidir.
+
+
+
+
+   Çizilen kanal bantları paralel olamaz. İki bandında aynı eğimde ilerlemesi
+    gerekmektedir.
+
+
+
+   Formasyonun kanal bantları birbirileriyle kesişim gerçekleştirmeden bitmelidir
+    (Baştaş, 2014: s.69-70).
+
+
+
+
+    2.5.4   Düzeltme Dalgaları
+
+            Düzeltme dalgaları fiyat trend hareketinin tam tersi yönünde gelişen dalga
+    hareketleridir. Piyasada boğa ve ayı tüccarlarının gerçekleştirdiği mücadele sebebiyle,
+    piyasa trend yönünde devam etme isteğinde bulunurken trendin aksi yönünde bir baskı
+    oluşması ve hareketin trendin aksi yönünde gerçekleşmesi nedeniyle çeşitlilik arz
+    ederler. Bu sebepten dolayı bir düzeltme dalgasını tespit etmek bir itki dalgasını tespit
+    etmekten çok daha zordur.
+
+            Düzeltme dalgalarının en kritik özelliklerinden biri hiçbir zaman bir itki dalgası
+    gibi 5 dalgalı yapıda olmamalarıdır. 5 dalgalı bir yapı düzeltmenin kendisi değil ancak
+    bir parçası olabilir. Düzeltme dalgaları her zaman 3 dalgalı yapılardan oluşurlar.
+
+
+
+
+                                               58
+           Düzeltme dalgaları 4 ana grupta sınıflandırılmaktadır (Prechter, 2007:19):
+
+   Yassı Düzeltmeler (3-3-5)
+   Zigzag Düzeltmeler (5-3-5)
+   Üçgen Düzeltmeler (3-3-3-3-3)
+   Kombinasyonlu Düzeltmeler
+
+
+
+
+    2.5.4.1 Yassı Düzeltmeler
+
+            Yassı düzeltmeler farklı bir değişle yatay düzeltmeler olarak da adlandırılırlar.
+    Bir yassı düzeltme ile bir sonraki alt başlıkta yer verilecek Zigzag düzeltmeleri
+    birbirilerinden ayıran en önemli özellik, yassı düzeltmelerin (3-3-5) yapısında
+    bulunmasıdır. Fiyat üzerinde trendi değiştirebilecek itki dalgasının güçsüz olması
+    nedeniyle A düzeltme dalgası toplam 3 dalgadan oluşmaktadır. B dalgası ise A
+    dalgasının tamamını geri almaktadır.
+
+           Ana trendin tersi yönünde gerçekleşen bir dip ve tepe arasında ilerleyen yassı
+    düzeltme dalgaları iki düzeltme ve bir itki dalgasından oluşmaktadır. Bir yassı
+    düzeltme dalgasının oluşması genellikle güçlü bir itki dalgası ardından olur. Bir itki
+    dalgasında genel olarak 3. dalga uzatma gerçekleştirdiği için bu düzeltmenin 4.
+    dalgada görülebilme olasılığı 2. dalgaya oranla daha fazladır.
+
+           Yassı düzeltmelerde B dalgasının bitiş noktası A dalgasının bitiş noktasına eşit
+    ya da yakındır. C dalgasının bitiş noktası ise A dalgasının bitiş noktasına eşit ya da
+    biraz miktar yukarıdadır (Frost ve Prechter, 2000:45).
+
+
+
+
+                                               59
+                           Şekil 25: Yassı Düzeltmeler
+
+
+
+
+       Yassı düzeltmeler hızlı yassı veya genişleyen yassı düzeltmeler olarak da
+ilerleme kaydedebilirler.
+
+
+
+       Genişleyen yassı düzeltmelerin normal yassı düzeltmelerden farkı, B
+dalgasının A dalgasının başlangıç noktası üzerine çıkmasıdır. Diğer bir fark ise C
+dalgasının A dalgasının bitiş noktasının biraz altında bitmiş olmasıdır. Aşağıdaki
+şekillerde daha basit olarak görülebilmektedir (Baştaş, 2014:77).
+
+
+
+
+                                       60
+                         Şekil 26: Genişleyen Yassı Düzeltme
+
+
+
+
+       Hareketli yassı düzeltme dalgalarının diğer yassı düzeltmelerden farkı, B
+dalgasının bitiş noktasının A dalgasının başlangıç noktasının üzerinde olmasına karşın,
+C dalgasının bitiş noktasının A dalgasının bittiği noktaya gelemeden dalganın sona
+ermesidir. Nadir oluşan bir düzeltme dalgasıdır. Kurallar ve rehber ilkeleri
+incelendiğinde (Baştaş, 2014:77-78):
+
+
+
+
+                                          61
+                              Şekil 27: Hareketli Yassı Düzeltme
+
+
+
+
+           Kurallar:
+
+
+
+   A dalgası zigzag ya da yassı düzeltme dalgası olmalıdır.
+
+
+   C dalgası ve A dalgası ortak bir fiyat alanına sahip olmalıdır.
+
+
+   B dalgası yapı olarak herhangi bir düzeltme dalgası olmalıdır.
+
+
+   B dalgası A dalgasının en az 0.382, en fazla 2.618 katı olabilir.
+
+
+
+   C dalgası yapı bakımından her hangi bir itki dalgası görevini üstlenebilir.
+
+
+
+
+                                               62
+    Rehber İlkeler:
+
+
+
+   B dalgası yüksek ihtimal ile zigzag ya da üçgen düzeltme dalgasıdır. Nadir olarak da
+    yassı düzeltme dalgası olabilir.
+
+
+   C dalgası genel olarak itki veya ilerleyen diyagonal olabilir. Nadir olarak da sonlanan
+    diyagonal olur.
+
+
+
+   A dalgası genel olarak zigzag düzeltme dalgası olur.
+
+
+   C dalgasının bitiş noktasının A dalgasının bittiği noktaya kadar ilerlemesi beklenir.
+
+
+
+   B dalgasının A dalgasının en az olarak 0.618, en fazla olarak 1.618 katı olması
+    beklenir.
+
+
+   A, B ve C dalgalarının birbirlerine eşit olması gerekir ya da C dalgasının A
+    dalgasının 1.618 katı olması gereklidir.
+
+
+
+   C dalgası en az A dalgasının 0.382 katı kadar olmalıdır.
+
+
+
+    2.5.4.2 Zigzag Düzeltmeler (5-3-5)
+
+            Zigzag düzeltme dalgaları analizi ve gözlemlenebilmesi en kolay olan temel
+    düzeltme dalgalarıdır. Düzeltme dalga tiplerinin bir çoğunda zigzag düzeltme dalgaları
+    gözlemlenebilir. Zigzag düzeltme dalgaları için en kritik özelliklerin başında genel
+    olarak sert ya da hareketli piyasa koşullarında ortaya çıkmalarıdır.
+
+            Zigzag düzeltmeler A B C dalgaları ile oluşan ana trendin tam tersi yönünde
+    ilerleyen üç dalgalı yapılardır. Zigzag düzeltmeler iki itki dalgasından (A, C) ve bir
+    düzeltme dalgasından (B) meydana gelirler. Basit bir zigzag düzeltme için dikkat
+    edilmesi gereken en önemli husus, B dalgasının bitiş seviyesinin A dalgasının
+    başlangıç seviyesinden daha aşağıda bulunmasıdır. Özetle, B dalgasının bitiş seviyesi
+    A dalgasının başlangıç seviyesini geçemez. Kurallar ve rehber ilkeleri incelendiğinde
+    (Frost ve Prechter, 2000:41-42):
+
+
+                                              63
+                   Şekil 28: Boğa ve Ayı Marketlerinde Zigzag Düzeltmeler
+
+
+
+
+    Kurallar:
+
+   Zigzag düzeltmeler için C dalgası B dalgasından daha kısa olamaz.
+   C dalgası asla ilerleyen bir diyagonal olamaz. İtki ya da sonlanan diyagonal olmalıdır.
+   A dalgası için, ayı marketi hakimse ilerleyen diyagonal olma istisnası dışında itki
+    olmak zorundadır.
+   B dalgası herhangi bir düzeltme dalgası olabilir.
+   B dalgası A dalgasının %61.8 oranından fazlasını asla geri alamaz.
+   C dalgası bitiş noktası, A dalgasının bittiği noktayı geçmek zorundadır.
+
+
+
+
+                                              64
+    Rehber İlkeler:
+
+   C dalgası ve A dalgası genel olarak birbirilerine eşit ilerlerler. Burada eşit olarak
+    nitelendirilen ana durum tam olarak eşitlik değildir. Görmezden gelinebilecek bir
+    oranda fark olsa dahi birlikte ilerlemektir. Eşit olmadıkları durumda ise, C dalgası A
+    dalgasının 0,618 ya da 1,618 katı olur.
+   C dalgası A dalgası ile karşılaştırıldığında daha kuvvetli ise, dalga yapısının basit
+    zigzag değil, ikili ya da üçlü zigzag olarak devam etmesi beklenir.
+   C dalgası A dalgasının 1,618 katından daha uzun ise bu yapının büyük bir ihtimalle
+    itki dalgası olması beklenir (Baştaş, 2014:73).
+
+
+
+    İkili Zigzag Düzeltme
+
+           İlk zigzag düzeltme hareketinin başarılı olamaması durumunda ikinci bir
+    zigzag düzeltme ortaya çıkabilir. Bu zigzag düzeltme dalgaları bir itiki dalgasının
+    gerçekleştirdiği uzatmaya benzer karakterde ilerleseler de onlara nazaran daha az
+    görülürler. İkili zigzaglar W – X – Y harfleri ile tanımlanır ve gösterilirler. Kurallar ve
+    rehber ilkeleri incelendiğinde (Baysal, 2011:121-122):
+
+
+
+
+                                 Şekil 29: İkili Zigzag Düzeltme
+
+
+
+
+                                                65
+    Kurallar:
+
+   W dalgası asla üçgen olamaz.
+   X dalgası genişleyen üçgen haricinde bir düzeltme dalgası olmak zorundadır.
+   X dalgası W ve Y dalgalarının her ikisinden de büyük ya da küçük olmak zorundadır.
+    Birinden büyük diğerinden küçük ya da tam tersi olamaz.
+   Ana trend dalgasının yönü W ile aynı olmalıdır.
+   Y dalgası genişleyen üçgen dışında bir düzeltme dalgası olmalıdır.
+   X dalgası W dalgasının en az %23.6’sı, en fazla %261.8’i büyüklüğünde olmalıdır.
+
+
+
+    Rehber İlkeler:
+
+   X dalgası her hangi bir zigzag düzeltmedir
+
+
+
+    Üçlü Zigzag Düzeltme
+
+            Çok nadir görülen bir düzeltme tipi olmakla birlikte birbiri ardına ilerleyen üç
+    zigzag dalgasından meydana gelirler. Üçlü zigzag düzeltmeler W, X, Y, X, Z harfleri
+    ile gösterilirler.
+
+
+
+
+                                Şekil 30: Üçlü Zigzag Düzeltme
+
+
+
+    Kurallar:
+
+           Üçlü zigzag düzeltmelerin kuralları ikili zigzag düzeltmeler ile aynıdır. Farkı
+    ise üçüncü bir zigzag düzeltme dalgasının oluşmasıdır.
+
+
+
+
+                                              66
+2.5.4.3 Üçgen Düzeltmeler
+
+      Markette alıcı ve satıcılardan bir taraf diğeri üzerinde büyük bir üstünlük
+kuramadığı zaman fiyat genel olarak üçgen tipi formasyonlar şeklinde ilerler. Üçgen
+formasyonlarında hacim ve volatilite göreceli olarak düşük seyreder.
+
+       Üçgen düzeltme dalgaları için diğer düzeltme dalgalarından en önemli farklılık
+5 dalgalı yapıda ilerlemesidir. Her dalga bir alt dereceli olarak üç farklı düzeltme
+dalgasından oluşur. Bu sebepten dolayı, dalga yapısı (3-3-3-3-3) biçimini alır. Üçgen
+düzeltme dalgaları a – b – c – d – e harfleri ile tanımlanır ve gösterilirler.
+
+       Üçgen düzeltmeler genel olarak itki dalgalarının bir alt dereceli 4. dalgalarında
+karşımıza çıkarlar. 2. dalganın bir üçgen düzeltme olarak ilerliyor olması çok az
+görülen bir durumdur.
+
+       Üçgen dalgalar genişleyen ve daralan üçgenler olarak iki farklı başlıkta
+incelenir. Daralan üçgenleri ise kendi içinde simetrik üçgen, yükselen üçgen ve alçalan
+üçgen olarak üçe ayrılırlar.
+
+        Genişleyen üçgenler Ralph Nelson Elliot tanımına göre “ters simetrik üçgen”
+olarak tanımlanmıştır ve çok daha az görülürler. Örnek şekillerle incelendiğinde (Frost
+ve Prechter, 2000:48-49):
+
+
+
+
+                             Şekil 31: Simetrik Üçgenler
+
+
+
+
+                                          67
+ Şekil 32: Alçalan Üçgenler
+
+
+
+
+Şekil 33: Yükselen Üçgenler
+
+
+
+
+Şekil 34: Genişleyen Üçgenler
+
+
+
+
+             68
+                                  Şekil 35: Hareketli Üçgenler
+
+
+
+
+    Kurallar:
+
+   Üçgen görünümünü oluşturan dalgalardan ilk dört tanesi üçgenin dışında herhangi bir
+    düzeltme formasyonu oluşturabilir. Son dalga ise üçgen de dahil olmak üzere herhangi
+    bir düzeltme dalgası biçimindedir.
+   A ve C dalgalarının bitişi noktaları işe B ve D dalgalarının bitiş noktaları arasında
+    çizilen çizgiler arasında hareket gerçekleşir. E dalgası ise bu çizgilerden maksimum
+    %15 oranında bir sapma gerçekleştirebilir.
+   Düzeltme hareketinin tamamı alt ve üst bant çizgileri birbirilerini kesmeden önce
+    sonlanmalıdır.
+   Çizgiler ya birbirilerine yakınsar ya da birbirilerinden uzaklaşır. Çizgiler asla
+    birbirilerine paralel olmaz.
+   B dalgası A dalgasının en az %38.2, en fazla ise %161.8’i kadardır.
+   Genişleyen bir üçgenin E dalgası daralan üçgen olarak ilerleyebilir.
+   Genişleyen üçgen tiplerinde en kısa dalgalar A veya B dalgalarından biri olmalıdır.
+
+
+
+    Rehber İlkeler:
+
+   A ve B dalgaları genel olarak birbirilerinin almaşıklarıdır. Özeyle, A dalgası keskin
+    bir düzeltme gerçekleştiriyorsa, B dalgasının daha yatay bir düzeltme gerçekleştirmesi
+    beklenir.
+   Genişleyen üçgen tiplerine piyasalarda çok az rastlanmaktadır.
+   Aynı trend ile ilerleyen dalgaların oranı genellikle %61.8’dir.
+   B dalgası genel olarak zigzag düzeltmeler gerçekleştirir.
+   Genişleyen bir üçgen tipiyle çok az karşı karşıya kalırız. Eğer bir genişleyen üçgen
+    dalgası ile karşı karşıya kaldıysak oran genel olarak şöyledir: E dalgası C dalgasının,
+
+                                              69
+C dalgası A dalgasının, D dalgası da B dalgasının 1.618 katı kadardır (Baştaş, 2014:81-
+82).
+
+
+
+2.5.4.4 Kombinasyonlu Düzeltmeler
+
+         Ralph Nelson Elliott düzeltme olarak ilerleyen dalgaların yatay uzamalarını
+ikili ve üçlü üçlüler olarak isimlendirmiştir. Oldukça nadir karşılaşılan bu düzeltme
+tipleri iki ya da üç basit düzeltme formasyonun birleşmesiyle oluşurlar. Genellikle
+oluşan formasyonun ilk iki bölümü zigzag ya da yassı düzeltme, son bölümü ise üçgen
+düzeltme olarak görülür. Üçlü oluşturan ana dalgalar ise W – X – Y harfleri ile
+isimlendirilirler. (Baştaş, 2014: s.84)
+
+Formasyona ait olan düzeltme dalgası X herhangi bir düzeltme dalgası olabilir ancak
+genel olarak zigzag düzeltme dalgası olarak görev edinir (Baştaş, 2014: s.84).
+
+
+
+
+                         Şekil 36: Kombinasyonlu Düzeltmeler
+
+
+
+
+2.5.5   Almaşıklık İlkesi
+
+       Almaşıklık ilkesi varsayımına göre iki düzeltme dalgası birbirilerinden farklı
+yapılarda oluşmaktadırlar. Eğer düzeltme dalgalarından bir tanesi keskin bir düzeltme
+hareketi gerçekleştiriyorsa diğer düzeltme dalgasının daha basit bir düzeltme
+gerçekleştireceği varsayılmaktadır. Tersi olarak, bir dalga daha basit bir düzeltme
+
+
+
+                                          70
+    gerçekleştiriyorsa diğeri daha keskin ya da karmaşık bir düzeltme gerçekleştirir.
+    Almaşıklık varsayımı tam olarak buna dayanmaktadır.
+
+           Almaşıklık ilkesi bir kural değil bir varsayımdır. Bir önceki dalga analiz
+    edilerek bir sonraki dalganın nasıl oluşması gerektiği konusunda tahminde bulunulur.
+    Doğru sonuç için bir garanti beklemek kesinlikle hata olacaktır. Glenn Neely
+    “Mastering the Elliot Wave” isimli eserinde almaşıklık ilkesinin beş farklı biçimde
+    gözlemlenebileceğini dile getirmiştir (Neely,1990:5):
+
+   Fiyat (Grafikte dikey olarak kat ettiği mesafe)
+   Zaman (Grafikte yatay olarak kat ettiği mesafe)
+   Şiddet (Yüzde olarak, kendinden önceki dalgayı geri alışı)
+   Karmaşıklık (Bir kalıbın alt bölünme sayısı)
+   Dalga Yapısı ( Bir dalganın yassı, zigzag veya üçgen olması)
+
+
+
+                                   ÜÇÜNCÜ BÖLÜM
+
+         ELLIOTT DALGA PRENSİPLERİ İLE FARKLI DÖNEM
+                BİTCOİN TRENDLERİNİN ANALİZİ
+
+
+            Bu bölümde Elliott Dalga Prensipleri ve buna ilişkin kanunları kullanarak
+    Bitcoin’in Amerikan Dolar’ı ($) bazında analitik incelemelerini gerçekleştirilecektir.
+    Çalışmamın birinci bölümünde Bitcoin hakkında detaylı bilgilere, ikinci bölümünde
+    ise Elliott Dalga Prensipleri hakkında analitik bilgilere yer verilmiştir.
+
+
+           Bitcoin için Amerikan Dolar’ı ($) bazında fiyat oluşumları hemen hemen 2010
+    yılından bu yana yakından takip edilmektedir. 01 Temmuz 2010 tarihinden itibaren
+    tradingview.com üzerinden Bitcoin’in USD($) bazlı fiyat datalarını güvenilir bir
+    biçimde elde edilebilmektedir. Bu sebepten doları tradingview.com üzerinden teknik
+    analiz      ve       benzeri      analitik      çalışmaları        gerçekleştireceğiz.
+
+           Bitcoin/USD paritesinde farklı periyotlarda Elliott Dalga Prensipleri ’ne ilişkin
+    oluşan formasyonları inceleyeceğiz. Grafikler logaritmiktir. İncelenecek zaman
+    periyotları aşağıdaki gibi olacaktır.
+
+
+   Aylık periyotlarda oluşturulmuş mum grafikleri
+   Haftalık periyotlarda oluşturulmuş mum grafikleri
+
+
+
+
+                                              71
+    Yukarıda belirtilen periyotlarda oluşan mum grafikleri incelenecek ve bu zaman
+periyotlarında anlamlı sonuçlar üreten Elliot Dalga Prensipleri’ne ilişkin
+formasyonlar, formasyonların sonuçlanma biçimleri ve gelecek dönem tahminleri
+paylaşılacaktır.
+
+
+
+             3.1 Aylık Periyotta BTC/USD Paritesi Elliot Dalga Prensipleri
+                 Analizi
+
+
+
+        BTC/USD paritesinde 01 Temmuz 2010 tarihinden başlayarak 2022 yılı Aralık
+ayına kadar devam eden dönem için Elliott Dalga Prensipleri incelemesi
+gerçekleştirildiğinde, Elliott Dalga Prensipleri yasalarına uygun olarak tek bir anlamlı
+5’li dalga modeli ortaya çıkmaktadır. Bu 5’li dalga modeli bir ana yükseliş trendini
+oluşturmaktadır. Mum grafiklerinden oluşan aylık periyot çalışma aşağıda
+özetlenmektedir:
+
+
+
+
+           Şekil 37: Aylık Periyotta BTC/USD Paritesi Elliott Dalga Analizi
+
+
+
+       Anlamlı olarak oluşan 5’li Elliott Dalga Prensipleri modeline göre, Aylık
+mumlarla oluşturulmuş fiyat grafiğinde 5’li dalga modelinin tamamlandığı ve A-B-C
+düzeltmesine geçiş yapıldığına dair işaretler alınmaktadır.
+
+
+1. Dalga
+       Elliott Dalga Prensipleri’ne göre, 1. dalga 01 Kasım Salı 2011 tarihinde 1.99$
+seviyesinden başlamaktadır. Bu aslına ana yükseliş trendinin anlamlı ilk başlangıcı
+olarak yorumlanabilmektedir. Fiyat 1.99$ seviyesinden 1242.00$ seviyesine kadar
+sürecek bir itki dalgası oluşturmakta ve bu dalga 1242.00$ seviyesinde sonlamaktadır.
+
+                                          72
+BTC/USD paritesi 1 numaralı yükseliş dalgasında %62186.86 oranında bir yükseliş
+gerçekleştirmektedir. Birinci yükseliş dalgası toplam 24 ay sürmektedir.
+
+
+
+
+                     Şekil 38: Aylık Periyot 1 Numaralı Dalga
+
+
+
+
+2. Dalga
+       Bir ara düzeltme olarak yorumlanan 2 numaralı Elliott Dalgası başlamakta ve
+fiyat 1242.00$ seviyesinden 162.00$ seviyesine kadar sürecek bir geri çekilme
+gerçekleştirmektedir. Bu ana trend olan yükseliş yönünün tersi yönünde bir dalga ve
+BTC/USD paritesi %86.96 oranında bir düşüş gerçekleştmektedir. Yaşanan düşüş
+büyük bir oranda olmasına rağmen 2 numaralı dalganın sonlandığı fiyatın, 1 numaralı
+dalganın başladığı fiyata denk gelen 1.99$ üzerinde olması Elliott Prensipleri’ne
+uygun olduğu sonucunu ortaya çıkarmaktadır. İkinci düzeltme dalgası toplam 21 ay
+sürmektedir.
+
+
+
+
+                       Şekil 39: Aylık Periyot 2 Numaralı Dalga
+
+
+
+                                         73
+3. Dalga
+       2 numaralı dalganın 162.00$ seviyesinde sonlanması ile birlikte yeni bir itki
+dalgası başlamaktadır. 3 numaralı itki dalgası 162.00$ seviyesinden başlamaktadır ve
+19804.25$ seviyesine kadar devam etmektedir. 3 numaralı bu dalga Elliott Dalga
+Prensipleri yasalarına uygun ve ana trend olan yükseliş trendi ile aynı yönde hareket
+etmektedir. 3 numaralı dalga 2 numaralı dalganın başlangıç, 1 numaralı dalganın da
+bitiş seviyesinden daha yüksek bir seviyeyi test ettiği için yapıyı kesinlikle
+bozmamaktadır. 3 numaralı dalga oldukça sert bir yükseliş dalgası ve hızlı
+gerçekleşmekte. 3 numaralı itici dalgada %12124.84 oranında bir yükseliş
+gerçekleşmekte ve bu dalga toplam 28 ay sürmektedir.
+
+
+
+
+                        Şekil 40: Aylık Periyot 3 Numaralı Dalga
+
+
+
+
+4. Dalga
+       3 numaralı itici dalganın yükselişi 19804.25$’a kadar devam etmişti ve oldukça
+sert bir yükseliş dalgası olduğu gözlemlenmiştir. Elliott Dalga Prensipleri
+kanunlarından hatırlanacağı üzere eğer 3 numaralı dalga yükselişi sert ve keskin ise 4
+numaralı düzeltme hareketi de keskin ve büyük boyutta olabilmektedir. Burada aslında
+tam da bu olmaktadır. 3 numaralı dalganın sonlanması sonrası 4 numaralı düzeltme
+dalgası boyunca BTC/USD paritesinin aylık mumlarda üst üste sert düşüşler
+gerçekleştiği görülmektedir. 4 numaralı dalgada düşüş 3 numaralı dalganın sonlanışı
+olan 19804.25$’dan başlamaktadır ve 3124.51$’a kadar devam ediyor. Bu hareket ile
+4 numaralı dalga da %84.22 oranında bir düşüş gerçekleşmektedir. Bu düşüş dalgası
+toplam 12 ay sürmtektedir.
+
+
+
+
+                                          74
+                        Şekil 41: Aylık Periyot 4 Numaralı Dalga
+
+
+       5. Dalga
+       4 numaralı düzeltici dalga ana trend olan yükseliş hareketinin tersi yönünde
+hareket ederken 3124.51$’a kadar devam eden bir düşüş hareketini beraberinde
+getirmişti. 4. dalganın sonlandığı 3124.51 seviyesinde 5 itici dalga başlangıç
+gerçekleştirmektedir. 5 numaralı dalga 3124.51$ seviyesinden başlayarak 68997.25$
+seviyesine kadar devam eden güçlü bir yükseliş hareketi sergilemektedir. Ana trendle
+aynı yönde hareket eden 5 numaralı dalga %2108.27 oranında bir yükseliş hareketini
+meydana getiriyor ve bu yükseliş hareketi 35 ay sürmektedir. 5’li dalga modeline göre
+3 numaralı dalganın sonlanışı ve 4 numaralı dalganın başlangıcına denk gelen
+19804.25 seviyesinden daha üst bir seviyeye ulaşan 5 numaralı dalga Elliot Dalga
+Prensipleri’ne uygun bir biçimde ilerlemektedir ve yapıyı bozmamaktadır. 5 numaralı
+dalga 68997.25$ seviyesinde sonlanmıştır.
+
+
+
+
+                        Şekil 42: Aylık Periyot 5 Numaralı Dalga
+
+
+       A-B-C Düzeltmesi
+
+                                          75
+       BTC/USD paritesinde aylık mumlarla oluşturulmuş grafik Elliot Dalga
+Prensipleri’ne göre incelendiğinde 5’li dalga yapısının tamamlandığı ve A-B-C
+düzeltme yapısı içinde olduğu görülmektedir.
+       5 numaralı dalganın yükselişini sonlandırdığı 68997.75$ seviyesinden
+başlayan düşüş hareketi düzeltme formasyonunun A dalgasını oluşturmaktadır. A
+düzeltme dalgası şimdilik 15473.78$’a kadar devam etmektedir. Bu çalışmanın
+yapıldığı dönemde henüz 15473.78$ altında bir dip görülmemiştir ancak fiyat bu
+bölgeye yakın seyrediyor. Çalışmanın gerçekleştiği döneme göre eğer 15473.78$
+seviyesi dip görevi üstlenirse A dalgası tamamlanabilir ve trendin tersi yönünde
+hareket edecek B dalgası bu bölgeden başlayacak olabilir. Eğer 15473.78$
+seviyesinden başlayacak olası bir yükseliş hareketi B dalgasının başlangıcı olacak ise,
+B dalgasının olası sonlanacağı bölgeler aşağıdaki gibi olabilir:
+
+
+
+
+               Şekil 43: Aylık Periyot B Dalgasının Sonlanabileceği Seviyeler
+
+
+B dalgası 15473.78$’dan başladı ise düşüşün başladığı 68997.75$’dan 15473.78$’a
+Elliot Prensipleri gereği düzeltme oranları uygulanır. Bu durumda A dalgasında
+gerçekleşen toplam düşüşün %38.2’si telafi edilirse 35919.94$, %50’si telafi edilirse
+42235.77$, %61.8’i telafi edilirse 48551.59$ sevilerine kadar gerçekleşebilecek
+yükselişler görülebilir. Bu seviyeler B dalgasının 15473.78$’dan başlaması
+durumunda, B dalgasının sonlanabileceği olası hedef bölgeleridir. Bu hedef
+bölgelerden biri yakınında B dalgası sonlandır ve trend ile yanı yönde devam edecek
+C dalgası başlangıcını görebiliriz. C dalgası A dalgasının oluşturduğu dip bölgeden
+daha dip seviyelere kadar düşüş gerçekleştirebilir.
+
+
+
+
+                                            76
+             3.1.1   BTC/USD Paritesi Aylık Grafik Elliot Dalga Prensipleri
+                     İnceleme Sonucu:
+
+       Aylık mumlarla oluşturulmuş grafik üzerinden Elliot Dalga Prensipleri ’ne
+göre yapılan analitik incelemede İtki dalgası olarak nitelendirilen 5’li dalga yapısı
+tamamlanmış görünmektedir. 01 Kasım Salı 2011 tarihinde başlayan 5’li dalga modeli
+01 Kasım Pazartesi 2021 tarihinde sonlanmaktadır ve A-B-C düzeltme hareketi
+başlamaktadır. Bu BTC/USD paritesi için görülen en büyük boyutlu Elliot Dalga
+Prensipleri 5’li dalga modelidir. Bu modele göre A-B-C düzeltmesi içinde olduğu
+görülmekte ve çalışmanın yapıldığı zaman dönemi içinde halen A dalgasında
+olunduğu söylenebilmektedir.
+
+
+
+
+                       Şekil 44: Aylık Periyot A Dalgası Görünümü
+
+
+        Eğer 2022 yılı Kasım ayı içinde test edilen 15473.78$ seviyesi bir dip görevi
+üstlenirse, A dalgası burada sonlanmış olabilir. Bu durumda A-B-C modeli içinde B
+düzeltme dalgası hareketine başlayabilir ve bu bir yükseliş hareketi olacaktır. B dalgası
+15473.78$ seviyesinden başlar ise olası hedefler olarak %38.2 geri alım hedefi olan
+35919.94$ ya da %50.0 geri alım hedefi olan 42235.7$ seviyelerinden birine doğru bir
+yükseliş görülebilir. Bu iki geri alım seviyesinden birine yakın olan bir bölgeye kadar
+yükseliş hareketi sonrasında, A-B-C düzeltme modeli için yeni bir düşüş dalgası olarak
+C dalgası başlangıç yapacaktır.
+
+
+
+
+                                           77
+                     Şekil 45: Aylık Periyot B Dalgası Olası Hedefler
+
+
+        C dalgası düzeltmenin son dalgası olacaktır. C dalgasının başlangıcı yukarıdaki
+grafikte de görülebileceği üzere %38.2 geri alım seviyesine denk gelen 35919.94$ ile
+%50.0 geri alım seviyesine denk gelen 42235.77$ seviyeleri aralığında ve bu
+seviyelerden herhangi birine eşit ya da çok yakın olabilmektedir.
+       Eğer 2022 yılı Kasım ayı içinde test edilen 15473.78$ seviyesi dip görevini
+üstlenmezse, A dalgasında uzatma halen devam etmekte ve yeni bir dip seviyesi
+görevini üstlenebilecek fiyat aranacaktır.
+
+
+
+
+                         Şekil 46: A ve 4 Numaralı Dalga Dipleri
+
+
+       A dalgasının dip bölgesinin 3124.51$ seviyesinden daha aşağıda olmasını
+beklenmemektedir. Ayrıca eğer A-B-C modeli bir yassı ya da hareketli yassı düzeltme
+modeli sergilerse B dalgasının bitiş noktası 5 numaralı dalganın sonlanış seviyesine
+
+                                           78
+denk gelen 68997.75$ seviyesinden daha güçlü bir tepe seviyesi gerçekleştirebilir. Bu
+ihtimaller göz önünde bulunmakla birlikte varsayımlar takip edilecektir. 15473.78$
+seviyesinin bir dip olduğu ihtimalini güçlendirebilecek en önemli işaret, 5 numaralı
+dalga yükselişinin %78.6 geri alım seviyesi olan 17221.39$ seviyesi üzerinde haftalık
+kapanışların sıklaşması ve görülmesidir.
+
+
+
+
+             3.2 Haftalık Periyotta BTC/USD Paritesi Elliott Dalga Prensipleri
+                Analizi
+
+        Haftalık mumlarla oluşturulmuş BTC/USD paritesi 01 Temmuz 2010
+tarihinden itibaren Elliot Dalga Prensipleri’ne göre incelendiğinde, tıpkı aylık
+mumlarla oluşturulmuş olan grafiğe benzer olarak 5’li bir dalga modeli görülmektedir.
+Ancak, haftalık mumlar ile inceleme de 5’li dalga modelinde değişimler olmaktadır.
+Haftalık grafiklerde oluşan 5’li model ve düzeltme dalgaları aylık grafikte oluşan
+görünüm ile aynı dönemde başlasa ve benzerlikler gösterse de tam olarak aynı
+sonuçları ve aynı dalga boylarını içermemektedir.
+
+
+
+
+           Şekil 47: Haftalık Periyotta BTC/USD Elliot Dalga Prensipleri Analizi
+
+
+        14 Kasım 2011 tarihinde 1.99$ seviyesinden BTC/USD paritesinde bir yükseliş
+hareketinin başladığı görülmektedir. Bu yükseliş hareketi başlangıcı ile birlikte
+68997.75$ seviyesine kadar sürecek bir trend de başlamış olacaktır. 08 Kasım 2021
+tarihinde 68997.75$ seviyesinde 5’li dalga modeli sonlamış olacak ve A-B-C
+düzeltmesi başlayacaktır. Ayrıca aylık mumlarla oluşturulmuş grafikte 1 numaralı itki
+dalgası, haftalık mumlarla oluşturulmuş grafik ile aynı olmasına karşın, 1 numaralı
+dalga içindeki 5’li dalga modeli görülmemiştir. Haftalık mumlarla oluşturulmuş grafik
+üzerinde Elliot Dalga Prensipleri ile inceleme gerçekleştirildiğinde 1 numaralı itki
+dalgası içinde farklı bir 5 modelli dalga olduğu da görülmüştür. Bu dalgalar detaylı
+incelendiğinde:
+
+                                            79
+       1. Dalga
+
+
+
+
+                      Şekil 48: Haftalık Periyotta 1 Numaralı Dalga
+
+
+
+
+        1 numaralı itki dalgası 14 Kasım 2011 tarihinde 1.99$ seviyesinden başlayan
+bir yükseliş hareketi oluşmaktadır ve bu itici yükseliş dalgası 11 Aralık 2017 tarihine
+kadar sürmektedir. 11 Aralık 2017 tarihinde 19804.25$ seviyesinde 1. dalganın
+sonlandığı görülmektedir. 1. dalga 317 hafta, 2219 işlem günü sürmekte ve toplam
+olarak %993091.95 oranında bir yükseliş gerçekleşmektedir. Bu oldukça ciddi bir
+yükseliş hareketidir. 1 numaralı dalga aynı zamanda 5’li dalga modeli için uzatma
+dalgası görevi görüyor. Model içinde uzatma 1 numaralı dalgada gerçekleşiyor.
+BTC/USD paritesinde aylık mumlarla Elliot Dalga Prensipleri incelemesi
+gerçekleştirdiğimizde 1. dalga içinde farklı bir 5’li model görememiştik ancak haftalık
+mumlarla oluşturulmuş grafik üzerinde inceleme gerçekleştirildiğinde 1. dalga içinde,
+1. dalganın kapsadığı bir 5’li dalga modeli olduğu görülmektedir. Bu incelenidğinde:
+
+
+       1. Dalganın Kapsadığı 5’li Dalga Modeli
+       Haftalık mumlarla oluşturulmuş BTC/USD grafiğinde 1 numaralı büyük itici
+dalga kendi içinde farklı bir 5’li dalga modeli barındırmaktadır.
+
+
+
+
+                                           80
+                Şekil 49: 1 Numaralı Dalganın Kapsadığı 5’li Dalga Modeli
+
+
+       Bu model 14 Kasım 2011 tarihinde 1.99$ seviyesinden başlayan bir 1 numaralı
+dalgaya sahiptir. 1 numaralı dalga 1242.00$ seviyesine kadar devam ediyor ve 106
+hafta sürüyor. 1 numaralı itici dalga %39410.81 oranında bir yükseliş hareketi
+gerçekleştirmektedir.
+
+
+
+
+                    Şekil 50: 1. Dalganın Kapsadığı 1 Numaralı Dalga
+
+
+        1 numaralı dalganın sonlandığı 1242.00$ seviyesi 2 numaralı düzeltici hareket
+dalgasının başlangıcı olmaktadır. 1242.00$ seviyesinden başlayan bir düşüş hareketi
+görüyoruz ve bu hareket 162.00$ seviyesine kadar sürmektedir. 2 numaralı dalga 90
+hafta sürüyor ve fiyatta %86.96 oranında bir kayba sebep oluyor. 2 numaralı dalganın
+sonlandığı 162.00$ seviyesinden 3 numaralı dalganın başlandığını görülmektedir.
+
+
+                                           81
+                     Şekil 51: Dalganın Kapsadığı 2 Numaralı Dalga
+
+
+       3 numaralı dalga 162.00$ seviyesinden başlamaktadır ve 2975.75$ seviyesine
+kadar devam etmektedir. Bir itki dalgası görevini üstlenen 3 numaralı dalga 17
+Ağustos 2015 tarihinde başlamaktadır ve 12 Haziran 2017 tarihinde sonlanmaktadır.
+BTC/USD paritesi fiyatı 3 numaralı dalgada %1736.88 oranında kazanç
+sağlamaktadır. 3 numaralı dalganın sonlandığı 2975.75$ seviyesinde 4 numaralı dalga
+başlangıç göstermektedir.
+
+
+
+
+                     Şekil 52: Dalganın Kapsadığı 3 Numaralı Dalga
+
+
+
+                                          82
+       4 numaralı dalga 5’li modelin en kısa dalgasıdır. 2975.75$ seviyesinden
+başlamaktadır ve 1799.30$ seviyesine kadar bir düşüş, düzeltme hareketine sahip
+olmaktadır. 12 Haziran 2017 tarihinde başlangıç gerçekleştiren 4 numaralı dalga 10
+Temmuz 2017 tarihinde sonlanmaktadır. 4 numaralı dalga toplam 4 hafta sürüyor ve
+fiyat %39.53 oranında bir kayıp yaşamaktadır.
+
+
+
+
+                    Şekil 53: 1. Dalganın Kapsadığı 4 Numaralı Dalga
+
+
+
+
+       5 numaralı dalga 1799.40$ seviyesinden başlayan yükseliş hareketi ile
+oluşmaktadır. 5 numaralı itki dalgasında yükseliş 1799.30$’dan 19804.25$’a kadar
+sürmektedir. 10 Temmuz 2017 tarihinde başlangıç gerçekleştiren 5 numaralı dalga 11
+Aralık 2017 tarihinde sonlanmaktadır. 5 numaralı dalga boyunca %1000.66 oranında
+bir yükseliş hareketi görülmektedir ve 5. dalganın sonlanması ile birlikte 5’li modelde
+tamamlanmaktadır.
+
+
+
+
+                    Şekil 54: 1. Dalganın Kapsadığı 5 Numaralı Dalga
+
+
+                                          83
+2. Dalga
+
+
+
+
+                      Şekil 55: Haftalık Periyot 2 Numaralı Dalga
+
+
+        2 numaralı dalga, 1 numaralı dalganın sonlandığı 19804.25$ seviyesinden
+başlamaktadır ve bir düzeltme dalgası olarak karşımıza çıkmaktadır. 2 numaralı
+dalgada 19804.25$ seviyesinden 3124.51$ seviyesine kadar sürecek bir düşüş hareketi
+görülmektedir. 2 numaralı dalga 11 Aralık 2017 tarihinden 10 Aralık 2018 tarihine
+kadar sürüyor ve toplam 52 hafta sürmektedir. 2 numaralı dalga boyunca BTC/USD
+paritesinde %84.22 oranında bir kayıp gerçekleşmektedir. 2 numaralı dalga 3124.51$
+seviyesinde tamamlanmaktadır ve 1 numaralı itki dalgasının düzeltmesi gerçekleşmiş
+oluyor. 2 numaralı daha haftalık mumlarla oluşturulmuş grafik üzerinde kendi içinde
+anlamlı bir Elliot Dalga Prensipleri yasasına uygun 5’li model oluşturmamaktadır.
+
+
+
+
+                                          84
+3. Dalga
+
+
+
+
+                       Şekil 56: Haftalık Periyot 3 Numaralı Dalga
+
+
+
+
+3 numaralı dalga 2 numaralı dalganın bitişi olan 3124.51$ seviyesinden yükselişini
+başlatan bir itici dalga olarak karşımıza çıkmakta. 3 numaralı dalga 3124.51$
+seviyesinden başlayarak 64898.56$ seviyesine kadar devam etmektedir. 3 numaralı
+dalganın başlangıç tarihi 10 Aralık 2018, bitiş tarihi ise 26 Ekim 2020. 3 numaralı
+dalga bir itki dalgasıdır ve bu dalga 122 hafta sürmektedir. 3 numaralı dalga boyunca
+BTC/USD paritesinde fiyat %1977.08 oranında bir yükseliş gerçekleşmektedir.
+
+
+
+       4. Dalga
+
+
+
+
+                       Şekil 57: Haftalık Periyot 4 Numaralı Dalga
+
+
+
+                                           85
+       4 numaralı dalga 3 numaralı dalganın sonlandığı 64898.56$ seviyesinden
+başlamaktadır ve bir düzeltme dalgası olarak karşımıza çıkmaktadır. 3 numaralı itki
+dalgasında güçlü bir biçimde yükseliş kaydeden BTC/USD paritesi 4 numaralı dalgada
+kayıp yaşamaktadır. 4 numaralı dalga 12 Nisan 2021 tarihinde başlayıp 21 Haziran
+2021 tarihinde sonlanıyor. 4 numaralı dalga 10 hafta sürüyor. 4 numaralı dalgada
+BTC/USD paritesinin fiyatı 64898.56$’dan 28754.40$’a düşüş gerçekleştirmektedir.
+4 numaralı dalga boyunca fiyat %55.69 oranında bir kayıp yaşamaktadır. 4 numaralı
+dalga bir düzeltme dalgasıdır ve 3 numaralı güçlü itki dalgası sonrası bir normalleşme
+gerçekleştirmektedir.
+
+5. Dalga
+
+
+
+
+                       Şekil 58: Haftalık Periyot 5 Numaralı Dalga
+
+
+        3 numaralı dalganın sonlandığı 28754.40$ seviyesinden 5 numaralı dalga
+başlamaktadır ve 5 numaralı itki dalgasında BTC/USD paritesi fiyatı 68997.75$’a
+kadar bir yükseliş gerçekleştirmektedir. 5 numaralı itki dalgası 21 Haziran 2021
+tarihinde başlamaktadır ve 08 Kasım 2021 tarihinde sonlanmaktadır. 5 numaralı itki
+dalgası toplamda 20 hafta sürmekte ve dalga boyunca fiyat %139.96 oranında bir
+yükseliş gerçekleştirmektedir. 5 numaralı dalganın sonlandığı 68997.75$ seviyesinde
+Elliott Dalga Prensipleri’ne göre 5’li dalga modeli sonlanmakta ve A-B-C
+düzeltmelerinin incelenmesi şu şekildedir:
+
+
+
+
+                                           86
+A-B-C Düzeltmesi
+
+
+
+
+                   Şekil 59: Haftalık Periyot A-B-C Düzeltme Dalgası
+
+
+       BTC/USD paritesinde Elliott Dalga Prensipleri ’ne göre haftalık mumlarla
+oluşturulmuş grafiği incelendiğinde, 5’li dalga modeli sonrasında bir A-B-C
+düzeltmesi oluştuğunu görülmektedir.
+
+       5 numaralı dalganın sonlandığı 68997.75$ seviyesinde A-B-C düzeltme dalga
+modeli başlangıç yapmaktadır. Yani A düzeltme dalgası 68997.75$ seviyesinde
+başlamakta ve ana trend olan yükseliş yönünün tersinde, 32992.55$ seviyesine kadar
+bir düşüş gerçekleşmektedir.
+
+        A düzeltme dalgası A-B-C dalga modelinin yönü düşüş olduğu için bir itici
+dalga görevini üstlenmektedir. A dalgası 08 Kasım 2021 tarihinde 68997.75$
+seviyesinden başlayıp 24 Ocak 2022 tarihinde 32992.55$ seviyesine kadar
+sürmektedir. Bu hareket 11 hafta sürmekte ve BTC/USD paritesi %52.18 oranında bir
+fiyat kaybı yaşıyor. A düzeltme dalgası 24 Ocak 2022 tarihinde 32992.55$ seviyesinde
+sonlanmaktadır ve B dalgası başlıyor.
+
+
+
+
+                                          87
+                           Şekil 60: Haftalık Periyot A Dalgası
+
+
+        B dalgası A-B-C düzeltme modeli içinde trendin tersi yönünde, yani yükseliş
+olarak hareket gerçekleştiren bir düzeltme dalgasıdır. A dalgasının sonlandığı
+32992.55$ seviyesinden B dalgası başlamaktadır. B dalgası 24 Ocak 2022 tarihinde
+32992.55$ seviyesinde başlamakta ve 28 Mart 2022 tarihinde 48222.96$ seviyesinde
+sonlanmaktadır. B dalgası toplam 9 hafta sümekte ve B dalgası boyunca BTC/USD
+paritesinde fiyat %46.16 oranında yükseliş gerçekleştirmektedir.
+
+
+
+
+                           Şekil 61: Haftalık Periyot B Dalgası
+
+
+       B dalgasının sonlandığı 48222.96$ seviyesinde C dalgası başlamaktadır.
+Çalışmanın yapıldığı güncel tarih içinde halen C dalgasında olunduğu
+söylenebilmektedir. Şimdilik 28 Mart 2022 tarihinde başlayan C dalgasının içinde
+seyredilmektedir ve C dalgasının tamamlandığına ilişkin net bir işaret mevcut değildir.
+
+                                           88
+C dalgasının güncel dip seviyesi, çalışmanın yapıldığı güncel tarihlerde 15473.78$
+olarak görünmektedir. Daha aşağı bir bölgede yeni bir dip denenebilir ve A-B-C
+düzeltmesinin başlangıç seviyesi 68997.75$ olsa da dip seviyesi daha aşağıda bir
+seviye olabilir. Eğer 15473.78$ seviyesi dip seviye olacaksa, C dalgası 34 hafta sürmüş
+olacak ve BTC/USD paritesi C dalgası boyunca %67.91 oranında bir kayıp yaşamış
+olacaktır. Ayrıca C dalgasının bitiş tarihi de 21 Kasım 2022 olacaktır.
+
+
+
+
+                           Şekil 62: Haftalık Periyot C Dalgası
+
+
+
+             3.2.1   BTC/USD Paritesi Haftalık Grafik Elliott Dalga Prensipleri
+                     İnceleme Sonucu:
+
+        BTC/USD paritesinde haftalık mumlarla oluşturulmuş grafik üzerinde
+gerçekleştirilen Elliott Dalga Prensipleri analizi, aylık mumlarla oluşturulmuş grafik
+üzerinde gerçekleştirilen analize göre bir takım değişiklikler içermektedir. Öncelikli
+olarak haftalık mumlarla oluşturulmuş grafik üzerinde 5’li model tamamlanmış ve A-
+B-C düzeltmesinde C dalgasında olunduğu görülmüştür. Aylık mumlarla oluşturulmuş
+grafikte ise 5’li model tamamlanmıştır ancak henüz A-B-C modelinde A dalgasında
+hareket edilmektedir.
+        Haftalık mumlarla oluşturulmuş grafikte 5’li model 1.99$ seviyesinden
+başlamaktadır ve 68997.75$ seviyesine kadar devam edilmektedir. 1. dalga 1.99$ ile
+19804.25$ aralığında oluşmaktadır ve uzatma dalgası olarak karşımıza çıkmaktadır.
+Ayrıca 1 numaralı dalga içinde yine Elliot Dalga Prensipleri’ne göre anlamlı bir yapıda
+farklı bir 5’li dalga modeli bulunmaktadır. Bu dalga modelini 1. dalga modeli
+kapsamakta ve başlangıç bitişleri aynı görünmektedir.
+      Haftalık mumlarla oluşturulmuş grafik üzerinde oluşan Elliot Dalga Prensipleri
+modelleri baz alındığında ana yükseliş trendi 5’li dalga modeli 1.99$ seviyesinden
+68997.75$ seviyesine kadar sürmektedir. Bu yükseliş hareketi 14 Kasım 2011’den
+
+                                           89
+başlıyor ve 22 Kasım 2021’e kadar sürüyor. 521 hafta süren bu yükseliş hareketi
+BTC/USD paritesinde fiyata %3460168.30 oranında bir kazanç sağlamaktadır.
+Akabinde, 5 numaralı dalganın sonlandığı 68997.75$ seviyesinden A-B-C düzeltme
+dalga modeli başlamaktadır. Halen bu modelin içinde bulunduğu görülmekte ve C
+dalgasında seyredilmektedir. C dalgasının henüz tamamlandığına dair bir işaret yoktur.
+
+
+
+
+                   Şekil 63: Haftalık Periyot C Dalgası Olası Dip Bölgesi
+
+
+        68997.75$’dan başlayan hareket ilk olarak 32992.55$’a kadar bir düşüş
+meydana getirmiş ve A dalgası oluşmuştur. Daha sonra 32992.55$’dan 48222.96$’a
+kadar bir yükseliş gerçekleşmiş ve B dalgası oluşmuştur. Bu hareket için oluşan tam
+yansıma 12217.76$’a denk gelmektedir. C dalgasında dip bölgesi bu alana yakan ya
+da eşit olabilir. Bu durumu da güncel olarak takip edilecektir.
+        C dalgasının sonlandığına dair net işaretler görülmesi durumunda bir 5’li dalga
+modeli ve A-B-C düzeltme dalga modeli haftalık mumlarla oluşturulmuş grafikte
+BTC/USD paritesi için tamamlanmış olacaktır. Bu tamamlanma gerçekleşince yeni bir
+5’li dalga modelinin başlangıcı, C dalgasının sonlandığı dip seviye olabilir.
+
+
+
+SONUÇ:
+
+       Finans bilimi ve bu alana ilişkin teknoloji geliştikçe ‘yatırım’ kavramı daha
+önemli hal almış ve ‘yatırımcı’ olarak nitelendirilebilecek insan sayısında her geçen
+yıl önemli artışlar gerçekleşmiştir. Yatırımcılar geçmişi ve bugünü analiz ederek
+geleceğe ilişkin tahminler ortaya koymuşlardır. Bu tahminler neticesinde ise bir
+yatırım kararı alarak tasarruflarını değerlendirme adına kritik hamleler
+gerçekleştirmişlerdir.
+
+        Gelişen finansal teknolojiler yatırım araçlarında çeşitliliği hızlı bir biçimde
+artırmış ve artırmaya devam edmektedir. Ayrıca teknolojik gelişmeler ve yaygın
+
+                                            90
+internet kullanımı yatırım araçlarına ulaşılabilirliği çok daha kolay ve hızlı hale
+getirmiştir. Örnek olarak, Türkiye’de yaşayan bir kişi bir Amerikan hisse senedini
+kolay, hızlı ve güvenilir biçimde, dilediği zaman satın alabiliyor ve dilediği zaman bu
+hisse senedini satabilmektedir. Birkaç on yıl önce böyle bir durumun olabileceği pek
+de öngörülen bir durum değildi. Finansal teknolojiler büyük bir hızla gelişmekte ve
+yaygınlaşmaktadır.
+
+        Çalışmamın birinci bölümünde detaylı bir şekilde açıklandığı üzere ‘kripto
+para’ kavramı 2008 yılı itibariyle hayatımıza girmiştir ve günümüze gelene kadar hızlı
+bir biçimde yaygınlaştı, kabul gördü. Bu süreçte birçok spekülatif ve manipülatif
+gelişme yaşanmış olsa da kripto para birimleri ve bu para birimlerine ilişkin projelerin
+toplumun göz ardı edilemeyecek bir kısmı tarafından kabul gördüğü görülmektedir.
+Blockchain teknolojisi ile üretilen bu para birimleri için projeler üretilmiş, borsalar
+kurulmuş ve yatırımcı toplulukları hızlı bir şekilde büyümüştür. Özellikle 2017 yılı ve
+sonrasında kripto para kavramı finans alanında önemli bir yere sahip olmuştur.
+
+        Geçmiş yıllarda ve günümüzde kripto paralar hakkında çokça eleştiri
+görülebilmektedir. Özellikle gizlilik ilkesinin ön planda olmasının ‘kara para
+transferi’, ‘dolandırıcılık’ gibi kavramları kolaylaştırıldığı dile getirilse de bu
+kavramların aslında kripto para teknolojileri öncesinde de varlığını koruduğu ve
+hemen hemen daha yüksek oranlarda olduğunu görülmektedir.
+
+        2008 yılında faaliyetlerine başlayan BITCOIN ile kripto para kavramı ortaya
+çıkmıştır. 2010 yılında yaygınlığı hızlı bir biçimde artan BITCOIN günümüze kadar
+her yıl daha fazla taşıyıcıya ulaşmayı başarabilmiştir. Bu süreçte farklı blockchain
+ağları ve bu ağlar üzerinde oluşturulmuş binlerce kripto para birimi üretildi. Bu kripto
+para birimlerinin bazıları bir proje üzerine bazıları ise farklı amaçlar ile üretildi.
+Üretilen kripto paralardan bazıları art niyet benzeri dolandırıcılık ve kara para
+faaliyetlerinde de kullanıldı ancak bu durum genel işleyişi bozulacak düzeye
+ulaşmamıştır.
+
+       Üretilen binlerce kripto paraların büyük bir bölümü halen faaliyetlerini
+sürdürmekte ve her yeni gün yeni projeler ile yeni kripto paralar üretilmektedir. Kripto
+para üretimlerinde genel bir sınırlama şuan için yoktur. Çalışmanın gerçekleştiği
+dönemde, blockchain sahibi firma ya da bireysel kişilerin de böyle bir sınırlama
+yapacaklarına dair manşet haberler ya da açıklamalar görülmemiştir.
+
+       Birçok ülkede, ticari faaliyetlerini sürdüren firmalar da dahil olmak üzere
+kripto para üretimleri gerçekleştirilmekte ve markalarına ait bir kripto para
+oluşturulmaktadır. Bazı ülkelerde kripto para ile alım-satım işlemleri yasak olsa da
+firmalar kripto paraları aracılığıyla yatırımcı kazanmak istemekte ve genel olarak
+amaçlar bu şekilde oluyor. Özellikle ülkelerinde resmi borsalarına kote olamayan
+                                          91
+firmalar ve bireysel projelerine fon toplamak isteyen bireyseller kripto para üretimini
+tercih edilmektedirler.
+
+        Günümüzde yeni bir blockchain ağı oluşturmak oldukça maliyetli. Yeni bir
+blockchain ağı için zaman, güçlü maddiyat ve iyi bir ekip gerekmektedir. Lakin,
+varolan bir blockchain üzerinden yeni bir ‘token’ oluşturmak çok daha uygun maliyetli
+ve hızlıdır. Bu sebepten dolayı yeni bir blockchain ağı oluşturmak yerine yeni bir token
+oluşturmak tercih sebebi olmaktadır. Bu durum da mevcutta faaliyet gösteren kripto
+paraların çok büyük bir bölümünün, varolan blockchain ağları üzerinde bir token
+olarak üretilmesine sebep olmaktadır.
+
+İnsanlar yatırımlarını yönlendirirken geçmişe ve bugüne bakar, gelecek hakkında
+tahminlerde bulunmakta ve hamlesini yapmaktadırlar. Bu yatırımcılıkta değişmez
+kavramlardan biridir. Bu kavramın değişmesi ancak ‘içerden bilgi almak’ gibi bir
+ifadeyle değişebilir ki bu durum da genelde manipülasyon oluşturmaktadır.
+Yatırımcılar bir finansal ürüne para yatırmayı düşündüklerinde iki farklı analitik metot
+kullanmaktadırlar.                Bunlar              aşağıdaki                  gibidir:
+
+
+      Teknik Analiz
+      Temel Analiz
+    Çalışmanın ikinci bölümünde kısaca değinilen teknik analiz kavramı aslında
+önemli bir analitik araçtır ve literatürde genel olarak yer bulmuştur. Teknik analizde
+ana amaç; Bir finansal ürünün oluşturduğu fiyat grafiklerinde, literatürde yer bulmuş
+ya da analistlerin büyük bir bölümü tarafından kabul görmüş analitik metotların
+kullanılması ile geçmişin incelenip gelecek hakkında tahminde bulunulmasıdır.
+
+     Bir finansal üründe teknik analiz çalışması yapılması gerekiyorsa ilk olarak bu
+finansal ürünün teknik analiz çalışmalarına uygun olup olmadığının incelenmesi
+gerekmektedir. Burada teknik analiz kavramının en önemli varsayımı olan ‘tüm
+bilgilerin fiyata şeffaf yansıması’ devreye girmektedir. Bu durumu test etmek için
+literatürde de yer alan ‘etkin market hipotezi’ ile test edilmesi gerekmektedir. Bitcoin
+üzerine bu testler tamamlanmış ve Bitcoin üzerine teknik analiz çalışmalarının
+yapılabileceği                                                           doğrulanmıştır.
+
+
+    Bitcoin birçok finansal ürünle kıyaslandığında yeni sayılabilir. Anlamlı ve
+güvenilir fiyat grafikleri 2010 yılından bu yana elde edilebilmekte ve ana trend olarak
+yorumlanabilecek birkaç hareketi bulunmaktadır. Yeni olarak yorumlanabilecek bir
+finansal ürün olmasından kaynaklı oldukça hareketli ancak net trend sayısı da pek fazla
+bulunmamaktadır. Bu sebepten dolayı Bitcoin fiyat trendlerini Elliott Dalga
+
+
+                                           92
+Prensipleri ile incelenmesi gerekmiştir. Bitcoin’de varolan ana yükseliş trendlerinin
+Elliott Dalga Prensipleri’ne göre anlamlı olabilme ihtimali gelecek varyasyonları
+açısından önemli işaretler ortaya çıkarabilmekte ve yatırımcılar için faydalı bir çalışma
+gerçekleşmiştir.
+
+    Çalışmanın ikinci bölümünde detaylı olarak değinilen Elliott Dalga Prensipleri
+Ralph Nelson Elliott tarafından teoriye dönüşmüş ve literatürde yer bulmuştur.
+Özellikle teknik analist olarak nitelendirebileceğimiz analitik çalışmalar üreten kişiler
+tarafından genel olarak kabul görmüştür. Elliott Dalga Prensipleri’nin temeli fiyatın
+oluşturduğu trendlerin dalgalar halinde ilerlemesidir. Bu dalgalar doğru tespit
+edilebilirse ‘trendin başlangıcı’, ‘trendin sonlanışı’, ‘trendin devamı’, ‘trendin
+düzeltmeye geçmesi’ gibi kavram hakkında daha iyi tahminler yapılabilmektedir.
+Özetle, eğer dalga modelleri anlamlı ve doğru görünüyorsa, gelecek tahminleri için iş
+biraz daha kolaylaşmaktadır.
+
+        Çalışmanın üçüncü bölümünde, Amerikan Doları($) bacaklı olarak Bitcoin
+fiyatlarını tr.tradingview.com üzerinden Elliott Dalga Prensipleri ile incelenmiştir.
+BTCUSD paritesini incelenmesinin sebebi, en fazla doğru bilgiye ve yaygın kullanıma
+sahip olmasıdır. Bu durumda en iyi verileri ve güvenli bir kaynak seçmek adına
+BTCUSD paritesi ön plana çıkmaktadır.
+
+       Bitcoin için ana yükseliş trendleri ve bu trendler sonrasında, bu trendler içinde
+oluşan düzeltme hareketli oldukça önemlidir. BTCUSD paritesi oldukça volatil bir
+finansal üründür ve bundan kaynaklı olarak kısa vadeli trendlerde anlamlı sonuçlar
+üretmek zor olmaktadır. Bu sebepten dolayı çalışmada aylık ve haftalık mumlarla
+oluşturulmuş BTCUSD paritesi grafikleri kullanılmıştır.
+
+       BTCUSD paritesini Elliott Dalga Prensipleri ile ilk olarak aylık mumlarla
+oluşturulmuş grafik üzerinde incelenmiştir. Bu inceleme sonucunda 01 Kasım Salı
+2011 tarihinden itibaren oluşan tek bir anlamlı 5’li dalga modeli görülmüştür. Bu 5’li
+dalga modeline göre fiyat trendi 1.99$ seviyesinden başlamakta ve 68997.75$
+seviyesine kadar devam etmektedir. Bu trend hareketi içinde anlamlı 5 dalga
+oluşmaktadır. Bunlardan 1-3-5 numaralı dalgalar itici yani itki dalgaları, 2-4 numaralı
+dalgalar ise düzeltici dalgalar olarak karşımıza çıkmaktadır.
+
+        BTCUSD paritesinde büyük yükseliş hareketinin aslında anlamlı bir yapıda
+ilerlediği aylık mumlarla oluşturulmuş grafik üzerinde görülebilmektedir. 1 numaralı
+yükseliş dalgası 1.99$ seviyesinden başlamaktadır 1242.00$ seviyesine kadar devam
+etmektedir. 1 numaralı yükseliş dalgasında %62186.86 oranında bir yükseliş
+gerçekleştirmektedir. Birinci yükseliş dalgası toplam 24 ay sürmektedir. Oransal
+olarak incelendiğinde çok ciddi bir hareket ancak bir sonraki dalga olan 2 numaralı
+düzeltici dalga da ciddi bir düşüş olarak karşımıza çıkmaktadır.
+                                           93
+        BTCUSD paritesinde 2 numaralı düzeltici dalgada, 1 numaralı güçlü yükseliş
+dalgası sonrası %86.96 oranında bir düşüş gerçekleşmektedir. Bu gerçekten büyük bir
+düşüş oranı ve birçok finansal üründe yatırımcının alışık olduğu bir durum değil. 2
+numaralı dalga 1242.00$ seviyesinden başlamakta, 162.00$ seviyesine kadar devam
+etmektedir. 2 numaralı düzeltme dalgasının da toplam 21 ay sürdüğü görülmektedir. 1
+ve 2 numaralı dalgalar sürerken BTCUSD paritesinde oldukça yüksek bir volatilite
+yaşandığı görülmektedir. 2 numaralı dalga 1 numaralı dalganın başlangıcı olan 1.99$
+seviyesi altına sarkmıyor ve bu sebepten dolayı bir düzeltici dalga olarak kabul
+edilmektedir. Yine bu sebepten dolayı, anlamlı bir görünüm sergilemektedir..
+
+        2 numaralı dalganın sonlandığı 162.00$ seviyesinden yine ciddi bir yükseliş
+oranına sahip 3 numaralı dalga başlamaktadır. 3 numaralı dalga 19804.25$ seviyesine
+kadar devam etmektedir. 3 numaralı dalga bir itki dalgası olarak karşımıza
+çıkmaktadır. 3 numaralı itici dalgada %12124.84 oranında bir yükseliş
+gerçekleşmektedir ve bu dalga toplam 28 ay sürmektedir. 3 numaralı dalganın 2
+numaralı dalganın başladığı 1242.00$ üzerinde bir tepe gerçekleştirmesi ve fiyatın
+tekrar 1242.00$ altına inmemesi dalganın anlamlı olmasını sağlamaktadır.
+
+
+
+       3 numaralı dalganın sonlandığı 19804.25$ seviyesinden 4 numaralı düzeltici
+dalga hareketini başlatmaktadır. 3 numaralı dalgada ciddi oranda bir yükseliş
+gerçekleştiren BTCUSD paritesi fiyatı %84.22 oranında bir düşüş
+gerçekleştirmektedir. 19804.25$ seviyesinden başlayan düşüş hareketi 3214.51$
+seviyesine kadar sürmekte ve 4 numaralı dalga bu seviyede sonlanmaktadır. 4 numaralı
+dalga toplam 12 ay sürmekte ve 5’li modelin en kısa dalgası olarak karşımıza
+çıkmaktadır. 4 numaralı dalga 1242.00$ seviyesi altında yeni bir fiyatlanma
+gerçekleştirmediği için anlamlı görünümü bozmamaktadır.
+
+       4 numaralı düzeltici dalga düşüşü 3124.51$ seviyesinde sonlanmakta ve 5
+numaralı dalga hareketinin başlangıcı bu seviyede gerçekleşmektedir. Aylık mumlarla
+oluşturulmuş BTCUSD paritesinde bulunan Elliott Dalga Prensipleri 5’li dalga
+modelinin uzatma dalgası 5 numaralı dalga olarak karşımıza çıkmaktadır. 3124.51$
+seviyesinde başlayan 5 numaralı dalga 68997.75$ seviyesine kadar sürmektedir.
+Toplamda 35 ay süren bu harekette BTCUSD paritesi fiyatı %2108.27 oranında bir
+yükseliş gerçekleşmektedir. 5. Dalga bir önceki tepe seviyesi olan 19804.25 seviyesini
+aştığı için anlamlı 5’li model yapısını bozmamaktadır.
+
+        5. dalga 68997.75$ seviyesinde sonlanmış ve bu şekilde aylık mum
+grafiklerinde Elliott Dalga Prensipleri 5’li dalga modeli tamamlanmıştır. Prensiplere
+göre 5’li dalga modeli tamamlandıktan sonra A-B-C düzeltmesi başlaması
+gerekmektedir.
+                                         94
+        5. dalganın sonlandığı 68997.75$ seviyesinde A-B-C düzeltme modelinin A
+dalgası başlangıç yapmakta ve bir düşüş hareketi yaşanmaktadır. Şuan için A
+dalgasının sonlandığına dair net bir işaret bulunmamakta ve A dalgası içinde
+fiyatlamalar sürmektedir. A dalgasının çalışmanın gerçekleştiği dönem içinde dip
+seviyesi 15473.78$ seviyesine denk gelmektedir. %1.618 yansıması ise 12207.00$
+civarına denk gelmektedir. Yani A dalgası ve sürecin devamı için üç önemli ihtimal
+ortaya çıkmaktadır ve oyun planları bunlara göre yapılabilmektedir.
+
+İlk İhtimal
+
+       A dalgası 15473.78$ - 12207.00$ fiyat aralığında bir dip denemesi
+gerçekleştirir ve bu bölgede A dalgası sonlanır. Daha sonra B dalgası başlar ve B
+dalgası hareketi 35919.94$ - 57543.62$ fiyat aralığında bir bölgeye doğru yükseliş
+meydana getirebilir. Daha sonra C dalgasının yeni bir düşüş hareketi başlattığı
+görülebilir. Bu durumda ihtimal olarak yeniden 15473.78$ - 12207.00$ aralığı ya da
+daha aşağı bir seviyeye kadar C dalgası düşüşü görülebilir. Eğer C dalgası hareketli
+bir zigzag oluşturursa yeni bir boğa piyasası hızlı bir biçimde B dalgası sonlandığında,
+C dalgasına geçiş yapıldığında gündemde olabilir.
+
+İkinci İhtimal
+
+       15473.78$ seviyesi A dalgası için dip görevi görür ve bölgeden yükseliş
+hareketi başlar. Bu durumda yine B dalgasının 35919.94$ - 57543.62$ aralığına doğru
+ilerlemesini beklenir. B dalgasında gerçekleşen bu yükseliş hareketi sonrası C dalgası
+yeni bir düşüş dalgası olarak ortaya çıkabilir ve 15473.78$ - 12207.00$ aralığı ya da
+daha alt bir bölgede yeni bir dip denemesi görülebilir. Eğer C dalgası hareketli bir
+zigzag oluşturursa yeni bir boğa piyasası hızlı bir biçimde B dalgası sonlandığında, C
+dalgasına geçiş yapıldığında gündemde olabilir.
+
+Üçüncü İhtimal
+
+       Fiyat 12207.00$ altında farklı bir dip denemesi yapar ve A dalgası uzatma
+gerçekleştirir. Bu durumda görünüm tamamen bozulabilir ve A dalgası ciddi bir kayba
+yönelebilir. Bu hareket sonucu görünümü tamamen bozabilecek güçlü bir B dalgası
+yükselişi ya da A-B-C iptali benzeri bir hareketlenme yaşanabilir. Bu ihtimal için daha
+ekstrem durumların kripto para piyasalarında hakim olması gerektiği düşünülebilir.
+Ayrıca A dalgasının daha düşük diplere yönelmesi B dalgasının daha kesin, C
+dalgasının ise hareketli bir zigzag ile daha hızlı olması manasına gelebilir.
+
+
+
+     Yukarıda aylık mumlarla oluşturulmuş grafikte BTCUSD paritesi için Elliott
+Dalga Prensipleri değerlendirmelerini ve ihtimalli olarak tahminlerini
+
+                                          95
+gerçekleştirilmiştir. Mumlar aylık periyot değil de haftalık periyotta incelendiğinde
+biraz daha farklı bir senaryo karşımıza çıkmakta. Öncelikle haftalık mumlarla
+oluşturulmuş grafikte 5’li dalga modelinin yine bir tane olduğunu görmekteyiz. Burada
+bazı dalgalar hassas ölçüm dolayısıyla farklı olarak ürüyor ve 1 numaralı dalganın
+kendi içinde farklı bir 5’li model kapsadığı görülmektedir. Tabii birçok dalga kendi
+içinde farklı dalga modelleri oluşturabilir ancak aylık ve haftalık mumlarda, ana trend
+oluşumlarında anlamlı yapılar biraz daha zor gerçekleşebilmektedir.
+
+         1 numaralı dalga yine 1.99$ seviyesinden başlamakta ancak 1 numaralı
+dalganın bitişi, aylık mumlardan oluşan grafikten farklı olmak üzere 19804.25$
+seviyesinde sonlanmaktadır. 1 numaralı dalgada %993091.95 oranında bir yükseliş
+gerçekleştirmekte ve hareket 317 hafta sürmektedir. 1 numaralı dalga haftalık periyotta
+uzatma dalgası görevini üstlenmektedir. Ayrıca 1 numaralı dalga kendi içinde farklı
+bir 5’li modeli kapsamaktadır.
+
+        19804.25$ seviyesinde 1 numaralı dalga sonlanmakta ve 2 numaralı dalga
+başlamaktadır. 2 numaralı dalgada %84.22 oranında bir düşüş görülmektedir ve 52
+hafta sürmektedir. 2 numaralı dalga 3124.51$ seviyesinde sonlanmaktadır.
+
+       3 numaralı dalga 2 numaralı dalganın sonlandığı 3124.51$ seviyesinden
+yükselişini başlatmakta ve 64898.56$ seviyesine kadar devam etmektedir. Bu
+harekette %1977.08 oranında bir yükseliş görülmektedir ve 3 numaralı dalga 122 hafta
+sürmektedir.
+
+       4 numaralı dalga 3 numaralı dalganın sonlandığı 64898.56$ seviyesinden
+başlamakta ve güçlü bir düşüş ile 28754.40$ seviyesine kadar sürmektedir. 4 numaralı
+dalgada fiyat %55.69 oranında bir kayıp yaşamakta ve 10 hafta sürmektedir.
+
+       5 numaralı dalga 4 numaralı dalganın sonlandığı 28754.40$ seviyesinden
+başlamakta ve 68997.75$ seviyesine kadar devam etmektedir. Bu itici dalga boyunca
+fiyat %139.96 oranında bir artış gerçekleştirmekte ve toplam 20 hafta hareket devam
+etmektedir. 5 numaralı dalganın sonlanması ile birlikte A-B-C düzeltmeleri
+başlamaktadır.
+
+       5 numaralı dalganın sonlandığı 68997.75$ seviyesinde A dalgası düşüşünü
+başlatmakta ve 32992.55$ seviyesine kadar A dalgası düşüşü sürmektedir. Daha sonra
+32992.55$ seviyesinden B dalgası yükselişi başlamakta ve bu hareket 48222.96$
+seviyesine kadar sürmektedir.
+
+        B dalgasının sonlandığı 48222.06$ seviyesinden C dalgası düşüşü başlatmakta
+ve aylık mumlarla oluşan grafik ile haftalık mumlarla oluşan grafik arasında en büyük
+fark da aslında ortaya çıkmış olmaktadır.
+
+
+                                          96
+       Aylık mumlarla oluşan BTCUSD grafiğinde Elliott Dalga Prensipleri’ne göre
+inceleme yapıldığında henüz A düzeltme dalgası içinde olduğu görülmektedir. Yani
+sırada B dalgası ile bir sınırlı yükseliş hareketi, daha sonra ise C dalgası ile yeni bir
+düşüş hareketi gerçekleşebileceği görülmektedir.
+
+        Haftalık mumlarla oluşan BTCUSD grafiğinde Elliott Dalga Prensipleri’ne
+göre inceleme yapıldığında ise A ve B dalgalarının sonlandığı, C dalgası içinde hareket
+edildiğini görmekteyiz. Bu da aslında A-B-C düzeltme modelinin sonlanmasına çok
+yakın olunduğunu ve yeni bir trendin başlayabileceği anlamını taşımaktadır.
+
+
+
+Gelecek Tahmini:
+
+        Hem aylık hem de haftalık mumlarla oluşturulmuş BTCUSD paritesi grafikleri
+Elliott Dalga Prensipleri ile incelendiğinde genel yapısıyla benzer ancak kısmi
+farklılıkları bulunan görünümler elde edilmiştir. İki incelemenin de ortak kanısı
+BTCUSD paritesinin ana yükseliş trendinde 5’li dalga modelini bitirip A-B-C
+düzeltme modelini başlattığı yönünde olmaktadır. Aylık mumlarla oluşan grafikte A
+düzeltmesinde olunduğu görülmektedir ve A-B-C düzeltme modeli daha uzun bir süre
+devam edebilme ihtimaline sahip olmaktadır. Bu durumda 2023 yılı ile birlikte
+öncelikle bir B dalgası yükselişi gerçekleşebilir ve bu yükseliş 15473.78$ - 12207.00$
+fiyat aralığından başlayabilir. Haftalık mumlarda ise, A-B-C düzeltmesi 15473.78$ -
+12207.00$ fiyat aralığında tamamen sonlanabilmektedir. Çünkü haftalık mumlarda
+yapılan incelemede C dalgasında hareketler sürmektedir.
+
+      BTCUSD fiyatının düşüş hareketini yüksek bir ihtimalle 15473.78$ -
+12207.00$ fiyat aralığında sonlandırabileceği görülmektedir.
+
+       Eğer düşüş bu bölgede sonlanır ve aylık mumlarla oluşan grafikte Elliott Dalga
+Prensipleri modeli çalışırsa bir B dalgası yükselişi ve sonra yeniden bir C dalgası
+düşüşü görülebilir. Bu şekilde A-B-C modelini tamamlar.
+
+       Eğer düşüş bu bölgede sonlanır ve haftalık mumlarla oluşan grafikte Elliott
+Dalga Prensipleri modeli çalışırsa C dalgası tamamlanmış olur ve yeni bir boğa
+sezonuna geçiş yapılabilmektedir. Bu durumda yeni bir yükseliş trendi
+başlayabilmektedir.
+
+        Yeni bir yükseliş trendi için aylık mumlarla oluşan grafikte yapılan incelemede
+10 – 12 ay gibi ortalama bir süre geçmesi gerektiği görülürken, haftalık mumlarla
+yapılan incelemede birkaç ay içinde yeni bir yükseliş trendinin başlayabileceğine dair
+işaretler mevcuttur.
+
+
+
+                                           97
+        Her iki inceleme için de C dalgasının sonlanacağı bölgenin 4 numaralı dip
+seviyesi olan 3214.51$ seviyesi altında olmaması gerekmektedir. Yani BTCUSD
+paritesinde fiyatın 3214.51$ seviyesi atlına sarkması beklenmemektedir. Bu bölge
+altına bir sarkma olması piyasa açısından büyük bir krize ve likidite eksiğine işaret
+edebilmektedir.
+
+
+
+
+                     KAYNAKÇA
+
+
+
+Anı, Bulut, “Kayıt Zinciri Teknolojisinin Finansal Piyasalardaki Yansıması: Kripto
+Para ve Bitcoin Uygulamaları”, 2019.
+
+Aslantaş Ateş, Burcu, “Kripto Para Birimleri, Bitcoin ve Muhasebesi” , Çankırı
+Karatekin Üniversitesi Sosyal Bilimler Enstitüsü Dergisi, Cilt, 7 sayı 1, 2016:349-
+366.
+
+Baştaş, Yiğit Can, “Elliott dalga prensipleri ve BİST-100 endeksinin analizi”,
+Marmara Üniversitesi, 2014.
+
+Baysal, Ömer Onur, “Elliott dalga prensipleri ve İMKB üzerine bir uygulama”,
+Marmara Üniversitesi, 2011.
+
+Benoit, Mandelbrot, “Finans Piyasalarında (Saklı) Düzen”, İstanbul: Güncel
+Yayıncılık, Haziran 2005.
+
+Bogdan, Ulm, “Bitcoin ATMs boom: new locations”, CoinTelegraph, 2014,
+https://cointelegraph.com/news/bitcoin-atms-boom-new-locations, (erişim tarihi
+07.05.2022).
+
+Chris Pacia, “Bitcoin Mining Explained Like You’re Five: Part 2” – Mechanics,
+Escape Velocity, 2013, (Son erişim tarihi: 05.03.2022).
+
+Çetiner, M., “Bitcoin (Kripto Para) Ve Blok Zincirin Yeni Dünyaya Getirdikleri”,
+Istanbul Journal of Social Science. 2016.
+
+
+
+
+                                            98
+David LEE, Kuo Chuen, “Handbook of Digital Currency: Bitcoin, Innovation,
+Financial Instruments, and Big Data”, Elsevier Science & Technology, eBook ISBN:
+9780128023518, 2015:16-18.
+
+Dilek, Ş., “Blockchain Teknolojisi ve Bitcoin”, Analiz, SETA Siyaset, Ekonomi ve
+Toplum Araştırmaları Vakfı. Şubat, (231) 2016:1-33.
+http://www.metzdowd.com/pipermail/cryptography/2008-October/014810.html.
+(Son Erişim tarihi: 10.03.2022).
+
+
+Emily, Maltby, “Chargebacks Create Business Headaches,” Wall Street Journal,
+February 10, 2011.
+https://www.wsj.com/articles/SB10001424052748704698004576104554234202010
+(Son erişim tarihi 27.05.2022)
+
+ERDİNÇ, Yaşar, Yatırımcı ve Teknik Analiz Sorgulanıyor, 1. Baskı, Ankara: Siyasal
+Kitabevi, 2004.
+
+Frost, Alfred John & Robert R., Prechter Jr. Elliott Wave Principle (Key to Market
+Behavior), 2. Baskı, Georgia: New Classics Library, 2000.
+
+Garrick, Hileman & Michel, Rauchs, “Global Cryptocurrency Benchmarking Study”,
+University of Cambridge, 2017:151.
+
+Gleen, NEELY, Mastering the Elliott Wave, 2. Baskı, New York: Windsor Books,
+1990, Bölüm 5
+
+Global Cryptocurrency Benchmarking Study, 2017, s.106.
+
+Gültekin, Y., & Bulut, Y.,“Bitcoin Ekonomisi: Bitcoin Eko-Sisteminden Doğan Yeni
+Sektörler ve Analizi”, Adnan Menderes Üniversitesi Sosyal Bilimler Enstitüsü
+Dergisi, Cilt 3, sayı 3, 2016:82-92.
+
+Havacılıkta Sahte İşlemleri Önleme Yönetimi, 2018:s.24,
+http://www.havais.org.tr/uploaded/magazine/martnisan-2018-1525269987-2.pdf,
+(Son erişim tarihi 24.05.2022).
+
+https://bitcoin.org/bitcoin.pdf, (Son erişim tarihi: 10.10.2022).
+
+https://coinmarketcap.com/tr/currencies/bitcoin (Son erişim tarihi: 10.08.2022).
+
+
+
+                                           99
+İstanbul Menkul Kıymetler Borsası, “Sermaye Piyasası ve Borsa Temel
+
+Bilgiler Kılavuzu”, Birinci Baskı, İstanbul: Eğitim yayınları, Mayıs 1996.
+
+Jan, Moller, “How The Bitcoin Protocol Actually Works”, International Software
+Development Conference, 23-24 Eylül 2014:10.
+
+Japan’s Ministry of Economy, Trade and Industry (METI), “Survey on Blockchain
+Technologies and Related Services FY2015 Report”, Nomura Research Institute.
+2016.
+
+Jeff, Fong, “How Bitcoin Could Help the World’s Poorest People,” PolicyMic,
+Mayıs 2013 http://mic.com/articles/41561/bitcoin-price-2013 -how-bitcoin-could-
+help-the-world-s-poorest-people (Erişim 15.10.2021).
+
+Jerry, Brito, ve Diğerleri: Bitcoin: A Primer for Policymakers, Mercatus Center,
+George Mason University, 2.basım, 2016.
+
+Jerry, Brito, “The Top 3 Things I Learned at the Bitcoin Conference,” Reason, 2013.
+
+http://reason.com/archives/2013/05/20/the-top-3-things-i-learned-at-the-bitcoin. (Son
+erişim tarihi: 12.06.2022).
+
+Karaoğlan, S., Arar, T., & Bilgin, O., “Türkiye’de Kripto Para Farkındalığı ve Kripto
+Para Kabul Eden İşletmelerin Motivasyonları”, İşletme ve İktisat Çalışmaları
+Dergisi, Cilt 6, Sayı 2, 2018:15-28.
+
+Kenger, E., & Tokmak, E., “Ödeme Sistemleri ve Kripto Para”, International Social
+Sciences Studies Journal, Cilt 4, Sayı 23, 2018.
+
+Ken, Tindell, “Geeks Love The Bitcoin Phenomenon Like They Loved The Internet
+In 1995”, Business Insider, https://www.businessinsider.com/how-bitcoins-are-
+mined-and-used-2013-4, 2013 (Son erişim tarihi: 05.03.2022).
+
+Kesebir, M., & Günceler, B., “Kripto Para Birimlerinin Parlak Geleceği”, Iğdır
+Üniversitesi Sosyal Bilimler Dergisi / Iğdır University Journal Social Science.
+Sayı 17, 2011:605-625.
+
+Mandelbrot, Benoit B., ve Richard, L., “Hudson. Finans Piyasalarında (Saklı)
+Düzen”, Metin Hüner (çev.), Birinci Basım, İstanbul: Güncel Yayıncılık, Haziran,
+2005.
+
+                                         100
+Marmara Üniversitesi Öneri Dergisi, Cilt 12, Sayı 45, Ocak, 2016:211-233.
+
+Morisse, M., “Cryptocurrencies and Bitcoin: Charting the Research Landscape”.
+Twenty-First Americas Conference on Information Systems, Puerto Rico. 2015:1- 16.
+
+Nick, Szabo, Smart Contracts,
+http://www.fon.hum.uva.nl/rob/Courses/InformationInSpeech/CDROM/Literature/L
+OTwinterschool2006 /szabo.best.vwh.net/smart.contracts.html, (Son erişim tarihi:
+14.06.2022).
+
+Pete, Rizzo, “BitPay Raises $30 Million in Record-Breaking Bitcoin Funding
+Round,” CoinDesk, May 13, 2014, https://www.coindesk.com /bitpay-closes-30-
+million-funding-round-led-by-index-ventures. (Son erişim tarihi 28.05.2022).
+
+Precther, R., Robert, Major Work Of R. N. Elliot, 3.Baskı, New York:New Classic,
+1990.
+
+Precther R., Robert, ve Rougelot, R (Ed.), R. N., Elliott’s Masterworks, Georgia:
+New, 1994.
+
+Prechter, Jr., Robert, R., “Predicting Economic and Monetary Trends”, The Elliott
+Wave Theorist, 2002.
+
+Satoshi, Nakamoto, “Bitcoin P2P E-Cash Paper”, Cryptography Mailing List, 2008.
+
+Satoshi, Nakamoto, “Bitcoin P2P e-cash paper”, Cryptography Mailing List, 2008,
+http://www.metzdowd.com/pipermail/cryptography/2008-October/014810.html,
+(erişim tarihi 23.05.2022).
+
+Satoshi Nakamoto, “Bitcoin: A Peer-to-Peer Electronic Cash System”, 2008.
+
+Securities and Exchange Commission v. Trendon T. Shavers and Bitcoin Savings and
+Trust, Civil Action No. 4:13-CV-416, 2014,.
+http://www.law.du.edu/documents/corporategovernance/securities-
+matters/shavers/SEC-v-Shavers-No-4-13-CV-416-E-D-Tex-Sept-18-2014.pdf.
+(erişim tarihi 04.06.2022).
+
+Şengöz, Tuncer, “Elliott Dalga Prensipleri”, Birinci Basım, İstanbul: Scala
+Yayıncılık, 2002.
+
+
+
+
+                                         101
+Yüksel, A., “Elektronik Para, Sanal Para, Bitcoin ve Linden Doları’na Hukuki Bir
+Bakış”, İstanbul Üniversitesi Hukuk Fakültesi Mecmuası, LXXIII, 2015:173- 220.
+
+www.https://ab.org.tr/ab17/bildiri/100.pdf. (Son erişim tarihi: 09.02.2022).
+
+
+
+
+                                         102
+
