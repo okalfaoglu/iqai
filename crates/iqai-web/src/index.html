@@ -617,6 +617,43 @@
       return 'aboveBar';
     }
 
+    /** Aynı mumda birden fazla EW etiketi: üst/alt sırayla yay (üst üste binmeyi azaltır). */
+    function staggerEwChartMarkers(markers) {
+      if (!Array.isArray(markers) || markers.length < 2) return markers;
+      const byTime = new Map();
+      for (const m of markers) {
+        const t = m.time;
+        if (!byTime.has(t)) byTime.set(t, []);
+        byTime.get(t).push(m);
+      }
+      for (const group of byTime.values()) {
+        if (group.length < 2) continue;
+        group.forEach((m, i) => {
+          m.position = i % 2 === 0 ? 'aboveBar' : 'belowBar';
+        });
+      }
+      return markers;
+    }
+
+    function ewWavePointKey(p) {
+      if (!p) return '';
+      const px = (p.price != null && Number.isFinite(Number(p.price))) ? Number(p.price).toFixed(2) : '';
+      return `${p.time}|${String(p.label || '')}|${px}`;
+    }
+
+    /** Geçmiş formasyon ile anlık tespit aynı pivot zinciri ise çift çizim yapma. */
+    function ewFormationDuplicateOfCurrent(f, ew) {
+      if (!ew || !Array.isArray(ew.wave_points) || !Array.isArray(f?.wave_points)) return false;
+      const a = ew.wave_points;
+      const b = f.wave_points;
+      if (a.length !== b.length || a.length === 0) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i].time !== b[i].time) return false;
+        if (String(a[i].label || '') !== String(b[i].label || '')) return false;
+      }
+      return true;
+    }
+
     function tvDefaultSymbol(exchange) {
       const e = (exchange || 'BINANCE').toUpperCase();
       if (e === 'BIST') return 'XU100';
@@ -1261,18 +1298,34 @@
         const ewValid = ann.elliott && (ann.elliott.validation_ok === true
           || (ann.elliott.wave_legs && ann.elliott.wave_legs.length > 0));
         const ewFormEnabled = ann.elliott && isEwFormationEnabled(ann.elliott.formation, ann.elliott.formation_type);
-        const ewPointMarkers = showElliott && ewValid && ewFormEnabled && (ann.elliott?.wave_points || []).map(p => ({
+        const ewPointMarkersRaw = showElliott && ewValid && ewFormEnabled && (ann.elliott?.wave_points || []).map(p => ({
           time: p.time, position: ewWaveMarkerPosition(p), color: ewWaveMarkerColor(p), shape: 'circle', text: ewWaveMarkerChartText(p)
         }));
         const formations = data.formations || [];
         const formationsFiltered = formations.filter(f => isEwFormationEnabled(f.formation, f.formation_type));
         const formColors = ['#00E5FF', '#00BFA5', '#E040FB', '#76FF03', '#FFB627'];
-        const formMarkers = showElliott && formationsFiltered.length > 0
-          ? formationsFiltered.flatMap((f, fi) => (f.wave_points || []).map(p => ({
-              time: p.time, position: ewWaveMarkerPosition(p), color: ewWaveMarkerColor(p),
-              shape: 'circle', text: ewWaveMarkerChartText(p)
+        const curEwPts = ann.elliott?.wave_points || [];
+        const curEwKeySet = new Set(curEwPts.map(ewWavePointKey));
+        let formMarkersHist = [];
+        if (showElliott && formationsFiltered.length > 0) {
+          const seenHist = new Set();
+          formMarkersHist = formationsFiltered.flatMap((f) => (f.wave_points || [])
+            .filter((p) => !curEwKeySet.has(ewWavePointKey(p)))
+            .map((p) => ({
+              time: p.time,
+              position: ewWaveMarkerPosition(p),
+              color: ewWaveMarkerColor(p),
+              shape: 'circle',
+              text: ewWaveMarkerChartText(p),
             })))
-          : [];
+            .filter((m) => {
+              const pk = `${m.time}|${String(m.text || '')}`;
+              if (seenHist.has(pk)) return false;
+              seenHist.add(pk);
+              return true;
+            });
+        }
+        const ewPointMarkers = staggerEwChartMarkers([...(ewPointMarkersRaw || []), ...formMarkersHist]);
 
         // Support/Resistance + Elliott Wave lines
         if (chart._lineSeries && chart._lineSeries.length) {
@@ -1699,6 +1752,7 @@
         // Geçmiş formasyonları mum verisi üzerine çiz: dalga bacakları (çizgiler)
         if (showElliott && formationsFiltered.length > 0) {
           formationsFiltered.forEach((f, fi) => {
+            if (ann.elliott && ewFormationDuplicateOfCurrent(f, ann.elliott)) return;
             const col = formColors[fi % formColors.length];
             (f.wave_legs || []).forEach(leg => {
               const lineStyle = leg.dotted ? 2 : 0;
@@ -1711,7 +1765,7 @@
             });
           });
         }
-        candleSeries.setMarkers([...allMarkers, ...classicPivotMarkers, ...(ewPointMarkers || []), ...formMarkers]);
+        candleSeries.setMarkers([...allMarkers, ...classicPivotMarkers, ...(ewPointMarkers || [])]);
     }
 
     function updateFormationsPanel(formations, classicPatterns) {

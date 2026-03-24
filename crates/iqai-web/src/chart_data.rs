@@ -855,7 +855,6 @@ fn fibo_color(label: &str) -> &'static str {
 fn elliott_result_to_annotations(
     r: iqai_core::elliott_detector::ElliottDetectorResult,
 ) -> ElliottAnnotations {
-    let original_points: Vec<_> = r.wave_points.clone();
     let mut wave_points: Vec<_> = r
         .wave_points
         .into_iter()
@@ -873,10 +872,6 @@ fn elliott_result_to_annotations(
         })
         .collect();
 
-    let original_point_keys: std::collections::HashSet<(String, i64)> = original_points
-        .iter()
-        .map(|p| (p.label.clone(), p.time))
-        .collect();
     let mut existing_point_keys: std::collections::HashSet<(String, i64)> = wave_points
         .iter()
         .map(|p| (p.label.clone(), p.time))
@@ -919,14 +914,18 @@ fn elliott_result_to_annotations(
         existing_point_keys.insert(key);
     }
 
-    // Tamamlanmış/geçerli formasyonda son bacak artık proje değil, düz çizgi olmalı.
-    if r.validation_ok == Some(true) && r.in_progress != Some(true) {
-        if let Some(last_leg) = wave_legs.last_mut() {
-            let key = (last_leg.label.clone(), last_leg.time2);
-            if last_leg.dotted && original_point_keys.contains(&key) {
-                last_leg.dotted = false;
-            }
+    // Onaylı / tamamlanmış formasyon: yapı dalgaları projeksiyon değil; tüm bacaklar düz çizgi.
+    // (Aksi halde ara hesaplarda kalan dotted bayrağı son bacakları turuncu kesikli gösteriyordu.)
+    if r.validation_ok == Some(true) {
+        for leg in &mut wave_legs {
+            leg.dotted = false;
         }
+    }
+
+    // Aynı (zaman, etiket) ile gelen noktaları tekilleştir (sentetik uç + gerçek pivot çifti).
+    {
+        let mut seen: std::collections::HashSet<(String, i64)> = std::collections::HashSet::new();
+        wave_points.retain(|p| seen.insert((p.label.clone(), p.time)));
     }
 
     let fibo_levels: Vec<_> = r
