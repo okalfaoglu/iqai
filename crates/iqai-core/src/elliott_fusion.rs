@@ -16,6 +16,19 @@ pub struct FusionWavePoint {
     pub label: String,
 }
 
+/// Grafik overlay: W2 ile çakışan OB bandı + (ayrıca) W3 setup entry/stop (`elliott_detector` doldurur).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ElliottFusionChartOverlay {
+    /// W2–W1 zamanı aralığında çizilen OB kutusu (fiyat)
+    pub ob_low: Option<f64>,
+    pub ob_high: Option<f64>,
+    /// Unix saniye (grafik time)
+    pub ob_time_from_sec: Option<i64>,
+    pub ob_time_to_sec: Option<i64>,
+    pub entry: Option<f64>,
+    pub stop: Option<f64>,
+}
+
 /// EWO + confluence + stabilite + SMC özeti (`ElliottDetectorResult` alanlarına map edilir)
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ElliottFusionExtras {
@@ -35,6 +48,7 @@ pub struct ElliottFusionExtras {
     pub smc_w2_detail: Option<String>,
     /// `elliott_require_ewo_alignment` açıkken impulse ile çelişen EWO
     pub fusion_ewo_soft_fail: Option<bool>,
+    pub chart_overlay: Option<ElliottFusionChartOverlay>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -318,9 +332,10 @@ pub fn compute_elliott_fusion_extras(
     if let Some(ctx) = build_smart_money_context_for_series(symbol, tf, candles, config) {
         let w2_lo = p1.price.min(p2.price);
         let w2_hi = p1.price.max(p2.price);
-        let smc_ob = ctx.order_blocks.iter().any(|ob| {
+        let ob_for_overlay = ctx.order_blocks.iter().find(|ob| {
             range_overlap(w2_lo, w2_hi, ob.low, ob.high)
         });
+        let smc_ob = ob_for_overlay.is_some();
         let smc_fvg = ctx.fair_value_gaps.iter().any(|f| {
             let fl = f.lower.min(f.upper);
             let fh = f.lower.max(f.upper);
@@ -342,6 +357,20 @@ pub fn compute_elliott_fusion_extras(
         }
         if !parts.is_empty() {
             ex.smc_w2_detail = Some(format!("W2 bölgesi: {}", parts.join("+")));
+        }
+        if let Some(ob) = ob_for_overlay {
+            let t1_ms = wave_point_time_ms(p1.time);
+            let t2_ms = wave_point_time_ms(p2.time);
+            let from_ms = t1_ms.min(t2_ms);
+            let to_ms = t1_ms.max(t2_ms);
+            ex.chart_overlay = Some(ElliottFusionChartOverlay {
+                ob_low: Some(ob.low),
+                ob_high: Some(ob.high),
+                ob_time_from_sec: Some(from_ms / 1000),
+                ob_time_to_sec: Some(to_ms / 1000),
+                entry: None,
+                stop: None,
+            });
         }
     }
 

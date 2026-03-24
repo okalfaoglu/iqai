@@ -16,9 +16,9 @@ Bu doküman **mantıksal fikirleri** IQAI mimarisiyle eşleştirir; Pine’daki 
 | **Görsel dil** | W1–3–5 düz, W2–4 kesik çizgi; projeksiyonlar noktalı | IQAI’de kısmen `wave_legs.dotted` ile var; tutarlı legend iyi |
 | **Ayarlanabilir projeksiyon** | `wave3_fib`, `wave4_retrace`, `wave5_fib` kullanıcı girdisi | Eğitim / farklı senaryo (agresif/konservatif) için |
 | **Fib toleransı** | `strictFibCheck` + `%` bantları veya geniş min–max W2/W1 | “Guideline” yakınlığını skorlamak için taşınabilir fikir |
-| **EWO (Elliott Wave Oscillator)** | EMA hızlı/yavaş oranı, sinyal çizgisi, güç eşiği, isteğe bağlı zorunlu onay | Repoda **yok**; momentum teyidi katmanı olarak eklenmeye değer |
-| **Confluence + not** | W2 oranı, OB/FVG, hacim, EMA50, EWO → skor + harf notu | Q-RADAR / setup ile birleştirilebilir tek “EW kalite” metriği |
-| **SMC birleşimi** | W2 anında OB/FVG aranıp kutulanması | IQAI `smart_money` zengin; **aynı zaman penceresinde** EW ile kesiştirme eksik olabilir |
+| **EWO (Elliott Wave Oscillator)** | EMA hızlı/yavaş oranı, sinyal çizgisi, güç eşiği, isteğe bağlı zorunlu onay | IQAI’de **`elliott_fusion`** + `elliott_ewo_*` config; panelde gösterim var |
+| **Confluence + not** | W2 oranı, OB/FVG, hacim, EMA50, EWO → skor + harf notu | **`confluence_score` / `wave_grade`** EW fusion’da; Q-RADAR ile tamamen birleşik tek skor değil (isteğe bağlı) |
+| **SMC birleşimi** | W2 anında OB/FVG aranıp kutulanması | **`smc_w2_zone_overlap`** + skor katkısı var; **grafikte kutu** (Pine’daki gibi) henüz yok → §7-B |
 | **Dashboard / R:R** | Tablo, W3 için basit R:R | Web panelde özet metrik olarak uygun |
 
 ---
@@ -43,42 +43,56 @@ Bu doküman **mantıksal fikirleri** IQAI mimarisiyle eşleştirir; Pine’daki 
 | Impulse aşamaları | `impulse_detector` (CHoCH, W2, BOS…) |
 | Dalga derecesi (yaklaşık) | `WaveDegree` + TF + `subwave_degree` |
 | SMC OB/FVG | `smart_money` (daha kapsamlı olabilir) |
-| EWO | **Yok** |
-| Harf notu / tek confluence skoru | Kısmi: `q_radar_analysis`, dip confluence; **EW’ye özel “grade” yok** |
-| Lock + cooldown + invalidate yaşam döngüsü | **Yok** (her bar yeniden `compute_elliott` benzeri akış) |
+| EWO | **Var** — `elliott_fusion.rs` (`ewo_value`, EMA sinyal, güç bayrakları); `config`: `elliott_ewo_*` |
+| Harf notu / tek confluence skoru | **Var (EW özel)** — `ElliottFusionExtras`: `confluence_score`, `wave_grade`; panel + API |
+| Lock + cooldown + invalidate yaşam döngüsü | **Kısmi** — stateless tespit devam; `pattern_stability` + `invalidate_hint` + config bar eşikleri var; **kalıcı `locked/current_leg` state makinesi yok** |
 
 ---
 
-## 4. Taşıma önerisi (öncelik sırası)
+## 4. Taşıma önerisi (öncelik sırası) — **durum (kod tabanı kontrolü)**
 
 ### P0 — Düşük risk, yüksek fikir değeri
-- [ ] **EW kalite / confluence skoru (Pine’daki `calcConfluence` ilhamlı):** W2/W1 bandına yakınlık, hacim spike, isteğe bağlı EMA hizası — mevcut `ElliottDetectorResult` veya Q-RADAR zenginleştirmesine alan ekleme.
-- [ ] **Konfigürasyon:** `config` veya `AppConfig` üzerinden Pine’daki gibi `wave3_ext`, `wave4_retrace`, `fib_tolerance` (projeksiyon/“guideline” için) — **kural doğrulamasını gevşetmeden** sadece hedef/projeksiyon tarafında.
+- [x] **EW kalite / confluence skoru:** `crates/iqai-core/src/elliott_fusion.rs` — W2/W1 oranı, Fib bant bonusu, hacim, EMA50, EWO; `confluence_score` + `wave_grade`.
+- [x] **Konfigürasyon:** `crates/iqai-core/src/config.rs` — `elliott_wave3_extension`, `elliott_wave4_retrace_path`, `elliott_fib_tolerance_pct`, projeksiyon barları, EWO ve stabilite alanları; `config.json.example` ile uyumlu tutulmalı.
 
 ### P1 — Orta efor
-- [ ] **EWO modülü:** `ewo = (EMA_fast/EMA_slow - 1) * 100`, sinyal EMA; `ElliottDetectorResult` veya ayrı struct’ta `ewo_bull`, `ewo_cross`, `ewo_strong` — Web’de küçük satır; isteğe bağlı “setup filtresi”.
-- [ ] **Aktif sayım durumu (state):** `ElliottPatternState { locked, current_leg, start_time, invalidate_reason }` — API’de tek nesne; cooldown / min bar mesafesi burada. *Dikkat:* Mevcut stateless tespitle birleştirmek için net spec gerekir (ör. “son geçerli impulse ID + sonraki barlarda sadece güncelle”).
+- [x] **EWO modülü:** `elliott_fusion.rs` (`compute_ewo_tail`); fusion ekleri `ElliottDetectorResult` / `chart_data` üzerinden web’e; `elliott_require_ewo_alignment` opsiyonel soft fail.
+- [ ] **Aktif sayım durumu (tam state makinesi):** `ElliottPatternState { locked, current_leg, … }` — **yapılmadı**. Şu an: bar başına yeniden hesap + `ElliottPatternStability` (min mesafe, onay barı, yaş, timeout uyarısı) + `invalidate_hint`. Kalıcı lock/cooldown için ayrı spec + depolama (ör. snapshot/DB) gerekir.
 
 ### P2 — SMC füzyonu
-- [ ] W2/W4 teyit bölgesinde `build_smart_money_context` ile **OB/FVG çakışması** bayrağı (Pine’daki kutu yerine skor katkısı).
-- [ ] Chart’ta isteğe bağlı “EW + SMC confluence” işareti (mevcut overlay sistemine).
+- [x] W2 bölgesinde **OB/FVG çakışması** — `build_smart_money_context_for_series` + `smc_w2_zone_overlap` / `smc_w2_detail`; confluence skoruna katkı.
+- [ ] Chart’ta **görsel** “EW + SMC” (OB kutusu / ENTRY-STOP çizgileri) — panelde metin var; **grafik overlay** (Pine’daki kutu çizimi) ayrı iş (bkz. `GUI_ROADMAP` / Elliott backlog).
 
 ### P3 — UX
-- [ ] Panelde Pine dashboard benzeri: **not (A–D)**, **confluence %**, **aktif dalga numarası**, **invalidate nedeni** (string).
-- [ ] Alert/notify: Yüksek confluence + geçerli impulse → mevcut `Notifier` ile hizala.
+- [x] Panel: **not (A+…D)**, **confluence %**, **EWO**, **stabilite**, **invalidate metni**, **SMC–W2** — `index.html` `ewFusionBlock` + `updateElliottPanel`.
+- [ ] **Alert/notify:** Yüksek confluence + geçerli impulse için otomatik bildirim kuralı — `notify.rs` Q/ Elliott özetleriyle kısmen yakın; **eşik tetikli** ayrı kural yok (isteğe bağlı geliştirme).
 
 ---
 
 ## 5. Sonuç
 
 - Pine script **tam Elliott motoru değil**; güçlü tarafı **durum + stabilite + skor + EWO + basit SMC görünürlüğü**.
-- IQAI **kurallı sayım** tarafında genelde daha güçlü; taşınacak başlıca değer: **EWO**, **EW’ye özel confluence/grade**, **yaşam döngüsü (lock/invalidate/cooldown)** ve **kullanıcı ayarlı projeksiyon oranları**.
-- SMC için Pine’ı kopyalamaktan çok **mevcut `smart_money` ile zaman/price penceresinde kesiştirme** yapılmalı.
+- IQAI’de **EWO**, **EW confluence/grade**, **projeksiyon oranları (config)** ve **SMC–W2 skor kesişimi** uygulanmış durumda (§4). Pine’a en yakın **eksikler**: kalıcı **state makinesi**, grafikte **OB/ENTRY/STOP** çizimi, isteğe bağlı **notify eşikleri** (§7).
+- SMC için Pine’ı kopyalamaktan çok **mevcut `smart_money` ile zaman/price penceresinde kesiştirme** yapıldı; görsel overlay sonraki adım.
 
 ---
 
 ## 6. İlgili dosyalar (IQAI)
 
 - `crates/iqai-core/src/elliott_detector.rs`, `elliott.rs`, `impulse_detector.rs`
+- `crates/iqai-core/src/elliott_fusion.rs` — EWO, confluence, SMC–W2, stabilite
+- `crates/iqai-core/src/config.rs` — `elliott_*` fusion/projeksiyon ayarları
 - `crates/iqai-core/src/q_radar_analysis.rs`, `dip_confluence.rs`, `smart_money.rs`
-- `crates/iqai-web/src/index.html` (Elliott paneli), `chart_data.rs`
+- `crates/iqai-web/src/index.html` (Elliott paneli), `chart_data.rs`, `notify.rs`
+
+---
+
+## 7. Öncelikli eksikler (geliştirme adayları)
+
+| Öncelik | Konu | Not |
+|--------|------|-----|
+| **A** | Kalıcı **Elliott state** (locked leg, cooldown, tek impulse ID) | Stateless motor ile birleştirme tasarımı şart |
+| **B** | Grafikte **OB + ENTRY/STOP** (Pine görünürlüğü) | API’de fiyat kutusu/çizgi; `lightweight-charts` |
+| **C** | **Notify eşiği** (örn. confluence ≥ X ve `validation_ok`) | `Notifier` + `config` eşikleri |
+
+Bu üçü tamamlandığında dokümandaki “Pine fikir paketi” ürün tarafında büyük ölçüde kapanmış olur.

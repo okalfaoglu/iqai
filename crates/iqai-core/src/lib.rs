@@ -47,7 +47,7 @@ pub use exchange::{
     OrderSide, OrderResponse, RcaOpenMarketSnapshot,
 };
 pub use signal::{CandleBuffer, SignalEngine};
-pub use elliott_fusion::{ElliottFusionExtras, ElliottPatternStability};
+pub use elliott_fusion::{ElliottFusionChartOverlay, ElliottFusionExtras, ElliottPatternStability};
 pub use elliott_detector::{
     collect_swings, compute_elliott, ElliottDetectorResult, ElliottProjectionPathLeg,
 };

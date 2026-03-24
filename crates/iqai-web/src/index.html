@@ -471,6 +471,7 @@
       <strong class="drawer-sub" title="Çok sayıda çizgi serisi = sağda çok fiyat etiketi.">Yatay / ölçek</strong>
       <label title="Fibo + W5 kısa yatay segmentleri (grafik sağında)"><input type="checkbox" id="showEwFiboYatay" checked> Elliott Fibo + W5 yatayları</label>
       <label title="Elliott üst/alt kanal çizgileri"><input type="checkbox" id="showEwChannelLines" checked> Elliott kanal (üst/alt)</label>
+      <label title="W2 ile çakışan OB kutusu + W3 ENTRY/STOP yatayları (fusion)"><input type="checkbox" id="showEwFusionOverlay" checked> EW fusion: OB + ENTRY/STOP</label>
       <label title="Klasik formasyon TP ve invalidation yatay çizgileri"><input type="checkbox" id="showClassicTpInvYatay" checked> Klasik TP / invalidation yatayları</label>
       <label title="Her çizgi serisi için sağdaki renkli fiyat kutusu"><input type="checkbox" id="overlayLineLabels"> Sağda çizgi fiyat etiketleri</label>
     </div>
@@ -603,7 +604,7 @@
       return 'ETHUSDT27H2026';
     }
 
-    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showZigzag','showElliott','showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showEwProjectionPath','showClassic','showClassicTriangle','showClassicDouble','showClassicCup','showClassicHs','showClassicFlag','showClassicRange','showClassicChannel','invertPattern','showEwFiboYatay','showEwChannelLines','showClassicTpInvYatay','overlayLineLabels'];
+    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showZigzag','showElliott','showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showEwProjectionPath','showClassic','showClassicTriangle','showClassicDouble','showClassicCup','showClassicHs','showClassicFlag','showClassicRange','showClassicChannel','invertPattern','showEwFiboYatay','showEwChannelLines','showEwFusionOverlay','showClassicTpInvYatay','overlayLineLabels'];
 
     function isEwFormationEnabled(formation, formationType) {
       const f = (formation || '').toLowerCase();
@@ -627,7 +628,7 @@
           el.addEventListener('change', () => {
             // Elliott master tiki – alt formların tiklerini de kontrol eder
             if (id === 'showElliott') {
-              const subs = ['showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showEwFiboYatay','showEwChannelLines'];
+              const subs = ['showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showEwFiboYatay','showEwChannelLines','showEwFusionOverlay'];
               subs.forEach(sid => {
                 const sEl = document.getElementById(sid);
                 if (sEl) sEl.checked = el.checked;
@@ -1508,6 +1509,43 @@
           const barSec = candles.length >= 2
             ? Math.max(1, (candles[candles.length - 1].time - candles[candles.length - 2].time))
             : 60;
+          // Fusion: OB kutusu (W2 penceresi) + ENTRY/STOP yatayları
+          const showEwFusionOverlay = document.getElementById('showEwFusionOverlay')?.checked ?? true;
+          if (showEwFusionOverlay && ew.chart_overlay) {
+            const ov = ew.chart_overlay;
+            const tLo = ov.ob_time_from_sec != null ? Number(ov.ob_time_from_sec) : null;
+            const tHi = ov.ob_time_to_sec != null ? Number(ov.ob_time_to_sec) : null;
+            const lo = ov.ob_low != null ? Number(ov.ob_low) : null;
+            const hi = ov.ob_high != null ? Number(ov.ob_high) : null;
+            if (tLo != null && tHi != null && lo != null && hi != null && Number.isFinite(tLo) && Number.isFinite(tHi) && Number.isFinite(lo) && Number.isFinite(hi)) {
+              const tA = Math.min(tLo, tHi);
+              const tB = Math.max(tLo, tHi);
+              const purple = '#A855F7';
+              const addObSeg = (x1, y1, x2, y2) => {
+                const line = chart.addLineSeries(overlayLineSeriesOptions({ color: purple, lineWidth: 2, lineStyle: 2 }));
+                line.setData([{ time: x1, value: y1 }, { time: x2, value: y2 }]);
+                chart._lineSeries.push(line);
+              };
+              addObSeg(tA, lo, tB, lo);
+              addObSeg(tA, hi, tB, hi);
+              addObSeg(tA, lo, tA, hi);
+              addObSeg(tB, lo, tB, hi);
+            }
+            const extEnd = lastCandleTime + 30 * barSec;
+            const tSpanStart = (tLo != null && tHi != null) ? Math.min(Number(tLo), Number(tHi)) : (lastCandleTime - Math.min(100 * barSec, lastCandleTime));
+            if (ov.entry != null && Number.isFinite(Number(ov.entry))) {
+              const ep = Number(ov.entry);
+              const line = chart.addLineSeries(overlayLineSeriesOptions({ color: '#3B82F6', lineWidth: 2, lineStyle: 0 }));
+              line.setData([{ time: tSpanStart, value: ep }, { time: extEnd, value: ep }]);
+              chart._lineSeries.push(line);
+            }
+            if (ov.stop != null && Number.isFinite(Number(ov.stop))) {
+              const sp = Number(ov.stop);
+              const line = chart.addLineSeries(overlayLineSeriesOptions({ color: '#EF4444', lineWidth: 2, lineStyle: 2 }));
+              line.setData([{ time: tSpanStart, value: sp }, { time: extEnd, value: sp }]);
+              chart._lineSeries.push(line);
+            }
+          }
           // Elliott formasyonunun tamamının SAĞINDA göstermek için, referansı son mum zamanı al.
           // Böylece tüm Fibo/Projeksiyon/W5 yatayları, fiyat verisinden sonra, boş bölgede kısa segment olarak görünür.
           const anchorTime = lastCandleTime;

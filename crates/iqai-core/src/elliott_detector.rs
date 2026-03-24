@@ -168,6 +168,8 @@ pub struct ElliottDetectorResult {
     pub smc_w2_zone_overlap: Option<bool>,
     pub smc_w2_detail: Option<String>,
     pub fusion_ewo_soft_fail: Option<bool>,
+    /// OB kutusu + ENTRY/STOP (fusion + W3 setup)
+    pub chart_overlay: Option<crate::elliott_fusion::ElliottFusionChartOverlay>,
 }
 
 impl Default for ElliottDetectorResult {
@@ -227,6 +229,7 @@ impl Default for ElliottDetectorResult {
             smc_w2_zone_overlap: None,
             smc_w2_detail: None,
             fusion_ewo_soft_fail: None,
+            chart_overlay: None,
         }
     }
 }
@@ -445,6 +448,21 @@ pub fn compute_elliott(
     result.smc_w2_zone_overlap = fusion.smc_w2_zone_overlap;
     result.smc_w2_detail = fusion.smc_w2_detail;
     result.fusion_ewo_soft_fail = fusion.fusion_ewo_soft_fail;
+    result.chart_overlay = fusion.chart_overlay;
+    if let Some(ref imp) = result.impulse_state {
+        if let Some(ref j) = imp.setup_w3 {
+            let mut co = result.chart_overlay.take().unwrap_or_default();
+            if let Some(e) = j.get("entry").and_then(|v| v.as_f64()) {
+                co.entry = Some(e);
+            }
+            if let Some(s) = j.get("sl").and_then(|v| v.as_f64()) {
+                co.stop = Some(s);
+            }
+            if co.ob_low.is_some() || co.entry.is_some() || co.stop.is_some() {
+                result.chart_overlay = Some(co);
+            }
+        }
+    }
     if fusion.fusion_ewo_soft_fail == Some(true) {
         let ex = result.validation_msg.take().unwrap_or_default();
         result.validation_msg = Some(if ex.is_empty() {

@@ -137,6 +137,8 @@ pub struct ElliottAnnotations {
     pub smc_w2_zone_overlap: Option<bool>,
     pub smc_w2_detail: Option<String>,
     pub fusion_ewo_soft_fail: Option<bool>,
+    /// OB kutusu + ENTRY/STOP (EW fusion / W3 setup)
+    pub chart_overlay: Option<iqai_core::ElliottFusionChartOverlay>,
 }
 
 #[derive(serde::Serialize)]
@@ -972,6 +974,7 @@ fn elliott_result_to_annotations(
         smc_w2_zone_overlap: r.smc_w2_zone_overlap,
         smc_w2_detail: r.smc_w2_detail,
         fusion_ewo_soft_fail: r.fusion_ewo_soft_fail,
+        chart_overlay: r.chart_overlay,
     }
 }
 
