@@ -2,6 +2,8 @@
 
 Bu doküman, **dev ortamındaki** `/app/iqai` kodunun **prod sunucuya** (örn. `100.120.77.57:/app/iqai`) taşınması, derlenmesi ve çalıştırılması için standart süreci içerir.
 
+**GitHub push/pull ve prod sert eşitleme** için hazır scriptler: `scripts/README.md` (`git-push.sh`, `git-pull.sh`, `git-prod-reset.sh`).
+
 ---
 
 ## 1. Temel prensipler (standartlar)

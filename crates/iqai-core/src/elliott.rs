@@ -85,6 +85,137 @@ impl WaveDegree {
     }
 }
 
+/// Elliott Wave International / klasik grafiklerde dereceye göre dalga gösterimi:
+/// Grand → Roma büyük (I–V), Primary → (1), Intermediate → ①, Minor → [1], Minute → alt simge ₁,
+/// Minuette → (i)–(v), Subminuette → üst simge ¹.
+///
+/// Ham `label` (`0`…`5`, `A`…`C`) mantık ve pivot konumu için aynı kalır; bu fonksiyon sadece **görünür metin** üretir.
+pub fn format_wave_label_for_degree(degree: Option<WaveDegree>, raw: &str) -> String {
+    let d = degree.unwrap_or(WaveDegree::Minute);
+    let t = raw.trim();
+    if t.is_empty() {
+        return raw.to_string();
+    }
+    let up = t.to_ascii_uppercase();
+    match up.as_str() {
+        "0" => format_degree_zero(d),
+        "1" | "2" | "3" | "4" | "5" => {
+            if let Ok(n) = t.parse::<u8>() {
+                if (1..=5).contains(&n) {
+                    return format_impulse_by_degree(d, n);
+                }
+            }
+            raw.to_string()
+        }
+        "A" | "B" | "C" => {
+            let c = t.chars().next().unwrap_or('A');
+            format_corrective_by_degree(d, c)
+        }
+        _ => raw.to_string(),
+    }
+}
+
+fn format_degree_zero(d: WaveDegree) -> String {
+    match d {
+        WaveDegree::Grand => "0".to_string(),
+        WaveDegree::Primary => "(0)".to_string(),
+        WaveDegree::Intermediate => "⓪".to_string(),
+        WaveDegree::Minor => "[0]".to_string(),
+        WaveDegree::Minute => "₀".to_string(),
+        WaveDegree::Minuette => "(0)".to_string(),
+        WaveDegree::SubMinuette => "⁰".to_string(),
+    }
+}
+
+fn format_impulse_by_degree(d: WaveDegree, n: u8) -> String {
+    match d {
+        WaveDegree::Grand => roman_upper(n),
+        WaveDegree::Primary => format!("({n})"),
+        WaveDegree::Intermediate => circled_digit(n),
+        WaveDegree::Minor => format!("[{n}]"),
+        WaveDegree::Minute => subscript_digit(n),
+        WaveDegree::Minuette => format!("({})", roman_lower(n)),
+        WaveDegree::SubMinuette => superscript_digit(n),
+    }
+}
+
+fn roman_upper(n: u8) -> String {
+    match n {
+        1 => "I".into(),
+        2 => "II".into(),
+        3 => "III".into(),
+        4 => "IV".into(),
+        5 => "V".into(),
+        _ => n.to_string(),
+    }
+}
+
+fn roman_lower(n: u8) -> String {
+    match n {
+        1 => "i".into(),
+        2 => "ii".into(),
+        3 => "iii".into(),
+        4 => "iv".into(),
+        5 => "v".into(),
+        _ => n.to_string(),
+    }
+}
+
+fn circled_digit(n: u8) -> String {
+    match n {
+        0 => "⓪".to_string(),
+        1..=9 => char::from_u32(0x2460 + (n as u32) - 1)
+            .map(|c| c.to_string())
+            .unwrap_or_else(|| n.to_string()),
+        _ => n.to_string(),
+    }
+}
+
+fn subscript_digit(n: u8) -> String {
+    const DIG: [char; 6] = ['\u{2080}', '\u{2081}', '\u{2082}', '\u{2083}', '\u{2084}', '\u{2085}'];
+    if (n as usize) < DIG.len() {
+        DIG[n as usize].to_string()
+    } else {
+        n.to_string()
+    }
+}
+
+fn superscript_digit(n: u8) -> String {
+    match n {
+        0 => "⁰".to_string(),
+        1 => "¹".to_string(),
+        2 => "²".to_string(),
+        3 => "³".to_string(),
+        4 => "⁴".to_string(),
+        5 => "⁵".to_string(),
+        _ => n.to_string(),
+    }
+}
+
+fn circled_upper_letter(c: char) -> String {
+    let u = c.to_ascii_uppercase() as u32;
+    if (b'A'..=b'Z').contains(&(u as u8)) {
+        char::from_u32(0x24B6 + (u - b'A' as u32))
+            .map(|ch| ch.to_string())
+            .unwrap_or_else(|| c.to_string())
+    } else {
+        c.to_string()
+    }
+}
+
+fn format_corrective_by_degree(d: WaveDegree, c: char) -> String {
+    let u = c.to_ascii_uppercase();
+    match d {
+        WaveDegree::Grand => u.to_string(),
+        WaveDegree::Primary => format!("({u})"),
+        WaveDegree::Intermediate => circled_upper_letter(u),
+        WaveDegree::Minor => format!("[{u}]"),
+        WaveDegree::Minute => u.to_string(),
+        WaveDegree::Minuette => format!("({})", u.to_ascii_lowercase()),
+        WaveDegree::SubMinuette => format!("({})", u), // ince derece: tek harf
+    }
+}
+
 /// Elliott Wave formasyon türü (EWM Cheat Sheet + Studocu interchange uyumlu)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ElliottFormation {

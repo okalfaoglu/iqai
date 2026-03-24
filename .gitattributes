@@ -1,0 +1,2 @@
+# Shell scriptler Linux'ta çalışsın (CRLF shebang hatası olmasın)
+*.sh text eol=lf

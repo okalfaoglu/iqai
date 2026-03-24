@@ -542,7 +542,8 @@
     <div class="ew-legend" id="ewLegend">
       <span class="solid">● Duz cizgi: tamamlanan dalga</span><br>
       <span class="dotted">● Noktali cizgi: hedef/projeksiyon</span><br>
-      <span style="color:#FFAA00">● Turuncu noktali: potansiyel W3–W5 yolu (Impulse 1–2)</span>
+      <span style="color:#FFAA00">● Turuncu noktali: potansiyel W3–W5 yolu (Impulse 1–2)</span><br>
+      <span style="color:#B39DDB">● Dalga etiketi: TF/pencereye göre derece (ornek: I / (1) / ① / [1] / ₁ / (i) / ¹)</span>
     </div>
     <div class="wave-pts" id="ewWavePoints">—</div>
     <div class="w5-pred" id="ewW5Pred">—</div>
@@ -579,6 +580,13 @@
 
     // Classic formasyon çizgilerine göre hover tooltip modeli
     let classicHoverModels = [];
+
+    /** Ham `label` yerine dereceye göre biçimlendirilmiş gösterim (grafik/panel). */
+    function ewWaveLabelDisplay(p) {
+      const d = p && (p.label_display != null && String(p.label_display).length > 0)
+        ? String(p.label_display) : String(p.label || '');
+      return d;
+    }
 
     /** Elliott pivot: tepe → aboveBar, dip → belowBar (`is_high` API alanı). */
     function ewWaveMarkerPosition(p) {
@@ -777,7 +785,7 @@
       };
       ptsEl.innerHTML = (ew.wave_points || []).map(p => {
         const tip = (_wp[p.label] || '') + ' (' + (p.price?.toFixed(4) || '') + ')';
-        return `<span title="${tip}">W${p.label}: ${(p.price || 0).toFixed(2)}</span>`;
+        return `<span title="${tip}">W${ewWaveLabelDisplay(p)}: ${(p.price || 0).toFixed(2)}</span>`;
       }).join('  ') || '—';
       if (w5El) {
         const w5 = ew.w5_targets;
@@ -1164,7 +1172,7 @@
         const ewValid = ann.elliott && (ann.elliott.validation_ok === true);
         const ewFormEnabled = ann.elliott && isEwFormationEnabled(ann.elliott.formation, ann.elliott.formation_type);
         const ewPointMarkers = showElliott && ewValid && ewFormEnabled && (ann.elliott?.wave_points || []).map(p => ({
-          time: p.time, position: ewWaveMarkerPosition(p), color: '#E040FB', shape: 'circle', text: `W${p.label} ${(p.price||0).toFixed(2)}`
+          time: p.time, position: ewWaveMarkerPosition(p), color: '#E040FB', shape: 'circle', text: `W${ewWaveLabelDisplay(p)} ${(p.price||0).toFixed(2)}`
         }));
         const formations = data.formations || [];
         const formationsFiltered = formations.filter(f => isEwFormationEnabled(f.formation, f.formation_type));
@@ -1172,7 +1180,7 @@
         const formMarkers = showElliott && formationsFiltered.length > 0
           ? formationsFiltered.flatMap((f, fi) => (f.wave_points || []).map(p => ({
               time: p.time, position: ewWaveMarkerPosition(p), color: formColors[fi % formColors.length],
-              shape: 'circle', text: `W${p.label} ${(p.price||0).toFixed(2)}`
+              shape: 'circle', text: `W${ewWaveLabelDisplay(p)} ${(p.price||0).toFixed(2)}`
             })))
           : [];
 
@@ -1567,7 +1575,7 @@
               position: ewWaveMarkerPosition(p),
               color: '#FDE047',
               shape: 'circle',
-              text: `W${p.label}`
+              text: `W${ewWaveLabelDisplay(p)}`
             }));
             // Append to any existing markers instead of overwriting completely
             const existing = chart._ewMarkers || [];
@@ -1604,7 +1612,7 @@
       }
       const ewHtml = ew.map((f, i) => {
         const dir = f.is_bullish ? '▲' : '▼';
-        const pts = (f.wave_points || []).map(p => `W${p.label}:${(p.price||0).toFixed(2)}`).join(' ');
+        const pts = (f.wave_points || []).map(p => `W${ewWaveLabelDisplay(p)}:${(p.price||0).toFixed(2)}`).join(' ');
         const timeStr = f.end_time ? new Date(f.end_time).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
         const w4 = (f.wave_points || []).find(p => p.label === '4');
         const scrollTime = w4 ? w4.time : '';

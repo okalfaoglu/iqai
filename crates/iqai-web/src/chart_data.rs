@@ -152,7 +152,11 @@ pub struct ImpulseState {
 pub struct ElliottWavePoint {
     pub time: i64,
     pub price: f64,
+    /// Ham indeks (0–5, A–C) — `is_high` / panel anahtarları için.
     pub label: String,
+    /// Dalga derecesine göre biçimlendirilmiş grafik/panel metni (örn. `I`, `(1)`, `①`).
+    #[serde(default)]
+    pub label_display: String,
     /// Pivot tepe (aboveBar) / dip (belowBar) — GUI marker konumu.
     pub is_high: bool,
 }
@@ -850,11 +854,17 @@ fn elliott_result_to_annotations(
     let wave_points: Vec<_> = r
         .wave_points
         .into_iter()
-        .map(|p| ElliottWavePoint {
-            time: p.time,
-            price: p.price,
-            label: p.label,
-            is_high: p.is_high,
+        .map(|p| {
+            let label = p.label.clone();
+            let label_display =
+                iqai_core::elliott::format_wave_label_for_degree(r.degree, &label);
+            ElliottWavePoint {
+                time: p.time,
+                price: p.price,
+                label,
+                label_display,
+                is_high: p.is_high,
+            }
         })
         .collect();
 
