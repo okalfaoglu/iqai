@@ -82,6 +82,38 @@ struct FormationsParams {
     limit: Option<u32>,
 }
 
+#[derive(Debug, Deserialize)]
+struct BacktestOptimizeParams {
+    symbol: Option<String>,
+    market: Option<String>,
+    exchange: Option<String>,
+    #[serde(rename = "tf")]
+    timeframe: Option<String>,
+    limit: Option<u32>,
+    initial_capital: Option<f64>,
+    risk_pct_per_trade: Option<f64>,
+    leverage: Option<f64>,
+    commission_bps: Option<u32>,
+    slippage_bps: Option<u32>,
+    /// CSV: "5,8,13,21"
+    pivots: Option<String>,
+    /// CSV: "2,3,5,8"
+    inner_pivots: Option<String>,
+    min_trades: Option<usize>,
+    /// return_pct | avg_pnl_per_trade
+    objective: Option<String>,
+    top_n: Option<usize>,
+}
+
+fn parse_u32_csv(input: Option<&str>) -> Vec<u32> {
+    input
+        .unwrap_or("")
+        .split(',')
+        .filter_map(|s| s.trim().parse::<u32>().ok())
+        .filter(|v| *v >= 2)
+        .collect()
+}
+
 /// Tüm config.json içeriğini okuyan API çıktısı için tip ipucu.
 type AppConfig = iqai_core::AppConfig;
 
@@ -120,6 +152,7 @@ pub fn build_router() -> Router {
         .route("/api/chart", get(api_chart))
         .route("/api/metrics", get(api_metrics))
         .route("/api/formations", get(api_formations))
+        .route("/api/backtest/optimize", get(api_backtest_optimize))
         .route("/api/pnl/symbols", get(api_pnl_symbols))
         .route("/api/q-analysis", get(api_q_analysis_all))
         .route("/api/q-analiz/detections", get(api_q_analiz_detections))
@@ -1202,5 +1235,96 @@ async fn api_formations(Query(params): Query<FormationsParams>) -> impl IntoResp
         "timeframe": tf_str,
         "count": formations.len(),
         "formations": formations
+    }))
+}
+
+/// Backtest üzerinde pivot/zigzag (outer + inner) optimizasyonu.
+/// Örnek:
+/// `/api/backtest/optimize?symbol=ETHUSDT&tf=5m&pivots=5,8,13,21&inner_pivots=2,3,5&objective=return_pct&top_n=5`
+async fn api_backtest_optimize(Query(params): Query<BacktestOptimizeParams>) -> impl IntoResponse {
+    let market = params.market.as_deref().unwrap_or("futures");
+    let tv_exchange_param = params.exchange.as_deref().unwrap_or("BINANCE");
+    let symbol = params.symbol.as_deref().unwrap_or_else(|| {
+        if market.eq_ignore_ascii_case("tv") {
+            tv_default_symbol(tv_exchange_param)
+        } else {
+            "ETHUSDT"
+        }
+    });
+    let tf_str = params.timeframe.as_deref().unwrap_or("15M");
+    let limit = params.limit.unwrap_or(1500);
+    let chart_tf = Timeframe::from_str(tf_str).unwrap_or(Timeframe::M15);
+
+    let use_tv = market.eq_ignore_ascii_case("tv");
+    let tv_exchange = params.exchange.as_deref().unwrap_or("BINANCE");
+    let tv_script = std::env::var("TV_CONNECTOR_SCRIPT").ok().filter(|s| !s.is_empty());
+    let tv_url = std::env::var("TV_CONNECTOR_URL").ok().filter(|s| !s.is_empty());
+    let candles = if use_tv {
+        let client = if let Some(script) = tv_script {
+            let python = std::env::var("TV_CONNECTOR_PYTHON").unwrap_or_else(|_| "python3".to_string());
+            TvConnectorClient::subprocess(python, script, tv_exchange)
+        } else if let Some(base) = tv_url {
+            TvConnectorClient::with_exchange(base, tv_exchange)
+        } else {
+            TvConnectorClient::auto(tv_exchange)
+        };
+        client
+            .fetch_klines(symbol, chart_tf, limit)
+            .await
+            .unwrap_or_default()
+    } else {
+        BinanceFuturesClient::new()
+            .fetch_klines(symbol, chart_tf, limit)
+            .await
+            .unwrap_or_default()
+    };
+
+    if candles.len() < 200 {
+        return axum::Json(serde_json::json!({
+            "symbol": symbol,
+            "timeframe": tf_str,
+            "error": "Yetersiz bar: optimizasyon için en az 200 bar önerilir",
+            "candles": candles.len(),
+            "results": []
+        }));
+    }
+
+    let app_cfg = iqai_core::AppConfig::load();
+    let sm_cfg = app_cfg.as_ref().and_then(|c| c.smart_money.as_ref());
+    let base_config = Config::from_smart_money(sm_cfg);
+
+    let pivot_lengths = parse_u32_csv(params.pivots.as_deref());
+    let inner_pivot_lengths = parse_u32_csv(params.inner_pivots.as_deref());
+    let objective = match params.objective.as_deref().unwrap_or("return_pct") {
+        "avg_pnl_per_trade" => iqai_core::backtest::BacktestOptimizationObjective::AvgPnlPerTrade,
+        _ => iqai_core::backtest::BacktestOptimizationObjective::ReturnPct,
+    };
+    let opt_params = iqai_core::backtest::BacktestOptimizationParams {
+        pivot_lengths: if pivot_lengths.is_empty() { vec![5, 8, 13, 21] } else { pivot_lengths },
+        inner_pivot_lengths,
+        min_trades: params.min_trades.unwrap_or(3),
+        objective,
+        top_n: params.top_n.unwrap_or(5),
+    };
+    let out = iqai_core::backtest::optimize_elliott_pivots(
+        &candles,
+        &base_config,
+        chart_tf,
+        symbol,
+        params.initial_capital.unwrap_or(10_000.0),
+        params.risk_pct_per_trade.unwrap_or(1.0),
+        params.leverage.unwrap_or(10.0),
+        params.commission_bps.unwrap_or(4),
+        params.slippage_bps.unwrap_or(0),
+        &opt_params,
+    );
+
+    axum::Json(serde_json::json!({
+        "symbol": symbol,
+        "timeframe": tf_str,
+        "market": market,
+        "candles": candles.len(),
+        "params": opt_params,
+        "results": out
     }))
 }

@@ -855,7 +855,8 @@ fn fibo_color(label: &str) -> &'static str {
 fn elliott_result_to_annotations(
     r: iqai_core::elliott_detector::ElliottDetectorResult,
 ) -> ElliottAnnotations {
-    let wave_points: Vec<_> = r
+    let original_points: Vec<_> = r.wave_points.clone();
+    let mut wave_points: Vec<_> = r
         .wave_points
         .into_iter()
         .map(|p| {
@@ -872,7 +873,16 @@ fn elliott_result_to_annotations(
         })
         .collect();
 
-    let wave_legs: Vec<_> = r
+    let original_point_keys: std::collections::HashSet<(String, i64)> = original_points
+        .iter()
+        .map(|p| (p.label.clone(), p.time))
+        .collect();
+    let mut existing_point_keys: std::collections::HashSet<(String, i64)> = wave_points
+        .iter()
+        .map(|p| (p.label.clone(), p.time))
+        .collect();
+
+    let mut wave_legs: Vec<_> = r
         .wave_legs
         .into_iter()
         .map(|l| {
@@ -888,6 +898,36 @@ fn elliott_result_to_annotations(
             }
         })
         .collect();
+
+    // Kesikli hedef bacaklar için endpoint etiketi de üret (örn. Impulse'ta "5" görünmesi).
+    for leg in &wave_legs {
+        if !leg.dotted {
+            continue;
+        }
+        let key = (leg.label.clone(), leg.time2);
+        if existing_point_keys.contains(&key) {
+            continue;
+        }
+        let label_display = iqai_core::elliott::format_wave_label_for_degree(r.degree, &leg.label);
+        wave_points.push(ElliottWavePoint {
+            time: leg.time2,
+            price: leg.price2,
+            label: leg.label.clone(),
+            label_display,
+            is_high: leg.price2 >= leg.price1,
+        });
+        existing_point_keys.insert(key);
+    }
+
+    // Tamamlanmış/geçerli formasyonda son bacak artık proje değil, düz çizgi olmalı.
+    if r.validation_ok == Some(true) && r.in_progress != Some(true) {
+        if let Some(last_leg) = wave_legs.last_mut() {
+            let key = (last_leg.label.clone(), last_leg.time2);
+            if last_leg.dotted && original_point_keys.contains(&key) {
+                last_leg.dotted = false;
+            }
+        }
+    }
 
     let fibo_levels: Vec<_> = r
         .fibo_levels
@@ -988,7 +1028,7 @@ pub fn scan_elliott_formations(candles: &[Candle], config: &Config) -> Vec<Histo
     let step = pivot_len.max(10); // Adım: pivot_length veya en az 10 bar
 
     let mut results = Vec::new();
-    let mut last_w4_time: Option<i64> = None;
+    let mut seen_terminal_keys: std::collections::HashSet<(String, i64)> = std::collections::HashSet::new();
 
     for end in (min_len..candles.len()).step_by(step) {
         let slice = &candles[..=end];
@@ -998,17 +1038,12 @@ pub fn scan_elliott_formations(candles: &[Candle], config: &Config) -> Vec<Histo
             continue;
         }
 
-        let last_time = ew
-            .wave_points
-            .iter()
-            .find(|p| matches!(p.label.as_str(), "4" | "C" | "E"))
-            .map(|p| p.time)
-            .or_else(|| ew.wave_points.last().map(|p| p.time));
-        if let Some(t) = last_time {
-            if last_w4_time == Some(t) {
+        if let Some(last_point) = ew.wave_points.last() {
+            let key = (ew.formation.clone(), last_point.time);
+            if seen_terminal_keys.contains(&key) {
                 continue;
             }
-            last_w4_time = Some(t);
+            seen_terminal_keys.insert(key);
         }
 
         let is_bullish = ew
