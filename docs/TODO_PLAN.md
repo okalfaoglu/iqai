@@ -40,6 +40,7 @@ IQAI bağlamı ve sentez: `docs/TRADE_FAILURE_ANALYSIS.md`, `docs/TRADE_FAILURE_
 | G-04 | [x] DONE | `iqai-gui` stub mesajı + `crates/iqai-gui/README.md` + `docs/GUI_ROADMAP.md` |
 | G-05 | [x] DONE | Q-RADAR + Q-Setup + Elliott: `q_radar_analysis` zenginleştirme, `config.q_enrich_opportunity_with_setup_elliott`, `radar_setup_alignment_score` — `docs/API_Q_ANALYSIS.md` |
 | T-01 | [x] DONE | `iqai-web` router lib’de: `http_app::build_router`, `run_server`; ince `main.rs`; `tests/http_smoke` — `/`, `/metrics/prometheus`, OpenAPI uçları |
+| G-06 | [x] DONE | XMSTradeX / TradingView Elliott PDF × kod matrisi (TODO/DONE): `docs/XMST_TRADINGVIEW_EW_PDF_VS_KOD.md` — PDF sayfa eşlemesi §4 kullanıcı tarafından doldurulacak |
 
 ---
 

@@ -544,7 +544,7 @@
       <span class="solid">● Duz cizgi: tamamlanan dalga</span><br>
       <span class="dotted">● Noktali cizgi: hedef/projeksiyon</span><br>
       <span style="color:#FFAA00">● Turuncu noktali: potansiyel W3–W5 yolu (Impulse 1–2)</span><br>
-      <span style="color:#B39DDB">● Dalga etiketi: TF/pencereye göre derece (ornek: I / (1) / ① / [1] / ₁ / (i) / ¹)</span>
+      <span style="color:#B39DDB">● Etiket: varsayılan Primary (1)/(A); TV benzeri renk (1/3/5 yeşil, 2/4 turuncu); grafikte W on eki yok</span>
     </div>
     <div class="wave-pts" id="ewWavePoints">—</div>
     <div class="w5-pred" id="ewW5Pred">—</div>
@@ -589,11 +589,29 @@
       return d;
     }
 
+    /** Grafik marker metni: TradingView’e yakın — dalga + fiyat, `W` ön eki yok (kalabalığı azaltır). */
+    function ewWaveMarkerChartText(p) {
+      const d = ewWaveLabelDisplay(p);
+      const px = (p.price != null && Number.isFinite(Number(p.price))) ? Number(p.price).toFixed(2) : '';
+      return px ? (d + ' ' + px) : d;
+    }
+
+    /** TV tarzı renk: itki 1/3/5 yeşil, 2/4 kırmızı; üçgen A/C/E vs B/D ayrımı. */
+    function ewWaveMarkerColor(p) {
+      const L = String(p.label || '');
+      if (['1', '3', '5'].includes(L)) return '#22C55E';
+      if (['2', '4'].includes(L)) return '#F97316';
+      if (['A', 'C', 'E'].includes(L)) return '#38BDF8';
+      if (['B', 'D'].includes(L)) return '#FB7185';
+      if (L === '0') return '#EAB308';
+      return '#FDE047';
+    }
+
     /** Elliott pivot: tepe → aboveBar, dip → belowBar (`is_high` API alanı). */
     function ewWaveMarkerPosition(p) {
       if (p && typeof p.is_high === 'boolean') return p.is_high ? 'aboveBar' : 'belowBar';
       const L = String(p.label || '');
-      if (['0', '2', '4', 'B'].includes(L)) return 'belowBar';
+      if (['0', '2', '4', 'B', 'D'].includes(L)) return 'belowBar';
       return 'aboveBar';
     }
 
@@ -786,7 +804,7 @@
       };
       ptsEl.innerHTML = (ew.wave_points || []).map(p => {
         const tip = (_wp[p.label] || '') + ' (' + (p.price?.toFixed(4) || '') + ')';
-        return `<span title="${tip}">W${ewWaveLabelDisplay(p)}: ${(p.price || 0).toFixed(2)}</span>`;
+        return `<span title="${tip}">${ewWaveLabelDisplay(p)}: ${(p.price || 0).toFixed(2)}</span>`;
       }).join('  ') || '—';
       if (w5El) {
         const w5 = ew.w5_targets;
@@ -1170,18 +1188,19 @@
         ];
         // Classic pattern pivot numbering (1..N) + their dotted zigzag.
         const classicPivotMarkers = [];
-        const ewValid = ann.elliott && (ann.elliott.validation_ok === true);
+        const ewValid = ann.elliott && (ann.elliott.validation_ok === true
+          || (ann.elliott.wave_legs && ann.elliott.wave_legs.length > 0));
         const ewFormEnabled = ann.elliott && isEwFormationEnabled(ann.elliott.formation, ann.elliott.formation_type);
         const ewPointMarkers = showElliott && ewValid && ewFormEnabled && (ann.elliott?.wave_points || []).map(p => ({
-          time: p.time, position: ewWaveMarkerPosition(p), color: '#E040FB', shape: 'circle', text: `W${ewWaveLabelDisplay(p)} ${(p.price||0).toFixed(2)}`
+          time: p.time, position: ewWaveMarkerPosition(p), color: ewWaveMarkerColor(p), shape: 'circle', text: ewWaveMarkerChartText(p)
         }));
         const formations = data.formations || [];
         const formationsFiltered = formations.filter(f => isEwFormationEnabled(f.formation, f.formation_type));
         const formColors = ['#00E5FF', '#00BFA5', '#E040FB', '#76FF03', '#FFB627'];
         const formMarkers = showElliott && formationsFiltered.length > 0
           ? formationsFiltered.flatMap((f, fi) => (f.wave_points || []).map(p => ({
-              time: p.time, position: ewWaveMarkerPosition(p), color: formColors[fi % formColors.length],
-              shape: 'circle', text: `W${ewWaveLabelDisplay(p)} ${(p.price||0).toFixed(2)}`
+              time: p.time, position: ewWaveMarkerPosition(p), color: ewWaveMarkerColor(p),
+              shape: 'circle', text: ewWaveMarkerChartText(p)
             })))
           : [];
 
@@ -1606,20 +1625,6 @@
               chart._lineSeries.push(line);
             });
           }
-          // Wave point labels (0-5, A,B,C) as markers on the main candle series
-          if (ew.wave_points && ew.wave_points.length > 0 && candleSeries && candleSeries.setMarkers) {
-            const markers = (ew.wave_points || []).map(p => ({
-              time: p.time > 1_000_000_000_000 ? p.time / 1000 : p.time,
-              position: ewWaveMarkerPosition(p),
-              color: '#FDE047',
-              shape: 'circle',
-              text: `W${ewWaveLabelDisplay(p)}`
-            }));
-            // Append to any existing markers instead of overwriting completely
-            const existing = chart._ewMarkers || [];
-            chart._ewMarkers = markers;
-            candleSeries.setMarkers(markers);
-          }
         }
         // Geçmiş formasyonları mum verisi üzerine çiz: dalga bacakları (çizgiler)
         if (showElliott && formationsFiltered.length > 0) {
@@ -1650,7 +1655,7 @@
       }
       const ewHtml = ew.map((f, i) => {
         const dir = f.is_bullish ? '▲' : '▼';
-        const pts = (f.wave_points || []).map(p => `W${ewWaveLabelDisplay(p)}:${(p.price||0).toFixed(2)}`).join(' ');
+        const pts = (f.wave_points || []).map(p => `${ewWaveLabelDisplay(p)}: ${(p.price||0).toFixed(2)}`).join(' ');
         const timeStr = f.end_time ? new Date(f.end_time).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
         const w4 = (f.wave_points || []).find(p => p.label === '4');
         const scrollTime = w4 ? w4.time : '';

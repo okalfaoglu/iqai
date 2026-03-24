@@ -89,12 +89,22 @@ impl WaveDegree {
 /// Grand → Roma büyük (I–V), Primary → (1), Intermediate → ①, Minor → [1], Minute → alt simge ₁,
 /// Minuette → (i)–(v), Subminuette → üst simge ¹.
 ///
-/// Ham `label` (`0`…`5`, `A`…`C`) mantık ve pivot konumu için aynı kalır; bu fonksiyon sadece **görünür metin** üretir.
+/// Ham `label` (`0`…`5`, `A`…`E`, `A'` …) mantık ve pivot konumu için aynı kalır; bu fonksiyon sadece **görünür metin** üretir.
+///
+/// Varsayılan derece **Primary** — TradingView’de sık görülen `(1)`, `(A)` parantez stiline yakın (tek derece gösteriminde).
 pub fn format_wave_label_for_degree(degree: Option<WaveDegree>, raw: &str) -> String {
-    let d = degree.unwrap_or(WaveDegree::Minute);
+    let d = degree.unwrap_or(WaveDegree::Primary);
     let t = raw.trim();
     if t.is_empty() {
         return raw.to_string();
+    }
+    // Zigzag A' vb.
+    if t.len() == 2 && t.ends_with('\'') {
+        let base = t.chars().next().unwrap();
+        if base.is_ascii_alphabetic() {
+            let inner = format_corrective_by_degree(d, base);
+            return format!("{inner}'");
+        }
     }
     let up = t.to_ascii_uppercase();
     match up.as_str() {
@@ -107,11 +117,16 @@ pub fn format_wave_label_for_degree(degree: Option<WaveDegree>, raw: &str) -> St
             }
             raw.to_string()
         }
-        "A" | "B" | "C" => {
-            let c = t.chars().next().unwrap_or('A');
-            format_corrective_by_degree(d, c)
+        _ => {
+            // Üçgen ABCDE, düzeltme harfleri (D, E dahil — önceden eksikti)
+            if t.len() == 1 {
+                let c = t.chars().next().unwrap();
+                if c.is_ascii_alphabetic() {
+                    return format_corrective_by_degree(d, c);
+                }
+            }
+            raw.to_string()
         }
-        _ => raw.to_string(),
     }
 }
 

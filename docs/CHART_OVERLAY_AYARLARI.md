@@ -15,3 +15,12 @@
 | **Sağda çizgi fiyat etiketleri** | Her `LineSeries` için fiyat ölçeğindeki renkli etiketler. Varsayılan **kapalı**; ihtiyaç halinde açın. |
 
 Ayarlar `localStorage` içinde `iqai-overlay-state` ile saklanır.
+
+## Elliott Wave marker’ları (TradingView’e yakın)
+
+- **Etiket biçimi:** Varsayılan **Primary** derece — `(0)` … `(5)`, `(A)` … `(E)` (API `label_display`, `crates/iqai-core/src/elliott.rs`).
+- **Grafikte `W` ön eki yok** — sadece dalga + fiyat (kalabalık azaltma).
+- **Renk:** itki **1/3/5** yeşil, **2/4** turuncu; üçgen / düzeltme **A/C/E** mavi ton, **B/D** pembe; **0** sarı.
+- **Geçmiş formasyonlar** ile ana sayım aynı renk şemasını kullanır (dalga harfine göre); çizgi renkleri formasyon indeksine göre kalır.
+
+İki ayrı formasyon aynı grafikte **C–D–E** ile başlıyormuş gibi görünebilir — biri geçmiş tarama, biri güncel; **Geçmiş Formasyonlar** listesinden ayırt edilir.
