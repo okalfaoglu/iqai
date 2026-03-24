@@ -591,11 +591,25 @@
       return d;
     }
 
-    /** Grafik marker metni: TradingView’e yakın — dalga + fiyat, `W` ön eki yok (kalabalığı azaltır). */
-    function ewWaveMarkerChartText(p) {
+    function ewExpectedInnerPatternForWave(ew, rawLabel) {
+      if (!ew || !rawLabel) return '';
+      const l = String(rawLabel);
+      if (ew.diagonal_sub === 'LeadingMotive') {
+        if (['1', '3', '5'].includes(l)) return '5';
+        if (['2', '4'].includes(l)) return '3';
+      } else if (ew.diagonal_sub === 'EndingCorrective') {
+        if (['1', '2', '3', '4', '5'].includes(l)) return '3';
+      }
+      return '';
+    }
+
+    /** Grafik marker metni: TV’ye yakın — dalga + fiyat (+ diyagonalda iç sayım hedefi). */
+    function ewWaveMarkerChartText(p, ew) {
       const d = ewWaveLabelDisplay(p);
       const px = (p.price != null && Number.isFinite(Number(p.price))) ? Number(p.price).toFixed(2) : '';
-      return px ? (d + ' ' + px) : d;
+      const inner = ewExpectedInnerPatternForWave(ew, p && p.label);
+      const core = px ? (d + ' ' + px) : d;
+      return inner ? (core + ' (' + inner + ')') : core;
     }
 
     /** TV tarzı renk: itki 1/3/5 yeşil, 2/4 kırmızı; üçgen A/C/E vs B/D ayrımı. */
@@ -1262,7 +1276,7 @@
           || (ann.elliott.wave_legs && ann.elliott.wave_legs.length > 0));
         const ewFormEnabled = ann.elliott && isEwFormationEnabled(ann.elliott.formation, ann.elliott.formation_type);
         const ewPointMarkers = showElliott && ewValid && ewFormEnabled && (ann.elliott?.wave_points || []).map(p => ({
-          time: p.time, position: ewWaveMarkerPosition(p), color: ewWaveMarkerColor(p), shape: 'circle', text: ewWaveMarkerChartText(p)
+          time: p.time, position: ewWaveMarkerPosition(p), color: ewWaveMarkerColor(p), shape: 'circle', text: ewWaveMarkerChartText(p, ann.elliott)
         }));
         const formations = data.formations || [];
         const formationsFiltered = formations.filter(f => isEwFormationEnabled(f.formation, f.formation_type));
@@ -1270,7 +1284,7 @@
         const formMarkers = showElliott && formationsFiltered.length > 0
           ? formationsFiltered.flatMap((f, fi) => (f.wave_points || []).map(p => ({
               time: p.time, position: ewWaveMarkerPosition(p), color: ewWaveMarkerColor(p),
-              shape: 'circle', text: ewWaveMarkerChartText(p)
+              shape: 'circle', text: ewWaveMarkerChartText(p, ann.elliott)
             })))
           : [];
 
