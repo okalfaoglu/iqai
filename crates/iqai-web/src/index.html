@@ -161,6 +161,9 @@
     .panel-elliott .ew-validation.fail { color: #FF1744; }
     .panel-elliott .ew-impulse-stage { font-size: 10px; color: #8b93ff; margin-top: 4px; }
     .panel-elliott .ew-setups { font-size: 10px; color: #00BFA5; margin-top: 6px; line-height: 1.4; }
+    .panel-elliott .ew-legend { font-size: 10px; color: #cbd5e1; margin-top: 6px; line-height: 1.35; }
+    .panel-elliott .ew-legend .solid { color: #2dd4bf; }
+    .panel-elliott .ew-legend .dotted { color: #fbbf24; }
     .live-badge { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00e676; animation: pulse 1.5s infinite; margin-right: 6px; }
     .live-badge.off { background: #666; animation: none; }
     @keyframes pulse { 50% { opacity: 0.5; } }
@@ -463,6 +466,7 @@
         <label><input type="checkbox" id="showEwComplex" checked> Double/Triple</label>
       </div>
       <label><input type="checkbox" id="showProjections" checked> Projeksiyonlar</label>
+      <label title="W2–W3–W4–W5 potansiyel çapraz yol (turuncu noktalı)"><input type="checkbox" id="showEwProjectionPath" checked> EW potansiyel yol (W3–W5)</label>
 
       <strong class="drawer-sub" title="Çok sayıda çizgi serisi = sağda çok fiyat etiketi.">Yatay / ölçek</strong>
       <label title="Fibo + W5 kısa yatay segmentleri (grafik sağında)"><input type="checkbox" id="showEwFiboYatay" checked> Elliott Fibo + W5 yatayları</label>
@@ -529,10 +533,17 @@
     <div class="panel-body">
     <div class="formation-type" id="ewFormationType">—</div>
     <div class="formation-name" id="ewFormationName">—</div>
+    <div class="ew-degree-line" id="ewDegreeLine" style="font-size:11px;color:#B39DDB;margin-top:4px;line-height:1.35;">—</div>
+    <div class="ew-fusion" id="ewFusionBlock" style="font-size:10px;color:#a5b4fc;margin-top:6px;line-height:1.45;">—</div>
     <div class="ew-validation" id="ewValidation">—</div>
     <div id="ewExtras" style="font-size:10px;color:#90CAF9;margin-top:2px;padding:2px 0;border-top:1px solid #333"></div>
     <div class="ew-impulse-stage" id="ewImpulseStage">—</div>
     <div class="ew-in-progress" id="ewInProgress" style="display:none;color:#FFB627;font-size:10px;margin-top:4px">⏳ In Progress</div>
+    <div class="ew-legend" id="ewLegend">
+      <span class="solid">● Duz cizgi: tamamlanan dalga</span><br>
+      <span class="dotted">● Noktali cizgi: hedef/projeksiyon</span><br>
+      <span style="color:#FFAA00">● Turuncu noktali: potansiyel W3–W5 yolu (Impulse 1–2)</span>
+    </div>
     <div class="wave-pts" id="ewWavePoints">—</div>
     <div class="w5-pred" id="ewW5Pred">—</div>
     <div class="ew-projections" id="ewProjections" style="font-size:10px;color:#FFB627;margin-top:4px"></div>
@@ -584,7 +595,7 @@
       return 'ETHUSDT27H2026';
     }
 
-    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showZigzag','showElliott','showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showClassic','showClassicTriangle','showClassicDouble','showClassicCup','showClassicHs','showClassicFlag','showClassicRange','showClassicChannel','invertPattern','showEwFiboYatay','showEwChannelLines','showClassicTpInvYatay','overlayLineLabels'];
+    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showZigzag','showElliott','showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showEwProjectionPath','showClassic','showClassicTriangle','showClassicDouble','showClassicCup','showClassicHs','showClassicFlag','showClassicRange','showClassicChannel','invertPattern','showEwFiboYatay','showEwChannelLines','showClassicTpInvYatay','overlayLineLabels'];
 
     function isEwFormationEnabled(formation, formationType) {
       const f = (formation || '').toLowerCase();
@@ -684,9 +695,13 @@
       const w5El = document.getElementById('ewW5Pred');
       const setupsEl = document.getElementById('ewSetups');
       if (!typeEl || !nameEl || !ptsEl) return;
+      const degLineEl = document.getElementById('ewDegreeLine');
+      const fusEl = document.getElementById('ewFusionBlock');
       if (!ew) {
         typeEl.textContent = '—';
         nameEl.textContent = '—';
+        if (degLineEl) degLineEl.textContent = '—';
+        if (fusEl) fusEl.textContent = '—';
         if (valEl) { valEl.textContent = '—'; valEl.className = 'ew-validation'; }
         if (stageEl) stageEl.textContent = '—';
         ptsEl.textContent = '—';
@@ -696,6 +711,49 @@
       }
       typeEl.textContent = ew.formation_type || '—';
       nameEl.textContent = ew.formation || '—';
+      if (degLineEl) {
+        const main = ew.degree_tr || ew.degree;
+        if (main) {
+          const inner = ew.subwave_degree_tr ? ' · iç sayım: ' + ew.subwave_degree_tr : '';
+          degLineEl.textContent = '📐 Dalga derecesi: ' + main + inner;
+        } else {
+          degLineEl.textContent = '—';
+        }
+      }
+      if (fusEl) {
+        const lines = [];
+        if (ew.wave_grade != null || ew.confluence_score != null) {
+          const g = ew.wave_grade || '—';
+          const c = ew.confluence_score != null ? ew.confluence_score.toFixed(0) + '%' : '—';
+          lines.push('⭐ Not: <b>' + g + '</b> · Confluence: ' + c);
+        }
+        if (ew.w2_w1_ratio != null) lines.push('📏 W2/W1: ' + ew.w2_w1_ratio.toFixed(3));
+        if (ew.ewo_value != null && ew.ewo_signal != null) {
+          const bull = ew.ewo_bull ? '▲' : '▼';
+          const al = ew.ewo_aligned_with_impulse === true ? ' ✓impulse' : (ew.ewo_aligned_with_impulse === false ? ' ⚠impulse' : '');
+          lines.push('📊 EWO: ' + ew.ewo_value.toFixed(2) + ' / sig ' + ew.ewo_signal.toFixed(2) + ' ' + bull + al);
+        }
+        if (ew.ewo_strong_long) lines.push('💪 EWO güçlü long');
+        if (ew.ewo_strong_short) lines.push('💪 EWO güçlü short');
+        if (ew.pattern_stability) {
+          const ps = ew.pattern_stability;
+          const ok = (ps.min_bar_distance_ok && ps.wave2_confirmation_ok) ? '✓' : '⚡';
+          const tw = ps.timeout_warning ? ' ⏱timeout?' : '';
+          lines.push(ok + ' Stabilite: W0→W1 ' + (ps.bars_wave0_to_wave1 ?? '—') + 'b · W1→W2 ' + (ps.bars_wave1_to_wave2 ?? '—') + 'b · yaş ' + (ps.pattern_age_bars ?? '—') + '/' + (ps.auto_invalidate_bars ?? '') + tw);
+        }
+        if (ew.smc_w2_zone_overlap === true) {
+          lines.push('🟣 SMC–W2: ' + (ew.smc_w2_detail || 'çakışma'));
+        } else if (ew.smc_w2_zone_overlap === false) {
+          lines.push('⚪ SMC–W2: yok');
+        }
+        if (ew.elliott_invalidate_hint) {
+          lines.push('<span style="color:#f87171">⚠ ' + ew.elliott_invalidate_hint + '</span>');
+        }
+        if (ew.fusion_ewo_soft_fail) {
+          lines.push('<span style="color:#fbbf24">EWO hizası zayıf (config)</span>');
+        }
+        fusEl.innerHTML = lines.length ? lines.join('<br>') : '—';
+      }
       if (valEl) {
         if (ew.validation_ok !== undefined && ew.validation_ok !== null) {
           valEl.textContent = ew.validation_msg || (ew.validation_ok ? '✓ Kurallar geçerli' : '✗ İhlal');
@@ -719,52 +777,22 @@
       };
       ptsEl.innerHTML = (ew.wave_points || []).map(p => {
         const tip = (_wp[p.label] || '') + ' (' + (p.price?.toFixed(4) || '') + ')';
-        return `<span title="${tip}">${p.label}: ${(p.price || 0).toFixed(2)}</span>`;
-      }).join('') || '—';
+        return `<span title="${tip}">W${p.label}: ${(p.price || 0).toFixed(2)}</span>`;
+      }).join('  ') || '—';
       if (w5El) {
         const w5 = ew.w5_targets;
         if (w5 && (ew.formation === 'Impulse' || ew.formation_type === 'Motif (İtki)')) {
-          w5El.innerHTML = `🎯 W5: <b>${(w5[0]).toFixed(2)}</b> (W1=W5) / <b>${(w5[1]).toFixed(2)}</b> (61.8%)${w5[2] != null ? ' / <b>' + (w5[2]).toFixed(2) + '</b> (inv123.6%)' : ''}`;
+          w5El.innerHTML = `🎯 W5 hedefleri: <b>${(w5[0]).toFixed(2)}</b> / ${(w5[1]).toFixed(2)}${w5[2] != null ? ' / ' + (w5[2]).toFixed(2) : ''}`;
         } else {
           w5El.textContent = '—';
         }
       }
       if (setupsEl) {
-        const imp = ew.impulse_state;
-        if (!imp || (!imp.setup_w3 && !imp.setup_w5)) {
-          setupsEl.textContent = '—';
-        } else {
-          const parts = [];
-          if (imp.setup_w3) {
-            const s = imp.setup_w3;
-            const rr1 = s.rr1 != null ? s.rr1.toFixed(1) : '?';
-            const rr2 = s.rr2 != null ? s.rr2.toFixed(1) : '?';
-            const rrColor1 = (s.rr1||0) >= 1.5 ? '#00E676' : (s.rr1||0) >= 1.0 ? '#FFB627' : '#FF1744';
-            const rrColor2 = (s.rr2||0) >= 1.5 ? '#00E676' : (s.rr2||0) >= 1.0 ? '#FFB627' : '#FF1744';
-            parts.push('W3: E=' + (s.entry||0).toFixed(2) + ' SL=' + (s.sl||0).toFixed(2) + ' TP1=' + (s.tp1||0).toFixed(2) + ' <span style="color:'+rrColor1+'">R:R ' + rr1 + '</span> TP2=' + (s.tp2||0).toFixed(2) + ' <span style="color:'+rrColor2+'">R:R ' + rr2 + '</span>');
-          }
-          if (imp.setup_w5) {
-            const s = imp.setup_w5;
-            const rr = s.rr != null ? s.rr.toFixed(1) : '?';
-            const rrColor = (s.rr||0) >= 1.5 ? '#00E676' : (s.rr||0) >= 1.0 ? '#FFB627' : '#FF1744';
-            parts.push('W5: E=' + (s.entry||0).toFixed(2) + ' SL=' + (s.sl||0).toFixed(2) + ' TP=' + (s.tp||0).toFixed(2) + ' <span style="color:'+rrColor+'">R:R ' + rr + '</span>');
-          }
-          setupsEl.innerHTML = parts.join('<br>');
-        }
-        if (ew.corr_setup) {
-          const cs = ew.corr_setup;
-          const rr = cs.rr != null ? cs.rr.toFixed(1) : '?';
-          const rrColor = (cs.rr||0) >= 1.5 ? '#00E676' : (cs.rr||0) >= 1.0 ? '#FFB627' : '#FF1744';
-          const side = cs.is_long ? 'LONG' : 'SHORT';
-          const sideC = cs.is_long ? '#00E676' : '#FF1744';
-          const line = '<span style="color:'+sideC+'">'+cs.setup_type+' '+side+'</span> E='+(cs.entry||0).toFixed(2)+' SL='+(cs.stop_loss||0).toFixed(2)+' TP='+(cs.tp||0).toFixed(2)+' <span style="color:'+rrColor+'">R:R '+rr+'</span>';
-          setupsEl.innerHTML = (setupsEl.textContent === '—' ? '' : setupsEl.innerHTML + '<br>') + line;
-        }
+        setupsEl.textContent = 'Detayli setup bilgileri gizli (sade gorunum).';
       }
       const extrasEl = document.getElementById('ewExtras');
       if (extrasEl) {
         const bits = [];
-        if (ew.degree) bits.push('📊 ' + ew.degree);
         if (ew.truncation === true) bits.push('⚠️ Truncation');
         if (ew.truncation === false) bits.push('✅ W5>W3');
         if (ew.alternation) {
@@ -1079,6 +1107,7 @@
         const showResistance = document.getElementById('showResistance')?.checked ?? true;
         const showZigzag = document.getElementById('showZigzag')?.checked ?? false;
         const showElliott = document.getElementById('showElliott')?.checked ?? true;
+        const showEwProjectionPath = document.getElementById('showEwProjectionPath')?.checked ?? true;
         const showProjections = document.getElementById('showProjections')?.checked ?? true;
         const showEwFiboYatay = document.getElementById('showEwFiboYatay')?.checked ?? true;
         const showEwChannelLines = document.getElementById('showEwChannelLines')?.checked ?? true;
@@ -1444,13 +1473,25 @@
           const ew = ann.elliott;
           (ew.wave_legs || []).forEach(leg => {
             const lineStyle = leg.dotted ? 2 : 0;
-            const line = chart.addLineSeries(overlayLineSeriesOptions({ color: leg.color, lineWidth: 2, lineStyle }));
+            const legColor = leg.dotted ? '#FBBF24' : '#2DD4BF';
+            const line = chart.addLineSeries(overlayLineSeriesOptions({ color: legColor, lineWidth: leg.dotted ? 1.5 : 2.5, lineStyle }));
             line.setData([
               { time: leg.time1, value: leg.price1 },
               { time: leg.time2, value: leg.price2 }
             ]);
             chart._lineSeries.push(line);
           });
+          // Potansiyel W3–W5 çapraz yolu (Pine drawProjections benzeri; turuncu noktalı)
+          if (showEwProjectionPath && showProjections && ew.projection_path && ew.projection_path.length > 0) {
+            (ew.projection_path || []).forEach(seg => {
+              const line = chart.addLineSeries(overlayLineSeriesOptions({ color: '#FFAA00', lineWidth: 2, lineStyle: 2 }));
+              line.setData([
+                { time: seg.time1, value: seg.price1 },
+                { time: seg.time2, value: seg.price2 }
+              ]);
+              chart._lineSeries.push(line);
+            });
+          }
           // Fibo yatay çizgileri: dalganın sağında, gap + kısa uzunluk (extend edilmiş tam çizgi olmasın)
           const fiboGapBars = 2;
           const fiboLengthBars = 12;
@@ -1524,9 +1565,9 @@
             const markers = (ew.wave_points || []).map(p => ({
               time: p.time > 1_000_000_000_000 ? p.time / 1000 : p.time,
               position: ewWaveMarkerPosition(p),
-              color: '#F5F3FF',
+              color: '#FDE047',
               shape: 'circle',
-              text: p.label
+              text: `W${p.label}`
             }));
             // Append to any existing markers instead of overwriting completely
             const existing = chart._ewMarkers || [];

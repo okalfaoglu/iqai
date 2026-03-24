@@ -31,6 +31,60 @@ pub enum WaveDegree {
     SubMinuette,
 }
 
+impl WaveDegree {
+    /// İngilizce kısa etiket (JSON / log).
+    pub const fn label_en(self) -> &'static str {
+        match self {
+            Self::Grand => "Grand",
+            Self::Primary => "Primary",
+            Self::Intermediate => "Intermediate",
+            Self::Minor => "Minor",
+            Self::Minute => "Minute",
+            Self::Minuette => "Minuette",
+            Self::SubMinuette => "SubMinuette",
+        }
+    }
+
+    /// Türkçe açıklamalı etiket (GUI).
+    pub const fn label_tr(self) -> &'static str {
+        match self {
+            Self::Grand => "Grand (en büyük döngü)",
+            Self::Primary => "Primary (birincil)",
+            Self::Intermediate => "Intermediate (ara)",
+            Self::Minor => "Minor (minör)",
+            Self::Minute => "Minute",
+            Self::Minuette => "Minuette",
+            Self::SubMinuette => "Subminuette (en ince)",
+        }
+    }
+
+    /// Bir üst derece (daha geniş perspektif; klasik tabloda yukarı).
+    pub const fn one_larger(self) -> Option<Self> {
+        match self {
+            Self::SubMinuette => Some(Self::Minuette),
+            Self::Minuette => Some(Self::Minute),
+            Self::Minute => Some(Self::Minor),
+            Self::Minor => Some(Self::Intermediate),
+            Self::Intermediate => Some(Self::Primary),
+            Self::Primary => Some(Self::Grand),
+            Self::Grand => None,
+        }
+    }
+
+    /// İç dalga / alt derece (W1–W5’nin içindeki sayım için klasik “bir alt seviye”).
+    pub const fn inner_degree(self) -> Option<Self> {
+        match self {
+            Self::Grand => Some(Self::Primary),
+            Self::Primary => Some(Self::Intermediate),
+            Self::Intermediate => Some(Self::Minor),
+            Self::Minor => Some(Self::Minute),
+            Self::Minute => Some(Self::Minuette),
+            Self::Minuette => Some(Self::SubMinuette),
+            Self::SubMinuette => None,
+        }
+    }
+}
+
 /// Elliott Wave formasyon türü (EWM Cheat Sheet + Studocu interchange uyumlu)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ElliottFormation {

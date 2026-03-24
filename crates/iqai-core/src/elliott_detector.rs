@@ -20,7 +20,7 @@ use crate::elliott::{
 };
 use crate::impulse_detector::{detect_impulse, W5Confirmation};
 use crate::indicators::{pivot_high, pivot_low, rsi};
-use crate::types::Candle;
+use crate::types::{Candle, Timeframe};
 
 /// Dalga noktası (time ms, price, label)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,6 +59,16 @@ pub struct ElliottProjectionCore {
     pub label: String,
 }
 
+/// Potansiyel W3–W5 çapraz yolu (TradingView / Pine tarzı noktalı projeksiyon çizgileri)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ElliottProjectionPathLeg {
+    pub time1: i64,
+    pub price1: f64,
+    pub time2: i64,
+    pub price2: f64,
+    pub label: String,
+}
+
 /// Impulse tespit durumu
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImpulseStateCore {
@@ -84,8 +94,12 @@ pub struct ElliottDetectorResult {
     pub validation_msg: Option<String>,
     pub in_progress: Option<bool>,
     pub projections: Option<Vec<ElliottProjectionCore>>,
-    /// Dalga derecesi (heuristic; TF ve bar sayısına göre)
+    /// Impulse (1-2) için W2→W3→W4→W5 potansiyel çapraz yol (grafik overlay)
+    pub projection_path: Option<Vec<ElliottProjectionPathLeg>>,
+    /// Dalga derecesi (sezgisel; TF + pencere uzunluğu — kesin sayım kullanıcıya bağlı)
     pub degree: Option<WaveDegree>,
+    /// Bir alt derece (iç sayım / alt TF beklentisi)
+    pub subwave_degree: Option<WaveDegree>,
     /// Truncation: W5 W3'ü aşamadıysa true (trend zayıflama sinyali)
     pub truncation: Option<bool>,
     /// W2-W4 alternation durumu
@@ -138,6 +152,22 @@ pub struct ElliottDetectorResult {
     pub corr_subwave_validation: Option<crate::elliott::CorrSubWaveValidation>,
     /// Dalgalardan sonra oluşacak/oluşan formasyonlar için referans seviyeleri (hesaplama referansı)
     pub next_formation_ref: Option<crate::elliott::NextFormationRefLevels>,
+
+    // ── Elliott fusion (EWO + confluence + stabilite + SMC–W2; `elliott_fusion.rs`) ──
+    pub ewo_value: Option<f64>,
+    pub ewo_signal: Option<f64>,
+    pub ewo_bull: Option<bool>,
+    pub ewo_strong_long: Option<bool>,
+    pub ewo_strong_short: Option<bool>,
+    pub ewo_aligned_with_impulse: Option<bool>,
+    pub confluence_score: Option<f64>,
+    pub wave_grade: Option<String>,
+    pub w2_w1_ratio: Option<f64>,
+    pub pattern_stability: Option<crate::elliott_fusion::ElliottPatternStability>,
+    pub elliott_invalidate_hint: Option<String>,
+    pub smc_w2_zone_overlap: Option<bool>,
+    pub smc_w2_detail: Option<String>,
+    pub fusion_ewo_soft_fail: Option<bool>,
 }
 
 impl Default for ElliottDetectorResult {
@@ -154,7 +184,9 @@ impl Default for ElliottDetectorResult {
             validation_msg: None,
             in_progress: None,
             projections: None,
+            projection_path: None,
             degree: None,
+            subwave_degree: None,
             truncation: None,
             alternation: None,
             channel: None,
@@ -181,6 +213,20 @@ impl Default for ElliottDetectorResult {
             nested_extension: None,
             corr_subwave_validation: None,
             next_formation_ref: None,
+            ewo_value: None,
+            ewo_signal: None,
+            ewo_bull: None,
+            ewo_strong_long: None,
+            ewo_strong_short: None,
+            ewo_aligned_with_impulse: None,
+            confluence_score: None,
+            wave_grade: None,
+            w2_w1_ratio: None,
+            pattern_stability: None,
+            elliott_invalidate_hint: None,
+            smc_w2_zone_overlap: None,
+            smc_w2_detail: None,
+            fusion_ewo_soft_fail: None,
         }
     }
 }
@@ -229,8 +275,18 @@ pub fn collect_swings(candles: &[Candle], pivot_len: usize) -> Vec<(i64, f64, bo
     swings
 }
 
-/// Merkezi Elliott Wave tespiti – tek kaynak, Web GUI ve Robot bu fonksiyonu kullanır
-pub fn compute_elliott(candles: &[Candle], config: &Config, invert: bool) -> ElliottDetectorResult {
+/// Merkezi Elliott Wave tespiti – tek kaynak, Web GUI ve Robot bu fonksiyonu kullanır.
+///
+/// `timeframe`: Grafik mum aralığı biliniyorsa verin; dalga derecesi sezgiseli doğru kalır.
+/// Bilinmiyorsa `None` (yalnızca bar sayısına dayalı eski yaklaşım).
+/// `fusion_symbol`: SMC–W2 çakışması için sembol (ör. `"BTCUSDT"`); bilinmiyorsa `None`.
+pub fn compute_elliott(
+    candles: &[Candle],
+    config: &Config,
+    invert: bool,
+    timeframe: Option<Timeframe>,
+    fusion_symbol: Option<&str>,
+) -> ElliottDetectorResult {
     let pivot_len = config.pivot_length as usize;
 
     if candles.len() < pivot_len * 4 + 2 {
@@ -323,9 +379,12 @@ pub fn compute_elliott(candles: &[Candle], config: &Config, invert: bool) -> Ell
         &result.formation_type,
         is_bullish,
         &imp,
+        config,
     );
-    // Dalga derecesini bar sayısına göre yaklaşıkla
-    result.degree = Some(infer_wave_degree(candles.len()));
+    result.projection_path = build_elliott_projection_path(candles, &result, is_bullish, config);
+    let deg = infer_wave_degree(candles.len(), timeframe);
+    result.degree = Some(deg);
+    result.subwave_degree = deg.inner_degree();
     result.impulse_state = impulse_state;
 
     // Sonraki formasyon referans seviyeleri (Impulse tamamlandıysa düzeltme A/B/C)
@@ -351,18 +410,101 @@ pub fn compute_elliott(candles: &[Candle], config: &Config, invert: bool) -> Ell
         }
     }
 
+    // Pine-tarzı fusion: EWO, confluence/not, stabilite, SMC–W2
+    let fusion_pts: Vec<crate::elliott_fusion::FusionWavePoint> = result
+        .wave_points
+        .iter()
+        .map(|p| crate::elliott_fusion::FusionWavePoint {
+            time: p.time,
+            price: p.price,
+            label: p.label.clone(),
+        })
+        .collect();
+    let fusion = crate::elliott_fusion::compute_elliott_fusion_extras(
+        &fusion_pts,
+        candles,
+        config,
+        timeframe,
+        fusion_symbol.unwrap_or(""),
+        is_bullish,
+        &result.formation,
+        &result.formation_type,
+        result.validation_ok,
+    );
+    result.ewo_value = fusion.ewo_value;
+    result.ewo_signal = fusion.ewo_signal;
+    result.ewo_bull = fusion.ewo_bull;
+    result.ewo_strong_long = fusion.ewo_strong_long;
+    result.ewo_strong_short = fusion.ewo_strong_short;
+    result.ewo_aligned_with_impulse = fusion.ewo_aligned_with_impulse;
+    result.confluence_score = fusion.confluence_score;
+    result.wave_grade = fusion.wave_grade;
+    result.w2_w1_ratio = fusion.w2_w1_ratio;
+    result.pattern_stability = fusion.pattern_stability;
+    result.elliott_invalidate_hint = fusion.invalidate_hint;
+    result.smc_w2_zone_overlap = fusion.smc_w2_zone_overlap;
+    result.smc_w2_detail = fusion.smc_w2_detail;
+    result.fusion_ewo_soft_fail = fusion.fusion_ewo_soft_fail;
+    if fusion.fusion_ewo_soft_fail == Some(true) {
+        let ex = result.validation_msg.take().unwrap_or_default();
+        result.validation_msg = Some(if ex.is_empty() {
+            "EWO impulse yönü ile hizalı değil (fusion uyarısı)".to_string()
+        } else {
+            format!("{ex}; EWO impulse yönü ile hizalı değil (fusion uyarısı)")
+        });
+    }
+
     result
 }
 
-fn infer_wave_degree(bar_count: usize) -> WaveDegree {
-    match bar_count {
-        n if n >= 5000 => WaveDegree::Grand,
-        n if n >= 2000 => WaveDegree::Primary,
-        n if n >= 800 => WaveDegree::Intermediate,
-        n if n >= 300 => WaveDegree::Minor,
-        n if n >= 120 => WaveDegree::Minute,
-        n if n >= 40 => WaveDegree::Minuette,
-        _ => WaveDegree::SubMinuette,
+/// Grafik zaman dilimi + pencere uzunluğuna göre yaklaşık Elliott derecesi.
+///
+/// Bu **otomatik etikettir**; gerçek derece analistin üst/alt TF sayımıyla belirlenir.
+fn infer_wave_degree(bar_count: usize, timeframe: Option<Timeframe>) -> WaveDegree {
+    if let Some(tf) = timeframe {
+        let tf_min = tf.minutes() as u64;
+        let span_minutes = (bar_count as u64).saturating_mul(tf_min);
+
+        let mut base = match tf {
+            Timeframe::D1 => WaveDegree::Intermediate,
+            Timeframe::H4 => WaveDegree::Minor,
+            Timeframe::H1 => WaveDegree::Minute,
+            Timeframe::M30 | Timeframe::M15 => WaveDegree::Minuette,
+            Timeframe::M5 | Timeframe::M1 => WaveDegree::SubMinuette,
+        };
+
+        // Uzun pencere → birkaç kademe “daha büyük” derece (tavan Grand)
+        let bumps: u8 = if span_minutes >= 1_500_000 {
+            4
+        } else if span_minutes >= 400_000 {
+            3
+        } else if span_minutes >= 120_000 {
+            2
+        } else if span_minutes >= 30_000 {
+            1
+        } else {
+            0
+        };
+
+        for _ in 0..bumps {
+            if let Some(b) = base.one_larger() {
+                base = b;
+            } else {
+                break;
+            }
+        }
+        base
+    } else {
+        // Geriye uyum: sadece bar sayısı
+        match bar_count {
+            n if n >= 5000 => WaveDegree::Grand,
+            n if n >= 2000 => WaveDegree::Primary,
+            n if n >= 800 => WaveDegree::Intermediate,
+            n if n >= 300 => WaveDegree::Minor,
+            n if n >= 120 => WaveDegree::Minute,
+            n if n >= 40 => WaveDegree::Minuette,
+            _ => WaveDegree::SubMinuette,
+        }
     }
 }
 
@@ -1722,6 +1864,106 @@ fn try_triple_three(swings: &[(i64, f64, bool)]) -> Option<ElliottDetectorResult
     })
 }
 
+fn wave_point_time_sec(t: i64) -> i64 {
+    if t > 1_000_000_000_000 {
+        t / 1000
+    } else {
+        t
+    }
+}
+
+fn avg_bar_sec_from_candles(candles: &[Candle]) -> i64 {
+    if candles.len() < 2 {
+        return 60;
+    }
+    let n = candles.len().min(64);
+    let mut sum = 0_i64;
+    let mut cnt = 0_i64;
+    for w in candles.windows(2).rev().take(n) {
+        sum += (w[1].time - w[0].time).abs() / 1000;
+        cnt += 1;
+    }
+    if cnt == 0 {
+        60
+    } else {
+        (sum / cnt).max(1)
+    }
+}
+
+/// Pine `drawProjections` benzeri: W2’den ileri W3–W4–W5 çapraz segmentleri.
+fn build_elliott_projection_path(
+    candles: &[Candle],
+    result: &ElliottDetectorResult,
+    is_bullish: bool,
+    config: &Config,
+) -> Option<Vec<ElliottProjectionPathLeg>> {
+    if result.formation != "Impulse (1-2)" {
+        return None;
+    }
+    let projs = result.projections.as_ref()?;
+    let p0 = result.wave_points.iter().find(|p| p.label == "0")?;
+    let p1 = result.wave_points.iter().find(|p| p.label == "1")?;
+    let p2 = result.wave_points.iter().find(|p| p.label == "2")?;
+    let w1_len = (p1.price - p0.price).abs();
+    if w1_len < 1e-12 {
+        return None;
+    }
+    let proj_w3 = projs
+        .iter()
+        .find(|p| p.label.contains("cfg"))
+        .or_else(|| projs.get(1))
+        .or_else(|| projs.first())?
+        .price;
+    let w4r = config.elliott_wave4_retrace_path.clamp(0.09, 0.95);
+    let w5m = config.elliott_wave5_w1_multiple.clamp(0.618, 2.618);
+    let (proj_w4, proj_w5) = if is_bullish {
+        let w3_move = proj_w3 - p2.price;
+        let proj_w4 = proj_w3 - w3_move * w4r;
+        let proj_w5 = proj_w4 + w1_len * w5m;
+        (proj_w4, proj_w5)
+    } else {
+        let w3_move = p2.price - proj_w3;
+        let proj_w4 = proj_w3 + w3_move * w4r;
+        let proj_w5 = proj_w4 - w1_len * w5m;
+        (proj_w4, proj_w5)
+    };
+    let last = candles.last()?;
+    let last_sec = last.time / 1000;
+    let bar_sec = avg_bar_sec_from_candles(candles);
+    let horizon = config.elliott_projection_horizon_bars.max(5) as i64;
+    let gap = config.elliott_projection_segment_gap_bars.max(1) as i64;
+    let t2 = wave_point_time_sec(p2.time);
+    let t_fut = last_sec + horizon * bar_sec;
+    if t_fut <= t2 {
+        return None;
+    }
+    let t_seg2 = t_fut + gap * bar_sec;
+    let t_seg3 = t_fut + 2 * gap * bar_sec;
+    Some(vec![
+        ElliottProjectionPathLeg {
+            time1: t2,
+            price1: p2.price,
+            time2: t_fut,
+            price2: proj_w3,
+            label: "W3 hedef".to_string(),
+        },
+        ElliottProjectionPathLeg {
+            time1: t_fut,
+            price1: proj_w3,
+            time2: t_seg2,
+            price2: proj_w4,
+            label: "W4".to_string(),
+        },
+        ElliottProjectionPathLeg {
+            time1: t_seg2,
+            price1: proj_w4,
+            time2: t_seg3,
+            price2: proj_w5,
+            label: "W5 hedef".to_string(),
+        },
+    ])
+}
+
 fn compute_projections(
     _candles: &[Candle],
     recent: &[(i64, f64, bool)],
@@ -1730,6 +1972,7 @@ fn compute_projections(
     formation_type: &str,
     is_bullish: bool,
     imp: &crate::impulse_detector::ImpulseDetectorState,
+    config: &Config,
 ) -> Option<Vec<ElliottProjectionCore>> {
     let mut proj = Vec::new();
 
@@ -1738,16 +1981,25 @@ fn compute_projections(
         let (_, p1, _) = recent[1];
         let (_, p2, _) = recent[2];
         let w1_len = (p1 - p0).abs();
-        for (ext, lbl) in [(1.382, "W3 138.2%"), (1.618, "W3 161.8%"), (2.618, "W3 261.8%")] {
+        let ext_cfg = config.elliott_wave3_extension.clamp(1.0, 4.0);
+        let mut seen = std::collections::BTreeSet::new();
+        for (ext, lbl) in [
+            (1.382_f64, "W3 138.2%"),
+            (ext_cfg, "W3 (cfg)"),
+            (2.618_f64, "W3 261.8%"),
+        ] {
             let price = if imp.is_bullish {
                 p2 + w1_len * ext
             } else {
                 p2 - w1_len * ext
             };
-            proj.push(ElliottProjectionCore {
-                price,
-                label: lbl.to_string(),
-            });
+            let key = (price * 10_000.0).round() as i64;
+            if seen.insert(key) {
+                proj.push(ElliottProjectionCore {
+                    price,
+                    label: lbl.to_string(),
+                });
+            }
         }
     } else if (formation == "Impulse" || formation_type == "Motif (İtki)") && recent.len() == 4 {
         let (_, p0, _) = recent[0];
@@ -1756,9 +2008,14 @@ fn compute_projections(
         let w1_len = (p1 - p0).abs();
         let w1_3 = (recent[2].1 - p0).abs();
         let w4_len = (recent[2].1 - p4).abs();
+        let w5m = config.elliott_wave5_w1_multiple.clamp(0.618, 2.618);
         proj.push(ElliottProjectionCore {
-            price: if is_bullish { p4 + w1_len } else { p4 - w1_len },
-            label: "W5=W1".to_string(),
+            price: if is_bullish {
+                p4 + w1_len * w5m
+            } else {
+                p4 - w1_len * w5m
+            },
+            label: format!("W5 {:.1}%×W1", w5m * 100.0),
         });
         proj.push(ElliottProjectionCore {
             price: if is_bullish { p4 + 0.618 * w1_3 } else { p4 - 0.618 * w1_3 },
@@ -1825,5 +2082,42 @@ mod find_impulse_window_tests {
         assert!(is_bull);
         assert_eq!(w.len(), 6);
         assert_eq!(w.last().unwrap().1, 140.0);
+    }
+}
+
+#[cfg(test)]
+mod infer_degree_tests {
+    use super::compute_elliott;
+    use crate::config::Config;
+    use crate::elliott::WaveDegree;
+    use crate::types::{Candle, Timeframe};
+
+    fn synth_candles(n: usize) -> Vec<Candle> {
+        (0..n)
+            .map(|i| Candle {
+                time: (i as i64) * 60_000,
+                open: 100.0 + (i as f64) * 0.01,
+                high: 101.0 + (i as f64) * 0.01,
+                low: 99.0 + (i as f64) * 0.01,
+                close: 100.5 + (i as f64) * 0.01,
+                volume: 1000.0,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn none_timeframe_falls_back_to_bar_count_grand() {
+        let c = synth_candles(5000);
+        let r = compute_elliott(&c, &Config::default(), false, None, None);
+        assert_eq!(r.degree, Some(WaveDegree::Grand));
+        assert_eq!(r.subwave_degree, Some(WaveDegree::Primary));
+    }
+
+    #[test]
+    fn timeframe_m5_inner_matches_enum() {
+        let c = synth_candles(400);
+        let r = compute_elliott(&c, &Config::default(), false, Some(Timeframe::M5), None);
+        let deg = r.degree.expect("degree");
+        assert_eq!(r.subwave_degree, deg.inner_degree());
     }
 }

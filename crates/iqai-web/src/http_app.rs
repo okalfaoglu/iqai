@@ -923,7 +923,13 @@ async fn api_chart(Query(params): Query<ChartParams>) -> impl IntoResponse {
         .map(|s| s == "1" || s.eq_ignore_ascii_case("true"))
         .unwrap_or(false);
     let elliott_opts = ElliottOptions { invert };
-    let annotations = compute_annotations(&chart_candles, &config, Some(&elliott_opts));
+    let annotations = compute_annotations(
+        &chart_candles,
+        &config,
+        Some(&elliott_opts),
+        Some(chart_tf),
+        Some(symbol),
+    );
     let formations = scan_elliott_formations(&chart_candles, &config);
     let classic_patterns = detect_classic_patterns(symbol, chart_tf, &chart_candles, &config);
     let classic_patterns_count = classic_patterns.len();

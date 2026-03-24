@@ -12,6 +12,7 @@ pub mod dip_confluence;
 pub mod dip_tepe_scoring;
 pub mod logging;
 pub mod elliott;
+pub mod elliott_fusion;
 pub mod elliott_detector;
 pub mod impulse_detector;
 pub mod binance_error;
@@ -46,7 +47,10 @@ pub use exchange::{
     OrderSide, OrderResponse, RcaOpenMarketSnapshot,
 };
 pub use signal::{CandleBuffer, SignalEngine};
-pub use elliott_detector::{collect_swings, compute_elliott, ElliottDetectorResult};
+pub use elliott_fusion::{ElliottFusionExtras, ElliottPatternStability};
+pub use elliott_detector::{
+    collect_swings, compute_elliott, ElliottDetectorResult, ElliottProjectionPathLeg,
+};
 pub use impulse_detector::{detect_impulse, ImpulseDetectorState, ImpulseStage};
 pub use q_radar_analysis::{
     compute_q_radar_opportunity, radar_setup_alignment_score, QRadarOpportunityAnalysis,

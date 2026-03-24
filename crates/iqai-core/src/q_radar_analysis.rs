@@ -259,7 +259,7 @@ fn enrich_opportunity_with_setup_elliott(
     analysis.radar_setup_alignment = radar_setup_alignment_score(&analysis.direction, q_setup.as_ref());
     analysis.q_setup = q_setup;
 
-    let elliott = compute_elliott(candles, config, false);
+    let elliott = compute_elliott(candles, config, false, Some(chart_tf), Some(symbol));
     if !elliott.formation.is_empty() && elliott.formation != "—" {
         analysis.elliott_summary = Some(format!("{} / {}", elliott.formation, elliott.formation_type));
     }

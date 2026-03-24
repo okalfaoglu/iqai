@@ -60,6 +60,35 @@ pub struct Config {
     /// Elliott setup minimum R/R eşiği (altındaki sinyaller zayıf işaretlenir)
     pub elliott_min_rr: f64,
 
+    // Elliott projeksiyon (Pine-tarzı ayarlanabilir hedefler; kuralları değiştirmez)
+    /// Impulse (1-2) aşamasında W3 ana uzatma çarpanı (örn. 1.618)
+    pub elliott_wave3_extension: f64,
+    /// W5 = W1 hedefinde W1 uzunluğu çarpanı (varsayılan 1.0 = klasik eşitlik)
+    pub elliott_wave5_w1_multiple: f64,
+    /// W2/W1 oranı “yönerge” yakınlık toleransı % (0.382/0.5/0.618/0.764 bantları)
+    pub elliott_fib_tolerance_pct: f64,
+    /// Potansiyel W4 fiyatı: W3 hareketinin geri çekilme oranı (Pine `wave4_retrace` benzeri)
+    pub elliott_wave4_retrace_path: f64,
+    /// Son mumdan itibaren W3 uç noktası için ileri bar sayısı (çapraz projeksiyon uzunluğu)
+    pub elliott_projection_horizon_bars: u32,
+    /// W3→W4 ve W4→W5 çapraz segmentleri arası bar (Pine `futBar+10` benzeri)
+    pub elliott_projection_segment_gap_bars: u32,
+
+    // Elliott Wave Oscillator (EWO) + fusion confluence (`elliott_fusion.rs`)
+    pub elliott_ewo_fast: u32,
+    pub elliott_ewo_slow: u32,
+    pub elliott_ewo_signal: u32,
+    pub elliott_ewo_strong_threshold: f64,
+    /// true ise geçerli impulse’ta EWO yönü zıt ise uyarı mesajı eklenir (kuralları iptal etmez)
+    pub elliott_require_ewo_alignment: bool,
+
+    /// Dalga pivotları arası minimum bar (stabilite ölçümü)
+    pub elliott_stability_min_wave_bars: u32,
+    /// W2 pivotundan sonra onay için minimum bar
+    pub elliott_stability_confirm_bars: u32,
+    /// Bu kadar bar sonra “timeout” uyarısı (stateless; Pine auto-invalidate ilhamı)
+    pub elliott_stability_auto_invalidate_bars: u32,
+
     // Q-ANALİZ / Q-RADAR parametreleri
     /// Q-Setup minimum skoru (0-100)
     pub q_score_threshold: f64,
@@ -228,6 +257,23 @@ impl Default for Config {
             elliott_fibo_gap_bars: 2,
             elliott_fibo_length_bars: 12,
             elliott_min_rr: 1.5,
+
+            elliott_wave3_extension: 1.618,
+            elliott_wave5_w1_multiple: 1.0,
+            elliott_fib_tolerance_pct: 35.0,
+            elliott_wave4_retrace_path: 0.382,
+            elliott_projection_horizon_bars: 30,
+            elliott_projection_segment_gap_bars: 10,
+
+            elliott_ewo_fast: 5,
+            elliott_ewo_slow: 34,
+            elliott_ewo_signal: 5,
+            elliott_ewo_strong_threshold: 13.0,
+            elliott_require_ewo_alignment: false,
+
+            elliott_stability_min_wave_bars: 5,
+            elliott_stability_confirm_bars: 3,
+            elliott_stability_auto_invalidate_bars: 100,
 
             // Q-ANALİZ varsayılanları
             q_score_threshold: 70.0,
@@ -450,6 +496,24 @@ impl Config {
             if let Some(v) = c.reversal_weight_vol_ratio { base.reversal_weight_vol_ratio = v; }
             if let Some(v) = c.reversal_weight_body_ratio { base.reversal_weight_body_ratio = v; }
             if let Some(v) = c.reversal_volume_ma_period { base.reversal_volume_ma_period = v.max(1); }
+
+            if let Some(v) = c.elliott_fibo_gap_bars { base.elliott_fibo_gap_bars = v.max(1); }
+            if let Some(v) = c.elliott_fibo_length_bars { base.elliott_fibo_length_bars = v.max(1); }
+            if let Some(v) = c.elliott_min_rr { base.elliott_min_rr = v; }
+            if let Some(v) = c.elliott_wave3_extension { base.elliott_wave3_extension = v.clamp(1.0, 4.0); }
+            if let Some(v) = c.elliott_wave5_w1_multiple { base.elliott_wave5_w1_multiple = v.clamp(0.618, 2.618); }
+            if let Some(v) = c.elliott_fib_tolerance_pct { base.elliott_fib_tolerance_pct = v.clamp(5.0, 50.0); }
+            if let Some(v) = c.elliott_wave4_retrace_path { base.elliott_wave4_retrace_path = v.clamp(0.09, 0.95); }
+            if let Some(v) = c.elliott_projection_horizon_bars { base.elliott_projection_horizon_bars = v.max(5); }
+            if let Some(v) = c.elliott_projection_segment_gap_bars { base.elliott_projection_segment_gap_bars = v.max(1); }
+            if let Some(v) = c.elliott_ewo_fast { base.elliott_ewo_fast = v.max(2); }
+            if let Some(v) = c.elliott_ewo_slow { base.elliott_ewo_slow = v.max(3); }
+            if let Some(v) = c.elliott_ewo_signal { base.elliott_ewo_signal = v.max(2); }
+            if let Some(v) = c.elliott_ewo_strong_threshold { base.elliott_ewo_strong_threshold = v; }
+            if let Some(v) = c.elliott_require_ewo_alignment { base.elliott_require_ewo_alignment = v; }
+            if let Some(v) = c.elliott_stability_min_wave_bars { base.elliott_stability_min_wave_bars = v.max(1); }
+            if let Some(v) = c.elliott_stability_confirm_bars { base.elliott_stability_confirm_bars = v.max(1); }
+            if let Some(v) = c.elliott_stability_auto_invalidate_bars { base.elliott_stability_auto_invalidate_bars = v.max(20); }
         }
         base
     }

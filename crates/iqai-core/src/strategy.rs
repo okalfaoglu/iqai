@@ -261,7 +261,7 @@ pub fn build_strategies_for_series(
     }
 
     // 1) Pre-compute Elliott and classic patterns once per series.
-    let elliott = compute_elliott(candles, config, false);
+    let elliott = compute_elliott(candles, config, false, None, None);
     let classic_patterns = detect_classic_patterns(symbol, timeframe, candles, config);
 
     // For quick lookup: we use the detector result directly as context.

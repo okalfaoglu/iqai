@@ -4,7 +4,7 @@ use iqai_core::{
     config::Config,
     elliott_detector::compute_elliott,
     indicators::{pivot_high, pivot_low, rsi, sma},
-    types::Candle,
+    types::{Candle, Timeframe},
 };
 
 #[derive(serde::Serialize)]
@@ -59,11 +59,18 @@ pub struct ElliottAnnotations {
     pub in_progress: Option<bool>,
     /// Projeksiyon hedefleri (W3/W5 veya C) – in_progress iken dolu
     pub projections: Option<Vec<ElliottProjection>>,
+    /// Potansiyel W3–W5 çapraz yol (noktalı çizgi; Impulse 1–2)
+    pub projection_path: Option<Vec<iqai_core::ElliottProjectionPathLeg>>,
     /// EWM tarzı sarı noktalı kanal çizgileri (üst: 1-3-5, alt: 2-4)
     pub channel_upper: Option<Line>,
     pub channel_lower: Option<Line>,
-    /// Dalga derecesi
+    /// Dalga derecesi (enum)
     pub degree: Option<iqai_core::elliott::WaveDegree>,
+    /// Türkçe derece etiketi (panel)
+    pub degree_tr: Option<String>,
+    /// İç sayım / alt derece
+    pub subwave_degree: Option<iqai_core::elliott::WaveDegree>,
+    pub subwave_degree_tr: Option<String>,
     /// Truncation
     pub truncation: Option<bool>,
     /// Alternation
@@ -114,6 +121,22 @@ pub struct ElliottAnnotations {
     pub nested_extension: Option<(bool, f64)>,
     /// Corrective alt-dalga doğrulaması (Zigzag/Flat A,B,C)
     pub corr_subwave_validation: Option<iqai_core::elliott::CorrSubWaveValidation>,
+
+    // Elliott fusion (EWO + confluence + stabilite + SMC–W2)
+    pub ewo_value: Option<f64>,
+    pub ewo_signal: Option<f64>,
+    pub ewo_bull: Option<bool>,
+    pub ewo_strong_long: Option<bool>,
+    pub ewo_strong_short: Option<bool>,
+    pub ewo_aligned_with_impulse: Option<bool>,
+    pub confluence_score: Option<f64>,
+    pub wave_grade: Option<String>,
+    pub w2_w1_ratio: Option<f64>,
+    pub pattern_stability: Option<iqai_core::ElliottPatternStability>,
+    pub elliott_invalidate_hint: Option<String>,
+    pub smc_w2_zone_overlap: Option<bool>,
+    pub smc_w2_detail: Option<String>,
+    pub fusion_ewo_soft_fail: Option<bool>,
 }
 
 #[derive(serde::Serialize)]
@@ -223,7 +246,13 @@ pub struct ElliottOptions {
     pub invert: bool,
 }
 
-pub fn compute_annotations(candles: &[Candle], config: &Config, opts: Option<&ElliottOptions>) -> ChartAnnotations {
+pub fn compute_annotations(
+    candles: &[Candle],
+    config: &Config,
+    opts: Option<&ElliottOptions>,
+    chart_timeframe: Option<Timeframe>,
+    chart_symbol: Option<&str>,
+) -> ChartAnnotations {
     let pl = config.pivot_length as usize;
     let mut choch = Vec::new();
     let mut bos = Vec::new();
@@ -514,7 +543,13 @@ pub fn compute_annotations(candles: &[Candle], config: &Config, opts: Option<&El
     }
 
     let invert = opts.map(|o| o.invert).unwrap_or(false);
-    let mut elliott = elliott_result_to_annotations(compute_elliott(candles, config, invert));
+    let mut elliott = elliott_result_to_annotations(compute_elliott(
+        candles,
+        config,
+        invert,
+        chart_timeframe,
+        chart_symbol,
+    ));
     let last_sec = candles.last().map(|c| c.time / 1000).unwrap_or(0);
     if let Some((upper, lower)) = compute_elliott_channel_lines(&elliott, last_sec) {
         elliott.channel_upper = Some(upper);
@@ -881,9 +916,13 @@ fn elliott_result_to_annotations(
         validation_msg: r.validation_msg,
         in_progress: r.in_progress,
         projections,
+        projection_path: r.projection_path,
         channel_upper: None,
         channel_lower: None,
         degree: r.degree,
+        degree_tr: r.degree.map(|d| d.label_tr().to_string()),
+        subwave_degree: r.subwave_degree,
+        subwave_degree_tr: r.subwave_degree.map(|d| d.label_tr().to_string()),
         truncation: r.truncation,
         alternation: r.alternation,
         channel: r.channel,
@@ -909,6 +948,20 @@ fn elliott_result_to_annotations(
         subwave_validation: r.subwave_validation,
         nested_extension: r.nested_extension,
         corr_subwave_validation: r.corr_subwave_validation,
+        ewo_value: r.ewo_value,
+        ewo_signal: r.ewo_signal,
+        ewo_bull: r.ewo_bull,
+        ewo_strong_long: r.ewo_strong_long,
+        ewo_strong_short: r.ewo_strong_short,
+        ewo_aligned_with_impulse: r.ewo_aligned_with_impulse,
+        confluence_score: r.confluence_score,
+        wave_grade: r.wave_grade,
+        w2_w1_ratio: r.w2_w1_ratio,
+        pattern_stability: r.pattern_stability,
+        elliott_invalidate_hint: r.elliott_invalidate_hint,
+        smc_w2_zone_overlap: r.smc_w2_zone_overlap,
+        smc_w2_detail: r.smc_w2_detail,
+        fusion_ewo_soft_fail: r.fusion_ewo_soft_fail,
     }
 }
 
@@ -923,7 +976,7 @@ pub fn scan_elliott_formations(candles: &[Candle], config: &Config) -> Vec<Histo
 
     for end in (min_len..candles.len()).step_by(step) {
         let slice = &candles[..=end];
-        let ew = elliott_result_to_annotations(compute_elliott(slice, config, false));
+        let ew = elliott_result_to_annotations(compute_elliott(slice, config, false, None, None));
 
         if ew.validation_ok != Some(true) || ew.wave_points.len() < 4 {
             continue;

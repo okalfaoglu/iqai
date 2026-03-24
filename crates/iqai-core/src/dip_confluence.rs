@@ -110,7 +110,7 @@ pub fn compute_dip_confluence(
     let ltf_structure_ok = structure_score >= config.dip_confluence_structure_score_min;
 
     let mut fib_elliott_zone = false;
-    let elliott = compute_elliott(candles, config, false);
+    let elliott = compute_elliott(candles, config, false, None, None);
     if elliott.validation_ok == Some(true) || elliott.corr_setup.is_some() {
         let mut ref_levels: Vec<f64> = Vec::new();
         if let Some(ref imp) = elliott.impulse_state {

@@ -209,7 +209,7 @@ pub fn build_analysis_snapshot(
 
     // Elliott
     if candles.len() >= (config.pivot_length as usize) * 4 + 20 {
-        let elliott = compute_elliott(candles, config, false);
+        let elliott = compute_elliott(candles, config, false, None, None);
         if !elliott.formation.is_empty() && elliott.formation != "—" {
             s.elliott_formation = Some(elliott.formation.clone());
             s.elliott_type = Some(elliott.formation_type.clone());

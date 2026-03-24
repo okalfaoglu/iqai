@@ -729,7 +729,7 @@ async fn run_scan_from_buffer(
     let min_bars_elliott = (config.pivot_length as usize) * 4 + 20;
     if let Some(candles) = buffer.get(chart_tf) {
         if candles.len() >= min_bars_elliott {
-            let elliott = compute_elliott(candles, &config, false);
+            let elliott = compute_elliott(candles, &config, false, None, None);
             println!("\n=== ANALİZ RAPORU (Elliott + Smart Money) ===");
             if elliott.validation_ok == Some(true) && !elliott.formation.is_empty() && elliott.formation != "—" {
                 println!("  Aktif dalga: {} ({})", elliott.formation, elliott.formation_type);
@@ -1281,7 +1281,7 @@ async fn run_robot(mode_override: Option<&str>, interval_secs: u64) -> Result<()
 
                         // Elliott Wave setup sinyalleri
                         let config = &sm_config;
-                        let elliott = compute_elliott(&candles, config, false);
+                        let elliott = compute_elliott(&candles, config, false, None, None);
                         if elliott.validation_ok == Some(true) {
                             if let Some(ref imp) = elliott.impulse_state {
                                 if let Some(ref setup_json) = imp.setup_w3 {
@@ -1568,7 +1568,7 @@ async fn run_q_analiz_daemon(interval_secs: u64, verbose: bool) -> Result<()> {
                             None
                         } else {
                             // Elliott bağlamı, strateji senaryoları ve Smart Money context'ini üret.
-                            let elliott = compute_elliott(candles, &sm_config, false);
+                            let elliott = compute_elliott(candles, &sm_config, false, None, None);
                             let scenarios = build_scenarios_for_series(symbol, tf, candles, &sm_config);
                             let sm_ctx = build_smart_money_context_for_series(symbol, tf, candles, &sm_config);
 

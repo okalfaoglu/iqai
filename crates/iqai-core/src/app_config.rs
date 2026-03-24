@@ -196,6 +196,25 @@ pub struct SmartMoneyConfig {
     pub reversal_weight_vol_ratio: Option<f64>,
     pub reversal_weight_body_ratio: Option<f64>,
     pub reversal_volume_ma_period: Option<u32>,
+
+    // ---- Elliott Wave (görsel + fusion + potansiyel yol; `config.rs` / `elliott_fusion.rs`) ----
+    pub elliott_fibo_gap_bars: Option<u32>,
+    pub elliott_fibo_length_bars: Option<u32>,
+    pub elliott_min_rr: Option<f64>,
+    pub elliott_wave3_extension: Option<f64>,
+    pub elliott_wave5_w1_multiple: Option<f64>,
+    pub elliott_fib_tolerance_pct: Option<f64>,
+    pub elliott_wave4_retrace_path: Option<f64>,
+    pub elliott_projection_horizon_bars: Option<u32>,
+    pub elliott_projection_segment_gap_bars: Option<u32>,
+    pub elliott_ewo_fast: Option<u32>,
+    pub elliott_ewo_slow: Option<u32>,
+    pub elliott_ewo_signal: Option<u32>,
+    pub elliott_ewo_strong_threshold: Option<f64>,
+    pub elliott_require_ewo_alignment: Option<bool>,
+    pub elliott_stability_min_wave_bars: Option<u32>,
+    pub elliott_stability_confirm_bars: Option<u32>,
+    pub elliott_stability_auto_invalidate_bars: Option<u32>,
 }
 
 /// Otomatik trading ayarları – config.json "trading" bölümü.
