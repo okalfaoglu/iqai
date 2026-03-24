@@ -2,9 +2,9 @@
 
 ## Config
 
-- `smart_money.elliott_thesis_teY_rules` (`config.json` → `Config::elliott_thesis_teY_rules`)
+- `smart_money.elliott_thesis_te_y_rules` (`config.json` → `Config::elliott_thesis_te_y_rules`). Eski JSON anahtarı `elliott_thesis_teY_rules` hâlâ kabul edilir (`SmartMoneyConfig` serde `alias`).
   - **`false` (varsayılan):** İtki `formation_valid` tez W3/W4 ek koşulları **hariç**; zigzag `validate_zigzag_abc` EWM bandı (B 38.2–85.4%).
-  - **`true`:** İtki için `validate_impulse_with_w5(..., apply_thesis_teY: true)` → W3 ucu W1 bitişinin ötesinde, `|W4| ≤ |W3|`; zigzag için B üst sınır **%61.8** ve **C genliği ≥ B**.
+  - **`true`:** İtki için `validate_impulse_with_w5(..., apply_thesis_te_y: true)` → W3 ucu W1 bitişinin ötesinde, `|W4| ≤ |W3|`; zigzag için B üst sınır **%61.8** ve **C genliği ≥ B**.
 
 ## API / Web
 

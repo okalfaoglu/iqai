@@ -921,6 +921,21 @@
           const dsLabel = dsMap[ew.diagonal_sub] || ew.diagonal_sub;
           bits.push('🔺 '+dsLabel);
         }
+        if (ew.diagonal_inner_counts && Array.isArray(ew.diagonal_inner_counts) && ew.diagonal_inner_counts.length === 5) {
+          const c = ew.diagonal_inner_counts.map(v => Number(v) || 0);
+          const fmt = '[' + c.join('-') + ']';
+          if (ew.diagonal_sub === 'LeadingMotive') {
+            const ok = (c[0] >= 4 && c[2] >= 4 && c[4] >= 4 && c[1] >= 2 && c[1] <= 3 && c[3] >= 2 && c[3] <= 3);
+            const color = ok ? '#00E676' : '#FFB627';
+            bits.push('<span style="color:'+color+'">🧩 LD iç sayım ' + fmt + ' ≈ 5-3-5-3-5</span>');
+          } else if (ew.diagonal_sub === 'EndingCorrective') {
+            const ok = c.every(v => v >= 2 && v <= 3);
+            const color = ok ? '#00E676' : '#FFB627';
+            bits.push('<span style="color:'+color+'">🧩 ED iç sayım ' + fmt + ' ≈ 3-3-3-3-3</span>');
+          } else {
+            bits.push('<span style="color:#FFB627">🧩 Diyagonal iç sayım ' + fmt + '</span>');
+          }
+        }
         if (ew.channel_alt && ew.channel_alt.w5_channel_target != null) {
           bits.push('📐 AltCh:' + ew.channel_alt.w5_channel_target.toFixed(2));
         }

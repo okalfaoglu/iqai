@@ -955,6 +955,9 @@ fn build_impulse_result(
                     Some(DiagonalSubStructure::Mixed) => " [karışık]",
                     None => "",
                 };
+                let inner_str = inner_counts
+                    .map(|c| format!(" [iç:{}-{}-{}-{}-{}]", c[0], c[1], c[2], c[3], c[4]))
+                    .unwrap_or_default();
 
                 let shape_str = match diag.shape {
                     Some(crate::elliott::DiagonalShape::Contracting) => "Daralan",
@@ -978,7 +981,10 @@ fn build_impulse_result(
                 };
                 (
                     Some(true),
-                    Some(format!("Diagonal: W4-W1 örtüşmesi kabul (EWM){}", sub_str)),
+                    Some(format!(
+                        "Diagonal: W4-W1 örtüşmesi kabul (EWM){}{}",
+                        sub_str, inner_str
+                    )),
                     formation_label,
                     formation_type_label,
                 )

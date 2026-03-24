@@ -60,8 +60,8 @@
     "elliott_stability_auto_invalidate_bars": 100,
     "_comment_elliott_subwave_strict": "true: itki W1–W5 ve zigzag/flat A–B–C iç-dalga 1:1 (tez); false: toleranslı (varsayılan).",
     "elliott_subwave_strict": false,
-    "_comment_elliott_thesis_teY": "true: docs/content.txt §2.5.3–2.5.4 (W3>W1 bitiş, |W4|≤|W3|; zigzag B≤61.8%, C≥B) formation_valid ile birleşir. false: varsayılan.",
-    "elliott_thesis_teY_rules": false
+    "_comment_elliott_thesis_te_y": "true: docs/content.txt §2.5.3–2.5.4 (W3>W1 bitiş, |W4|≤|W3|; zigzag B≤61.8%, C≥B) formation_valid ile birleşir. false: varsayılan. Eski anahtar elliott_thesis_teY_rules hâlâ okunur (alias).",
+    "elliott_thesis_te_y_rules": false
   },
   "trading": {
     "enabled": false,
