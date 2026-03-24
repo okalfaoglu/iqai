@@ -466,6 +466,9 @@
         <label><input type="checkbox" id="showEwTriangle" checked> Triangle</label>
         <label><input type="checkbox" id="showEwComplex" checked> Double/Triple</label>
       </div>
+      <label title="Kapalı: sadece güncel EW (annotations) çizilir. Açık: geçmiş taramadan ek çizgiler (kalabalık olabilir).">
+        <input type="checkbox" id="showEwHistoryOnChart"> Geçmiş EW çizgileri (grafik)
+      </label>
       <label><input type="checkbox" id="showProjections" checked> Projeksiyonlar</label>
       <label title="W2–W3–W4–W5 potansiyel çapraz yol (turuncu noktalı)"><input type="checkbox" id="showEwProjectionPath" checked> EW potansiyel yol (W3–W5)</label>
 
@@ -661,7 +664,7 @@
       return 'ETHUSDT27H2026';
     }
 
-    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showZigzag','showElliott','showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showProjections','showEwProjectionPath','showClassic','showClassicTriangle','showClassicDouble','showClassicCup','showClassicHs','showClassicFlag','showClassicRange','showClassicChannel','invertPattern','showEwFiboYatay','showEwChannelLines','showEwFusionOverlay','showClassicTpInvYatay','overlayLineLabels'];
+    const OVERLAY_IDS = ['showChoch','showBos','showLiquidity','showMarketProfile','showDivergence','showSupport','showResistance','showZigzag','showElliott','showEwImpulse','showEwDiagonal','showEwZigzag','showEwFlat','showEwTriangle','showEwComplex','showEwHistoryOnChart','showProjections','showEwProjectionPath','showClassic','showClassicTriangle','showClassicDouble','showClassicCup','showClassicHs','showClassicFlag','showClassicRange','showClassicChannel','invertPattern','showEwFiboYatay','showEwChannelLines','showEwFusionOverlay','showClassicTpInvYatay','overlayLineLabels'];
 
     function isEwFormationEnabled(formation, formationType) {
       const f = (formation || '').toLowerCase();
@@ -690,6 +693,8 @@
                 const sEl = document.getElementById(sid);
                 if (sEl) sEl.checked = el.checked;
               });
+              const histEl = document.getElementById('showEwHistoryOnChart');
+              if (!el.checked && histEl) histEl.checked = false;
             }
             if (id === 'showClassic') {
               ['showClassicTriangle','showClassicDouble','showClassicCup','showClassicHs','showClassicFlag','showClassicRange','showClassicChannel'].forEach(sid => {
@@ -1245,6 +1250,7 @@
         const showProjections = document.getElementById('showProjections')?.checked ?? true;
         const showEwFiboYatay = document.getElementById('showEwFiboYatay')?.checked ?? true;
         const showEwChannelLines = document.getElementById('showEwChannelLines')?.checked ?? true;
+        const showEwHistoryOnChart = document.getElementById('showEwHistoryOnChart')?.checked ?? false;
         const showClassicTpInvYatay = document.getElementById('showClassicTpInvYatay')?.checked ?? true;
         const showClassic = document.getElementById('showClassic')?.checked ?? false;
         const showClassicTriangle = document.getElementById('showClassicTriangle')?.checked ?? false;
@@ -1307,8 +1313,9 @@
         const curEwPts = ann.elliott?.wave_points || [];
         const curEwKeySet = new Set(curEwPts.map(ewWavePointKey));
         let formMarkersHist = [];
-        if (showElliott && formationsFiltered.length > 0) {
+        if (showElliott && showEwHistoryOnChart && formationsFiltered.length > 0) {
           const seenHist = new Set();
+          const seenText = new Set();
           formMarkersHist = formationsFiltered.flatMap((f) => (f.wave_points || [])
             .filter((p) => !curEwKeySet.has(ewWavePointKey(p)))
             .map((p) => ({
@@ -1322,6 +1329,9 @@
               const pk = `${m.time}|${String(m.text || '')}`;
               if (seenHist.has(pk)) return false;
               seenHist.add(pk);
+              const tx = String(m.text || '');
+              if (seenText.has(tx)) return false;
+              seenText.add(tx);
               return true;
             });
         }
@@ -1750,7 +1760,7 @@
           }
         }
         // Geçmiş formasyonları mum verisi üzerine çiz: dalga bacakları (çizgiler)
-        if (showElliott && formationsFiltered.length > 0) {
+        if (showElliott && showEwHistoryOnChart && formationsFiltered.length > 0) {
           formationsFiltered.forEach((f, fi) => {
             if (ann.elliott && ewFormationDuplicateOfCurrent(f, ann.elliott)) return;
             const col = formColors[fi % formColors.length];

@@ -1062,5 +1062,28 @@ pub fn scan_elliott_formations(candles: &[Candle], config: &Config) -> Vec<Histo
         });
     }
 
-    results
+    /// Aynı pivot zincirini tekrar tekrar çizmeyi önle (kaydırılmış pencerede aynı yapı).
+    fn formation_signature(f: &HistoricalFormation) -> String {
+        let mut s = format!("{}|", f.formation);
+        for p in &f.wave_points {
+            s.push_str(&format!("{}:{}|", p.time, p.label));
+        }
+        s
+    }
+
+    const MAX_HISTORICAL_EW: usize = 12;
+    results.sort_by_key(|r| std::cmp::Reverse(r.end_time));
+    let mut deduped: Vec<HistoricalFormation> = Vec::new();
+    let mut sigs: std::collections::HashSet<String> = std::collections::HashSet::new();
+    for r in results {
+        let sig = formation_signature(&r);
+        if !sigs.insert(sig) {
+            continue;
+        }
+        deduped.push(r);
+        if deduped.len() >= MAX_HISTORICAL_EW {
+            break;
+        }
+    }
+    deduped
 }
